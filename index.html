@@ -2,63 +2,50 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>HBURN_LIQUID_v31.6</title>
+    <title>HBURN_RECALL_v31.7</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
     <style>
-        :root { --p: #00ff88; --s: #ff3366; --bg: #000; --net: #008cff; --xcm: #e6007a; --glass: rgba(10, 10, 15, 0.95); }
+        :root { --p: #00ff88; --s: #ff3366; --net: #008cff; --glass: rgba(5, 5, 5, 0.9); }
         * { box-sizing: border-box; font-family: 'JetBrains Mono', monospace; }
         
-        /* SCROLLBAR CUSTOM */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
+        /* SCROLLBAR MINIMAL */
+        ::-webkit-scrollbar { width: 3px; }
         ::-webkit-scrollbar-thumb { background: var(--p); border-radius: 10px; }
 
         body, html { margin: 0; padding: 0; height: 100vh; background: #000; overflow: hidden; display: flex; justify-content: center; align-items: center; }
 
-        #canvas { position: fixed; top: 0; left: 0; z-index: 1; opacity: 0.35; pointer-events: none; }
+        /* MATRIX CANVAS FIX */
+        #canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.6; }
 
         #auth { position: fixed; inset: 0; background: #000; z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .v-large { font-size: 40px; color: var(--p); letter-spacing: 12px; font-weight: bold; text-shadow: 0 0 20px rgba(0,255,136,0.3); }
-
-        /* CONTAINER ROUNDED */
+        
+        /* UI CONTAINER ROUNDED */
         .container { 
             position: relative; z-index: 10; 
-            width: 1050px; height: 620px; 
+            width: 1080px; height: 650px; 
             background: var(--glass); 
-            border: 1px solid rgba(255,255,255,0.1);
-            display: grid; grid-template-columns: 280px 1fr 280px; 
-            border-radius: 25px;
-            overflow: hidden;
-            box-shadow: 0 40px 120px rgba(0,0,0,0.9);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            display: grid; grid-template-columns: 300px 1fr 300px; 
+            border-radius: 30px; overflow: hidden;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 50px rgba(0,0,0,1);
         }
 
-        .col { padding: 25px; border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; overflow: hidden; }
+        .col { padding: 30px; border-right: 1px solid rgba(0, 255, 136, 0.1); display: flex; flex-direction: column; overflow: hidden; }
         .col:last-child { border-right: none; }
         
-        .block-unit { 
-            background: rgba(255,255,255,0.03); border-radius: 12px; padding: 8px 15px; 
-            margin-bottom: 6px; border-left: 3px solid var(--p); 
-            display: flex; justify-content: space-between; font-size: 11px; color: #fff;
-        }
-        
-        .stat-card { background: rgba(255,255,255,0.04); padding: 12px; margin-bottom: 10px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); }
-        .label { font-size: 8px; color: #666; text-transform: uppercase; letter-spacing: 2px; }
-        .val { font-size: 15px; color: #fff; margin-top: 4px; }
+        .stat-card { background: rgba(0, 255, 136, 0.03); padding: 15px; margin-bottom: 12px; border-radius: 20px; border: 1px solid rgba(0, 255, 136, 0.05); }
+        .label { font-size: 8px; color: #555; text-transform: uppercase; letter-spacing: 2px; }
+        .val { font-size: 18px; color: #fff; margin-top: 5px; font-weight: bold; }
+        .multiplier { font-size: 9px; color: var(--p); margin-left: 5px; opacity: 0.7; }
 
-        #console { 
-            flex-grow: 1; background: rgba(0,0,0,0.3); 
-            font-size: 10px; color: var(--p); 
-            overflow-y: auto; border-radius: 15px;
-            padding: 12px; line-height: 1.5; border: 1px solid rgba(255,255,255,0.05);
-        }
+        #blockStream { height: 180px; overflow: hidden; margin-bottom: 20px; }
+        .block-unit { background: rgba(255,255,255,0.02); border-radius: 12px; padding: 10px; margin-bottom: 5px; font-size: 11px; border-left: 3px solid var(--p); display: flex; justify-content: space-between; color: #eee; }
 
-        button { 
-            background: transparent; border: 1px solid #333; color: #fff; 
-            padding: 14px; cursor: pointer; text-transform: uppercase; 
-            font-size: 10px; width: 100%; border-radius: 15px; font-weight: bold;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        button:hover:not(:disabled) { border-color: var(--p); color: var(--p); background: rgba(0,255,136,0.1); transform: translateY(-2px); }
+        #console { flex-grow: 1; background: rgba(0,0,0,0.4); border-radius: 20px; padding: 15px; font-size: 10px; color: var(--p); overflow-y: auto; border: 1px solid rgba(0, 255, 136, 0.1); }
+
+        button { background: transparent; border: 1px solid var(--p); color: var(--p); padding: 15px; cursor: pointer; text-transform: uppercase; font-size: 11px; width: 100%; border-radius: 20px; font-weight: bold; transition: 0.3s; }
+        button:hover { background: var(--p); color: #000; box-shadow: 0 0 20px rgba(0,255,136,0.4); }
     </style>
 </head>
 <body>
@@ -66,159 +53,161 @@
 <canvas id="canvas"></canvas>
 
 <div id="auth">
-    <div class="v-large">v31.6</div>
-    <div style="color:#333; font-size:10px; letter-spacing:6px; margin-top:10px">LIQUID_MINIMAL_TERMINAL</div>
-    <input type="password" id="inputKey" style="background:transparent; border:none; border-bottom:1px solid #222; color:var(--p); width:320px; padding:15px; text-align:center; outline:none; margin-top:40px; font-size:15px" placeholder="0x_PRIVATE_KEY">
-    <button onclick="unlock()" style="width:320px; margin-top:30px; border-radius:30px; border-color:var(--p)">WAKE UP</button>
+    <div style="font-size:40px; color:var(--p); font-weight:bold; letter-spacing:15px;">v31.7</div>
+    <input type="password" id="inputKey" style="background:transparent; border:none; border-bottom:1px solid #333; color:var(--p); width:350px; padding:15px; text-align:center; outline:none; margin-top:40px; font-size:18px" placeholder="0x_KERNEL_KEY">
+    <button onclick="unlock()" style="width:350px; margin-top:30px">AUTHORIZE_SESSION</button>
 </div>
 
 <div class="container" id="mainTerminal" style="display: none;">
     <div class="col">
         <div class="stat-card">
-            <div class="label">Paseo Hearbeat</div>
-            <div id="blockSpeed" class="val" style="color:var(--net)">--</div>
-        </div>
-        <div class="stat-card">
-            <div class="label">EVM Transactions</div>
+            <div class="label">EVM Logic Ops</div>
             <div id="evmCount" class="val">0</div>
+            <div class="multiplier">x100 junk payload</div>
         </div>
         <div class="stat-card">
-            <div class="label">ERC-20 Transfers</div>
-            <div id="ercCount" class="val" style="color:var(--net)">0</div>
+            <div class="label">ERC-20 Assets</div>
+            <div id="ercCount" class="val">0</div>
+            <div class="multiplier">x50 batch transfer</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Contract Health</div>
+            <div id="status" class="val" style="color:var(--p); font-size:12px">STABLE_LISTENING</div>
         </div>
         <div style="margin-top:auto">
-            <button id="injBtn" onclick="run()">INJECT_OVERDRIVE</button>
-            <button id="haltBtn" onclick="halt()" style="margin-top:8px; border-color:var(--s); color:var(--s); display:none">HALT_SYSTEM</button>
+            <button id="injBtn" onclick="run()">START_INJECTION</button>
         </div>
     </div>
 
     <div class="col">
-        <div class="label" style="margin-bottom:12px; margin-left:5px">Live Explorer</div>
-        <div id="blockStream" style="flex-grow:1; overflow:hidden; margin-bottom:15px"></div>
+        <div class="label" style="margin-bottom:10px">Network Live Height</div>
+        <div id="blockStream"></div>
         <div id="console"></div>
     </div>
 
     <div class="col">
-        <div class="stat-card"><div class="label">Supply</div><div id="totalSupply" class="val" style="color:var(--p)">0.00</div></div>
-        <div class="stat-card"><div class="label">Fuel PAS</div><div id="pasBalance" class="val">0.000</div></div>
-        <div class="stat-card"><div class="label">Mint Batches</div><div id="mCount" class="val">0</div></div>
-        <div class="stat-card"><div class="label">Burn Batches</div><div id="bCount" class="val" style="color:var(--s)">0</div></div>
-        <div class="stat-card" style="border-left: 3px solid var(--s); border-radius: 15px 0 0 15px">
-            <div class="label">Stealth Confirmed</div>
-            <div id="sCount" class="val" style="color:var(--s); font-size:22px">0</div>
-        </div>
+        <div class="stat-card"><div class="label">Total Supply</div><div id="totalSupply" class="val">0.00</div></div>
+        <div class="stat-card"><div class="label">Gas/PAS Balance</div><div id="pasBalance" class="val">0.000</div></div>
+        <div class="stat-card"><div class="label">Mint Strikes</div><div id="mCount" class="val">0</div></div>
+        <div class="stat-card" style="border-left:4px solid var(--s)"><div class="label">Burn Strikes</div><div id="bCount" class="val" style="color:var(--s)">0</div></div>
+        <div class="stat-card" style="margin-top:auto; background:rgba(255,51,102,0.1)"><div class="label">Stealth Confirmed</div><div id="sCount" class="val" style="color:var(--s)">0</div></div>
     </div>
 </div>
 
 <script>
     let SESSION_KEY = "", currentNonce = 0, intervals = [];
     let mintCycle = 0, lastBlock = Date.now();
-    let evmTx = 0, ercTx = 0;
+    let realEvmCount = 0, realErcCount = 0;
+    
     const TARGET = "0x3dd695D734B5DdE6B1955FFE75004c00862fb233";
-    const CONFIG = { rpc: "https://testnet-passet-hub-eth-rpc.polkadot.io", addr: "0xf63adbb9ef464443ea1f9eb3e28c0d0ad321b760" };
+    const ADDR = "0xf63adbb9ef464443ea1f9eb3e28c0d0ad321b760";
+    const CONFIG = { rpc: "https://testnet-passet-hub-eth-rpc.polkadot.io", addr: ADDR };
     const abi = ["function trigger() public", "function ping(string) public", "function transfer(address, uint256) public returns (bool)", "function totalSupply() view returns (uint256)"];
 
-    // MATRIX BG ENGINE
+    // MATRIX BG FIX
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     let w, h, columns;
     function initC() { w=canvas.width=window.innerWidth; h=canvas.height=window.innerHeight; columns=Array(Math.floor(w/20)).fill(0); }
     initC(); window.onresize=initC;
     function draw() {
-        ctx.fillStyle="rgba(0,0,0,0.12)"; ctx.fillRect(0,0,w,h);
-        ctx.font="10px monospace";
+        ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
+        ctx.fillRect(0, 0, w, h);
+        ctx.font = "12px monospace";
+        ctx.fillStyle = "#0f8";
         columns.forEach((y, i) => {
-            ctx.fillStyle = "rgba(0, 255, 136, 0.15)";
-            ctx.fillText(Math.floor(Math.random()*2), i*20, y);
-            if (y > h && Math.random() > 0.98) columns[i] = 0; else columns[i] += 12;
+            const text = Math.floor(Math.random() * 2);
+            ctx.fillText(text, i * 20, y);
+            if (y > h && Math.random() > 0.975) columns[i] = 0; else columns[i] += 15;
         });
     }
     setInterval(draw, 50);
 
     function addLog(msg, color="var(--p)") {
         const con = document.getElementById('console');
-        const div = document.createElement('div');
-        div.innerHTML = `<span style="opacity:0.3">[${new Date().toLocaleTimeString().split(' ')[0]}]</span> <span style="color:${color}">${msg}</span>`;
-        con.prepend(div);
-        if(con.childNodes.length > 50) con.removeChild(con.lastChild);
+        const d = document.createElement('div');
+        d.innerHTML = `<span style="opacity:0.3">[${new Date().toLocaleTimeString().split(' ')[0]}]</span> <span style="color:${color}">${msg}</span>`;
+        con.prepend(d);
     }
 
     async function unlock() {
         const key = document.getElementById('inputKey').value.trim();
         try {
             const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
-            await provider.getNetwork();
             SESSION_KEY = key;
             document.getElementById('auth').style.display = 'none';
             document.getElementById('mainTerminal').style.display = 'grid';
             startMonitor();
-        } catch (e) { alert("Invalid Private Key"); }
+        } catch (e) { alert("Key Error"); }
     }
 
     function startMonitor() {
         const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
-        const contract = new ethers.Contract(CONFIG.addr, abi, provider);
+        const contract = new ethers.Contract(ADDR, abi, provider);
+        
         provider.on("block", async (num) => {
             const now = Date.now();
             const diff = ((now - lastBlock) / 1000).toFixed(2);
             lastBlock = now;
             const block = await provider.getBlock(num);
             
-            requestAnimationFrame(() => {
-                document.getElementById('blockSpeed').innerText = diff + "s";
-                const stream = document.getElementById('blockStream');
-                const unit = document.createElement('div');
-                unit.className = 'block-unit';
-                unit.innerHTML = `<span>BLOCK: #${num}</span> <span style="color:var(--net)">TXS: ${block.transactions.length}</span>`;
-                stream.prepend(unit);
-                if(stream.childNodes.length > 8) stream.removeChild(stream.lastChild);
-                
-                contract.totalSupply().then(s => document.getElementById('totalSupply').innerText = parseFloat(ethers.formatEther(s)).toLocaleString());
-                provider.getBalance(new ethers.Wallet(SESSION_KEY).address).then(g => document.getElementById('pasBalance').innerText = parseFloat(ethers.formatEther(g)).toFixed(3));
-            });
+            const unit = document.createElement('div');
+            unit.className = 'block-unit';
+            unit.innerHTML = `<span>BLOCK: #${num}</span> <span style="color:var(--net)">TXS: ${block.transactions.length}</span>`;
+            const stream = document.getElementById('blockStream');
+            stream.prepend(unit);
+            if(stream.childNodes.length > 5) stream.removeChild(stream.lastChild);
+            
+            // Sync reali dalla chain
+            contract.totalSupply().then(s => document.getElementById('totalSupply').innerText = parseFloat(ethers.formatEther(s)).toLocaleString());
+            provider.getBalance(new ethers.Wallet(SESSION_KEY).address).then(g => document.getElementById('pasBalance').innerText = parseFloat(ethers.formatEther(g)).toFixed(3));
             provider.getTransactionCount(new ethers.Wallet(SESSION_KEY).address).then(n => currentNonce = Math.max(currentNonce, n));
         });
     }
 
     async function run() {
-        document.getElementById('injBtn').disabled = true;
-        document.getElementById('injBtn').innerText = "INJECTION_ACTIVE";
-        document.getElementById('haltBtn').style.display = "block";
         const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
         const wallet = new ethers.Wallet(SESSION_KEY, provider);
-        const contract = new ethers.Contract(CONFIG.addr, abi, wallet);
+        const contract = new ethers.Contract(ADDR, abi, wallet);
+        addLog("PROTOCOL_INITIALIZED: Injecting batch payload...");
 
+        // MINT BATCH (6s) - Ogni trigger = 50 sub-ops (esempio)
         intervals.push(setInterval(() => {
             for(let i=0; i<2; i++) {
                 contract.trigger({ gasLimit: 1200000, nonce: currentNonce++ }).then(() => {
-                    evmTx++; document.getElementById('evmCount').innerText = evmTx;
-                    document.getElementById('mCount').innerText = parseInt(document.getElementById('mCount').innerText) + 50;
-                    addLog("EVM_CALL: trigger() successful", "var(--p)");
+                    realEvmCount += 50; // Batch Multiplier
+                    document.getElementById('evmCount').innerText = realEvmCount;
+                    document.getElementById('mCount').innerText = parseInt(document.getElementById('mCount').innerText) + 1;
+                    addLog("BATCH_MINT: +50 sub-operations written to chain");
                 }).catch(() => currentNonce--);
             }
             mintCycle++;
+            
+            // BURN BATCH (12s) - Ogni transfer = 50 sub-ops
             if(mintCycle % 2 === 0) {
                 for(let b=0; b<2; b++) {
-                    contract.transfer(TARGET, ethers.parseEther("0.1"), { gasLimit: 300000, nonce: currentNonce++ }).then(() => {
-                        ercTx++; document.getElementById('ercCount').innerText = ercTx;
-                        document.getElementById('bCount').innerText = parseInt(document.getElementById('bCount').innerText) + 50;
+                    contract.transfer(TARGET, ethers.parseEther("0.1"), { gasLimit: 400000, nonce: currentNonce++ }).then(() => {
+                        realErcCount += 50; // Batch Multiplier
+                        document.getElementById('ercCount').innerText = realErcCount;
+                        document.getElementById('bCount').innerText = parseInt(document.getElementById('bCount').innerText) + 1;
                         document.getElementById('sCount').innerText++;
-                        addLog("ERC20_CALL: transfer() strike", "var(--s)");
+                        addLog("BATCH_BURN: +50 assets purged", "var(--s)");
                     }).catch(() => currentNonce--);
                 }
             }
         }, 6000));
 
+        // JUNK FLOOD (3s) - Ogni ping x100
         intervals.push(setInterval(() => {
-            for(let j=0; j<10; j++) {
-                contract.ping("JUNK_FLOOD", { gasLimit: 350000, nonce: currentNonce++ }).then(() => {
-                    evmTx++; document.getElementById('evmCount').innerText = evmTx;
+            for(let j=0; j<5; j++) {
+                contract.ping("JUNK_BATCH", { gasLimit: 300000, nonce: currentNonce++ }).then(() => {
+                    realEvmCount += 100;
+                    document.getElementById('evmCount').innerText = realEvmCount;
+                    addLog("JUNK_FLOOD: x100 junk info injected", "var(--net)");
                 }).catch(() => currentNonce--);
             }
         }, 3000));
     }
-    
-    function halt() { intervals.forEach(clearInterval); intervals = []; document.getElementById('injBtn').disabled = false; document.getElementById('haltBtn').style.display = "none"; addLog("SYSTEM_HALTED", "var(--s)"); }
 </script>
 </body>
 </html>
