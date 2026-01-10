@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HBURN_STRESS_MASTER_v22</title>
+    <title>HBURN_STABLE_v23.1</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
         :root { --p: #00ff88; --s: #ff3366; --bg: #030406; --glass: rgba(12, 14, 18, 0.98); }
@@ -12,32 +12,32 @@
         
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); }
-        ::-webkit-scrollbar-thumb { background: var(--p); border-radius: 10px; box-shadow: 0 0 5px var(--p); }
+        ::-webkit-scrollbar-thumb { background: var(--p); border-radius: 10px; }
 
-        #canvas { position: fixed; top: 0; left: 0; z-index: 1; opacity: 0.35; pointer-events: none; }
+        #canvas { position: fixed; top: 0; left: 0; z-index: 1; opacity: 0.3; pointer-events: none; }
 
         #authOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.96); z-index: 100; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(12px); }
-        .auth-box { width: 420px; padding: 40px; border: 1px solid var(--p); border-radius: 20px; text-align: center; box-shadow: 0 0 40px rgba(0,255,136,0.1); }
+        .auth-box { width: 420px; padding: 40px; border: 1px solid var(--p); border-radius: 20px; text-align: center; }
         .auth-input { background: #000; border: 1px solid #222; color: var(--p); width: 100%; padding: 15px; margin: 20px 0; border-radius: 8px; text-align: center; }
         
-        .container { position: relative; z-index: 10; width: 95%; max-width: 1050px; height: 650px; background: var(--glass); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; display: grid; grid-template-columns: 380px 1fr; overflow: hidden; box-shadow: 0 0 100px #000; }
+        .container { position: relative; z-index: 10; width: 95%; max-width: 1000px; height: 650px; background: var(--glass); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; display: grid; grid-template-columns: 350px 1fr; overflow: hidden; box-shadow: 0 0 100px #000; }
         .side { padding: 40px; border-right: 1px solid #1a1d23; display: flex; flex-direction: column; justify-content: space-between; background: rgba(0,0,0,0.4); }
         
+        .main-content { display: flex; flex-direction: column; height: 100%; }
+        .header-bar { padding: 20px 40px 10px; display: flex; justify-content: flex-end; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .gas-monitor { font-size: 11px; color: #888; background: rgba(0,0,0,0.5); padding: 8px 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); }
+        .gas-val { color: var(--p); font-weight: bold; font-family: 'Consolas', monospace; }
+
         .stat-label { font-size: 10px; color: var(--p); letter-spacing: 2px; text-transform: uppercase; font-weight: bold; }
-        .val { font-size: 32px; font-weight: bold; margin: 10px 0; color: #fff; }
-        
-        .monitor-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; margin-bottom: 20px; }
-        .timer-bar { width: 100%; height: 6px; background: #111; border-radius: 10px; overflow: hidden; margin: 12px 0; border: 1px solid rgba(255,255,255,0.03); }
+        .val { font-size: 32px; font-weight: bold; margin: 10px 0; }
+        .timer-bar { width: 100%; height: 6px; background: #111; border-radius: 10px; overflow: hidden; margin: 15px 0; }
         .fill { height: 100%; width: 0%; transition: width 0.1s linear; }
         
-        #console { padding: 40px; overflow-y: auto; font-size: 11px; color: #555; line-height: 1.6; mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent); }
+        #console { flex-grow: 1; padding: 30px 40px; overflow-y: auto; font-size: 11px; color: #555; line-height: 1.6; mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent); }
         
-        button { background: var(--p); color: #000; border: none; padding: 20px; border-radius: 12px; font-weight: 900; cursor: pointer; text-transform: uppercase; width: 100%; transition: 0.3s; letter-spacing: 1px; }
-        button:hover { filter: brightness(1.2); box-shadow: 0 0 20px var(--p); }
-        button:disabled { background: #1a1d23; color: #444; cursor: not-allowed; }
-
-        .detail-text { font-size: 11px; color: #666; margin-top: 5px; line-height: 1.4; }
-        .highlight { color: var(--p); }
+        button { background: var(--p); color: #000; border: none; padding: 20px; border-radius: 12px; font-weight: 900; cursor: pointer; text-transform: uppercase; width: 100%; transition: 0.3s; }
+        button:hover { box-shadow: 0 0 20px var(--p); }
+        button:disabled { background: #1a1d23; color: #444; }
     </style>
 </head>
 <body>
@@ -46,99 +46,100 @@
 
 <div id="authOverlay">
     <div class="auth-box">
-        <div class="stat-label">HBURN STRESS INJECTOR v22</div>
-        <p style="font-size: 11px; color: #444; margin-top: 10px;">INDUSTRIAL BATCH: 100x OPS. FOLLOW THE WHITE RABBIT.</p>
+        <div class="stat-label">HBURN STABLE INJECTOR v23.1</div>
+        <p style="font-size: 11px; color: #444; margin-top: 10px;">BALANCED BATCH: 25x OPS. GAS MONITOR ACTIVE.</p>
         <input type="password" id="inputKey" class="auth-input" placeholder="INSERT_PRIVATE_KEY_0x">
-        <button onclick="unlock()">INITIALIZE INDUSTRIAL LOOP</button>
+        <button onclick="unlock()">INITIALIZE SECURE SESSION</button>
     </div>
 </div>
 
 <div class="container">
     <div class="side">
         <div>
-            <div class="stat-label">System Monitoring</div>
-            <div class="val" id="bal">0.00</div>
-            <div class="detail-text">Contract Supply Balance (HBURN)</div>
-
-            <div class="monitor-card" style="margin-top: 30px;">
-                <div class="stat-label">Batch Load: <span class="highlight">100 OPS</span></div>
-                <div class="timer-bar"><div id="mFill" class="fill" style="background:var(--p); box-shadow: 0 0 10px var(--p);"></div></div>
-                <div class="detail-text">Mint cycle: <span id="mCount">0</span> total events.</div>
+            <div class="stat-label">Contract Balance</div>
+            <div id="bal" class="val">0.00</div>
+            
+            <div style="display: flex; gap: 30px;">
+                <div><div class="stat-label">Mints</div><div id="mCount" style="font-size:22px; font-weight:bold">0</div></div>
+                <div><div class="stat-label" style="color:var(--s)">Burns</div><div id="bCount" style="font-size:22px; font-weight:bold; color:var(--s)">0</div></div>
             </div>
 
-            <div class="monitor-card">
-                <div class="stat-label" style="color:var(--s)">Burn Cycle: <span style="color:var(--s)">100 OPS</span></div>
-                <div class="timer-bar"><div id="bFill" class="fill" style="background:var(--s); box-shadow: 0 0 10px var(--s);"></div></div>
-                <div class="detail-text">Status: 2:1 Supply Equilibrium. Total Burns: <span id="bCount" style="color:var(--s)">0</span></div>
-            </div>
-
-            <div class="detail-text" style="font-size: 9px; opacity: 0.7;">
-                > Block Time Target: <span class="highlight">6.5s</span><br>
-                > Gas Limit: <span class="highlight">8,000,000</span><br>
-                > Network: <span class="highlight">Paseo AssetHub</span>
+            <div style="margin-top:40px">
+                <div class="stat-label">Mint Cycle (25x)</div>
+                <div class="timer-bar"><div id="mFill" class="fill" style="background:var(--p)"></div></div>
+                <div class="stat-label" style="color:var(--s)">Burn Cycle (25x)</div>
+                <div class="timer-bar"><div id="bFill" class="fill" style="background:var(--s)"></div></div>
             </div>
         </div>
         <button id="start" disabled>AWAITING AUTH</button>
     </div>
-    <div id="console"></div>
+
+    <div class="main-content">
+        <div class="header-bar">
+            <div class="gas-monitor">
+                PAS_FUEL: <span id="pasBalance" class="gas-val">0.0000</span> PAS
+            </div>
+        </div>
+        <div id="console"></div>
+    </div>
 </div>
 
 <script>
-    // --- MATRIX BACKGROUND ---
+    // --- MATRIX BG ---
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     let w, h, drops;
-    const words = ["SYSTEM ERROR", "INDUSTRIAL", "PASEO", "POLKADOT", "BATCH_100", "W3F", "WHITE RABBIT", "HBURN", "GAVIN WOOD", "STRESS_TEST"];
-
-    function init() {
-        w = canvas.width = window.innerWidth;
-        h = canvas.height = window.innerHeight;
-        drops = Array(Math.floor(w / 35)).fill(1);
-    }
-    init();
-    window.addEventListener('resize', init);
-
+    const words = ["STABLE_MODE", "PAS_MONITOR", "25X_BATCH", "PASEO", "W3F", "WHITE RABBIT", "HBURN"];
+    function init() { w=canvas.width=window.innerWidth; h=canvas.height=window.innerHeight; drops=Array(Math.floor(w/35)).fill(1); }
+    init(); window.addEventListener('resize', init);
     function draw() {
-        ctx.fillStyle = "rgba(3, 4, 6, 0.15)";
-        ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = "rgba(3, 4, 6, 0.15)"; ctx.fillRect(0, 0, w, h);
         ctx.font = "10px monospace";
         drops.forEach((y, i) => {
-            const text = words[Math.floor(Math.random() * words.length)];
             ctx.fillStyle = Math.random() > 0.85 ? "#ff3366" : "#00ff88";
-            ctx.fillText(text, i * 40, y * 15);
-            if (y * 15 > h && Math.random() > 0.98) drops[i] = 0;
-            drops[i]++;
+            ctx.fillText(words[Math.floor(Math.random()*words.length)], i*40, y*15);
+            if (y*15 > h && Math.random() > 0.98) drops[i]=0; drops[i]++;
         });
     }
     setInterval(draw, 60);
 
-    // --- BLOCKCHAIN LOGIC ---
+    // --- ENGINE ---
     let SESSION_KEY = "";
-    const CONFIG = { rpc: "https://testnet-passet-hub-eth-rpc.polkadot.io", addr: "0x2c3aA0FE317aE22ceF28C1Bd182f7f28C1b46AF2" };
+    const CONFIG = { 
+        rpc: "https://testnet-passet-hub-eth-rpc.polkadot.io", 
+        addr: "0xf63adbb9ef464443ea1f9eb3e28c0d0ad321b760" 
+    };
     const abi = ["function trigger() public", "function balanceOf(address) view returns (uint256)"];
 
     function unlock() {
         SESSION_KEY = document.getElementById('inputKey').value;
-        if(SESSION_KEY.length < 60) return alert("AUTH_ERROR: Invalid Key");
+        if(SESSION_KEY.length < 60) return alert("AUTH_ERROR");
         document.getElementById('authOverlay').remove();
         document.getElementById('start').disabled = false;
-        document.getElementById('start').innerText = "EXECUTE BATCH LOOP";
-        addLog("INDUSTRIAL BATCH PROTOCOL INJECTED.", "#00ff88");
+        addLog("PROTOCOL STABILIZED. GAS MONITOR ENGAGED.", "#00ff88");
+        updateGas(); // Caricamento iniziale gas
+    }
+
+    async function updateGas() {
+        try {
+            const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
+            const wallet = new ethers.Wallet(SESSION_KEY, provider);
+            const balance = await provider.getBalance(wallet.address);
+            document.getElementById('pasBalance').innerText = parseFloat(ethers.formatEther(balance)).toFixed(4);
+        } catch(e) {}
     }
 
     function addLog(t, col="#666") {
         const con = document.getElementById('console');
-        const l = document.createElement('div'); 
-        l.style.color = col; 
-        l.style.marginBottom = "5px";
-        l.style.fontWeight = (col === "#00ff88" || col === "#ff3366") ? "bold" : "normal";
+        const l = document.createElement('div'); l.style.color = col; l.style.marginBottom="5px";
+        l.style.fontWeight = (col==="#00ff88" || col==="#ff3366") ? "bold" : "normal";
         l.innerHTML = `[${new Date().toLocaleTimeString()}] > ${t}`;
         con.prepend(l);
         if(con.childNodes.length > 50) con.removeChild(con.lastChild);
     }
 
     document.getElementById('start').onclick = async function() {
-        this.disabled = true; this.innerText = "INDUSTRIAL ACTIVE";
+        this.disabled = true; this.innerText = "Loop Active";
         const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
         const wallet = new ethers.Wallet(SESSION_KEY, provider);
         const contract = new ethers.Contract(CONFIG.addr, abi, wallet);
@@ -152,28 +153,24 @@
 
         setInterval(async () => {
             try {
-                // Ultra High Gas Limit for Batch 100
-                const tx = await contract.trigger({ gasLimit: 8000000 });
-                addLog("BATCH TRIGGER SENT (100x Operations)", "#666");
+                const tx = await contract.trigger({ gasLimit: 1500000 });
+                addLog("BATCH TRIGGER SENT (25x Ops)", "#666");
                 await tx.wait();
                 
                 const bal = await contract.balanceOf(CONFIG.addr);
                 document.getElementById('bal').innerText = parseFloat(ethers.formatEther(bal)).toFixed(2);
                 
-                m += 100;
-                document.getElementById('mCount').innerText = m;
-                addLog("HBURN minted (Batch 100x Confirmed)", "#00ff88");
+                m += 25; document.getElementById('mCount').innerText = m;
+                addLog("HBURN minted", "#00ff88");
                 
-                if(m % 200 === 0) { 
-                    b += 100; 
-                    document.getElementById('bCount').innerText = b; 
-                    addLog("HBURN Burned (Batch 100x Confirmed)", "#ff3366");
+                if(m % 50 === 0) { 
+                    b += 25; document.getElementById('bCount').innerText = b; 
+                    addLog("HBURN Burned", "#ff3366"); 
                     bt=0; 
                 }
                 mt=0;
-            } catch(e) { 
-                addLog("NETWORK_CONGESTION: RETRYING...", "#444"); 
-            }
+                updateGas(); // Aggiorna gas dopo ogni transazione
+            } catch(e) { addLog("NODE_BUSY: RETRYING...", "#444"); updateGas(); }
         }, 6500);
     };
 </script>
