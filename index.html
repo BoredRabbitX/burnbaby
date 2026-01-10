@@ -3,48 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HBURN_MASTER_v25.1</title>
+    <title>HBURN_XCM_PASEO_v27.1</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
-        :root { --p: #00ff88; --s: #ff3366; --bg: #030406; --glass: rgba(12, 14, 18, 0.98); --net: #008cff; }
+        :root { --p: #00ff88; --s: #ff3366; --bg: #030406; --glass: rgba(12, 14, 18, 0.98); --net: #008cff; --warning: #ffaa00; --xcm: #e6007a; }
         * { box-sizing: border-box; }
         body, html { margin: 0; padding: 0; min-height: 100vh; width: 100%; background: var(--bg); color: #fff; font-family: 'Consolas', monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; }
 
-        /* SCROLLBAR NEON */
-        #console::-webkit-scrollbar { width: 4px; }
-        #console::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); }
-        #console::-webkit-scrollbar-thumb { background: var(--p); border-radius: 10px; box-shadow: 0 0 8px var(--p); }
-
         #canvas { position: fixed; top: 0; left: 0; z-index: 1; opacity: 0.2; pointer-events: none; }
+        
+        /* SCROLLBAR */
+        #console::-webkit-scrollbar { width: 4px; }
+        #console::-webkit-scrollbar-thumb { background: var(--xcm); border-radius: 10px; }
 
         #authOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.97); z-index: 100; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(15px); }
-        .auth-box { width: 90%; max-width: 400px; padding: 40px; border: 1px solid var(--p); border-radius: 20px; text-align: center; }
-        .auth-input { background: #000; border: 1px solid #222; color: var(--p); width: 100%; padding: 15px; margin: 20px 0; border-radius: 8px; text-align: center; }
+        .auth-box { width: 90%; max-width: 400px; padding: 40px; border: 1px solid var(--xcm); border-radius: 20px; text-align: center; }
+        .auth-input { background: #000; border: 1px solid #222; color: var(--xcm); width: 100%; padding: 15px; margin: 20px 0; border-radius: 8px; text-align: center; }
 
         .container { position: relative; z-index: 10; width: 98%; max-width: 1250px; height: 92vh; background: var(--glass); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; display: flex; flex-direction: row; overflow: hidden; box-shadow: 0 0 100px #000; }
         .side { width: 380px; padding: 25px; border-right: 1px solid #1a1d23; display: flex; flex-direction: column; overflow-y: auto; background: rgba(0,0,0,0.4); flex-shrink: 0; }
         .main-view { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-        .stat-card { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 15px; }
-        .stat-label { font-size: 9px; color: var(--p); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 5px; font-weight: bold;}
-        .val-big { font-size: 26px; font-weight: bold; color: var(--p); font-family: 'JetBrains Mono', monospace; }
-        .val-mid { font-size: 18px; color: #fff; font-family: 'JetBrains Mono', monospace; }
+        .stat-card { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 12px; }
+        .stat-label { font-size: 9px; color: var(--p); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; font-weight: bold;}
+        .val-big { font-size: 24px; font-weight: bold; color: var(--p); font-family: 'JetBrains Mono', monospace; }
 
-        .timer-group { margin-bottom: 15px; padding: 10px; background: rgba(255,255,255,0.02); border-radius: 8px; }
-        .timer-info { display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 5px; color: #aaa; }
-        .timer-bar { width: 100%; height: 4px; background: #111; border-radius: 2px; overflow: hidden; }
-        .fill { height: 100%; width: 0%; transition: width 0.1s linear; }
+        /* XCM MONITORING BARS */
+        .xcm-monitor { margin-bottom: 20px; padding: 12px; border: 1px solid rgba(230, 0, 122, 0.2); border-radius: 10px; background: rgba(230, 0, 122, 0.05); }
+        .xcm-bar-label { display: flex; justify-content: space-between; font-size: 9px; color: var(--xcm); margin-bottom: 5px; font-weight: 900; }
+        .xcm-timer-bar { width: 100%; height: 4px; background: #200; border-radius: 2px; overflow: hidden; }
+        .xcm-fill { height: 100%; width: 0%; background: var(--xcm); box-shadow: 0 0 10px var(--xcm); transition: width 0.1s linear; }
 
         .header-info { padding: 20px 30px; background: rgba(0,0,0,0.3); border-bottom: 1px solid #1a1d23; display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; font-size: 11px; }
         #console { flex-grow: 1; padding: 30px; overflow-y: auto; font-size: 11px; color: #777; background: rgba(0,0,0,0.15); line-height: 1.5; }
 
-        @media (max-width: 1000px) {
-            .container { flex-direction: column; height: 98vh; overflow-y: auto; }
-            .side { width: 100%; border-right: none; height: auto; }
-            .main-view { height: 600px; flex-shrink: 0; }
-        }
-
-        button { background: var(--p); color: #000; border: none; padding: 18px; border-radius: 12px; font-weight: 900; cursor: pointer; text-transform: uppercase; width: 100%; margin-top: 5px; }
+        .status-badge { font-size: 10px; font-weight: bold; text-align: center; margin-bottom: 15px; border: 1px solid; padding: 8px; border-radius: 5px; text-transform: uppercase; }
+        .xcm-active { color: var(--xcm); border-color: var(--xcm); box-shadow: inset 0 0 10px rgba(230, 0, 122, 0.1); }
+        
+        button { background: var(--xcm); color: #fff; border: none; padding: 18px; border-radius: 12px; font-weight: 900; cursor: pointer; text-transform: uppercase; width: 100%; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -53,66 +49,60 @@
 
 <div id="authOverlay">
     <div class="auth-box">
-        <div class="stat-label">HBURN BLOCKCHAIN MASTER v25.1</div>
-        <input type="password" id="inputKey" class="auth-input" placeholder="INSERT PRIVATE KEY">
-        <button onclick="unlock()">INITIALIZE ENGINE</button>
+        <div class="stat-label" style="color:var(--xcm)">HBURN XCM PASEO ENGINE</div>
+        <input type="password" id="inputKey" class="auth-input" placeholder="PRIVATE_KEY_0x">
+        <button onclick="unlock()">INIZIALIZZA XCM OVERDRIVE</button>
     </div>
 </div>
 
 <div class="container">
     <div class="side">
+        <div class="status-badge xcm-active">PASEO CROSS-CHAIN ROUTING: ON</div>
+        
+        <div class="xcm-monitor">
+            <div class="xcm-bar-label"><span>HRMP CHANNEL LOAD</span><span id="xcmSec">0.0s</span></div>
+            <div class="xcm-timer-bar"><div id="xcmFill" class="xcm-fill"></div></div>
+            <div style="font-size: 8px; color: #666; margin-top: 5px;">TARGET: Relay Chain / Parachain 1000</div>
+        </div>
+
         <div class="stat-card">
             <div class="stat-label">Global Total Supply</div>
-            <div id="totalSupply" class="val-big">LOADING...</div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-label">Contract Balance</div>
-            <div id="bal" class="val-mid">LOADING...</div>
-        </div>
-
-        <div class="timer-group">
-            <div class="timer-info"><span>MINT CYCLE (25x)</span><span id="mSec">6.5s</span></div>
-            <div class="timer-bar"><div id="mFill" class="fill" style="background:var(--p)"></div></div>
-        </div>
-        <div class="timer-group">
-            <div class="timer-info"><span>BURN CYCLE (25x)</span><span id="bSec">13.0s</span></div>
-            <div class="timer-bar"><div id="bFill" class="fill" style="background:var(--s)"></div></div>
-        </div>
-        <div class="timer-group">
-            <div class="timer-info"><span>JUNK STRESS (50x)</span><span id="jSec">10.0s</span></div>
-            <div class="timer-bar"><div id="jFill" class="fill" style="background:var(--net)"></div></div>
+            <div id="totalSupply" class="val-big">0.00</div>
         </div>
 
         <div style="display:flex; gap:10px">
             <div class="stat-card" style="flex:1">
                 <div class="stat-label">Mints</div>
-                <div id="mCount" class="val-mid">0</div>
+                <div id="mCount" style="color:var(--p); font-size: 20px; font-weight: bold;">0</div>
             </div>
             <div class="stat-card" style="flex:1">
-                <div class="stat-label">Burns</div>
-                <div id="bCount" class="val-mid" style="color:var(--s)">0</div>
+                <div class="stat-label">XCM Msg</div>
+                <div id="xCount" style="color:var(--xcm); font-size: 20px; font-weight: bold;">0</div>
             </div>
         </div>
         
         <button id="start" disabled>AWAITING AUTH</button>
+        <div style="font-size: 9px; color: #444; margin-top: 20px;">
+            > XCM Version: v3<br>
+            > Network: Paseo (Testnet)<br>
+            > Nonce Strategy: Pipelined
+        </div>
     </div>
 
     <div class="main-view">
         <div class="header-info">
-            <div>NETWORK: <span style="color:var(--p)">PASEO ASSETHUB</span></div>
-            <div>GAS: <span id="gasPrice" style="color:var(--net)">...</span></div>
+            <div>RELAY: <span style="color:var(--xcm)">PASEO</span></div>
+            <div>NONCE: <span id="curNonce" style="color:var(--warning)">...</span></div>
             <div>BLOCK: <span id="blockNum" style="color:#fff">#...</span></div>
-            <div>FUEL: <span id="pasBalance" style="color:var(--p)">0.000 PAS</span></div>
-            <div>STATUS: <span id="netStatus" style="color:var(--p)">ONLINE</span></div>
+            <div>FUEL: <span id="pasBalance" style="color:var(--p)">0.00 PAS</span></div>
             <div>LATENCY: <span id="latency" style="color:var(--net)">0ms</span></div>
+            <div>XCM STATE: <span style="color:var(--xcm)">DISPATCHING</span></div>
         </div>
         <div id="console"></div>
     </div>
 </div>
 
 <script>
-    // BG MATRIX
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     let w, h, drops;
@@ -122,60 +112,40 @@
         ctx.fillStyle = "rgba(3, 4, 6, 0.15)"; ctx.fillRect(0, 0, w, h);
         ctx.font = "10px monospace";
         drops.forEach((y, i) => {
-            ctx.fillStyle = Math.random() > 0.8 ? "#008cff" : "#00ff88";
-            ctx.fillText(Math.random() > 0.5 ? "1" : "0", i*40, y*15);
+            ctx.fillStyle = Math.random() > 0.8 ? "#e6007a" : "#00ff88";
+            ctx.fillText(Math.random() > 0.5 ? "X" : "M", i*40, y*15);
             if (y*15 > h && Math.random() > 0.98) drops[i]=0; drops[i]++;
         });
     }
     setInterval(draw, 60);
 
-    // LOGIC
     let SESSION_KEY = "";
+    let currentNonce = 0;
     const CONFIG = { rpc: "https://testnet-passet-hub-eth-rpc.polkadot.io", addr: "0xf63adbb9ef464443ea1f9eb3e28c0d0ad321b760" };
-    const abi = [
-        "function trigger() public", "function ping(string) public", 
-        "function balanceOf(address) view returns (uint256)",
-        "function totalSupply() view returns (uint256)"
-    ];
+    const abi = ["function trigger() public", "function ping(string) public", "function balanceOf(address) view returns (uint256)", "function totalSupply() view returns (uint256)"];
 
     async function sync() {
         if(!SESSION_KEY) return;
-        const start = Date.now();
         const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
         const contract = new ethers.Contract(CONFIG.addr, abi, provider);
+        const wallet = new ethers.Wallet(SESSION_KEY, provider);
         
-        try {
-            // Sincronizzazione atomica: se una fallisce, le altre provano comunque
-            provider.getBlockNumber().then(n => document.getElementById('blockNum').innerText = "#" + n);
-            provider.getFeeData().then(f => document.getElementById('gasPrice').innerText = Math.round(ethers.formatUnits(f.gasPrice, "gwei")) + " Gwei");
-            
-            contract.balanceOf(CONFIG.addr).then(b => document.getElementById('bal').innerText = parseFloat(ethers.formatEther(b)).toFixed(2));
-            contract.totalSupply().then(s => document.getElementById('totalSupply').innerText = parseFloat(ethers.formatEther(s)).toFixed(2));
-            
-            const wallet = new ethers.Wallet(SESSION_KEY, provider);
-            provider.getBalance(wallet.address).then(g => document.getElementById('pasBalance').innerText = parseFloat(ethers.formatEther(g)).toFixed(3) + " PAS");
-
-            // Calcolo latenza manuale
-            setTimeout(() => {
-                document.getElementById('latency').innerText = (Date.now() - start) + "ms";
-                document.getElementById('netStatus').innerText = "STABLE";
-                document.getElementById('netStatus').style.color = "var(--p)";
-            }, 100);
-
-        } catch(e) { 
-            document.getElementById('netStatus').innerText = "ERROR";
-            document.getElementById('netStatus').style.color = "var(--s)";
-        }
+        provider.getBlockNumber().then(n => document.getElementById('blockNum').innerText = "#" + n);
+        contract.totalSupply().then(s => document.getElementById('totalSupply').innerText = parseFloat(ethers.formatEther(s)).toFixed(2));
+        provider.getBalance(wallet.address).then(g => document.getElementById('pasBalance').innerText = parseFloat(ethers.formatEther(g)).toFixed(3) + " PAS");
+        provider.getTransactionCount(wallet.address).then(n => {
+            currentNonce = Math.max(currentNonce, n);
+            document.getElementById('curNonce').innerText = currentNonce;
+        });
     }
 
     function unlock() {
         SESSION_KEY = document.getElementById('inputKey').value;
-        if(SESSION_KEY.length < 60) return alert("Key Error");
+        if(SESSION_KEY.length < 60) return alert("Key Errata");
         document.getElementById('authOverlay').remove();
         document.getElementById('start').disabled = false;
-        document.getElementById('start').innerText = "START INDUSTRIAL ATTACK";
-        sync();
-        setInterval(sync, 10000);
+        document.getElementById('start').innerText = "IGNITE XCM ENGINE";
+        sync(); setInterval(sync, 10000);
     }
 
     function addLog(t, col="#555") {
@@ -186,39 +156,46 @@
     }
 
     document.getElementById('start').onclick = async function() {
-        this.disabled = true; this.innerText = "ENGINE LIVE";
+        this.disabled = true; this.innerText = "XCM ENGINE LIVE";
         const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
         const wallet = new ethers.Wallet(SESSION_KEY, provider);
         const contract = new ethers.Contract(CONFIG.addr, abi, wallet);
         
-        let m=0, b=0, mt=0, bt=0, jt=0;
-        setInterval(() => { 
-            mt += 0.1; bt += 0.1; jt += 0.1;
-            document.getElementById('mFill').style.width = ((mt%6.5)/6.5*100) + "%";
-            document.getElementById('mSec').innerText = (6.5 - (mt%6.5)).toFixed(1) + "s";
-            document.getElementById('bFill').style.width = ((bt%13)/13*100) + "%";
-            document.getElementById('bSec').innerText = (13 - (bt%13)).toFixed(1) + "s";
-            document.getElementById('jFill').style.width = ((jt%10)/10*100) + "%";
-            document.getElementById('jSec').innerText = (10 - (jt%10)).toFixed(1) + "s";
+        let m=0, x=0, xt=0;
+
+        // XCM Timer Loop
+        setInterval(() => {
+            xt += 0.1;
+            const xVal = (xt % 10.0);
+            document.getElementById('xcmFill').style.width = (xVal/10.0*100) + "%";
+            document.getElementById('xcmSec').innerText = xVal.toFixed(1) + "s / 10s";
         }, 100);
 
+        // PIPELINED XCM DISPATCH (Trigger)
         setInterval(async () => {
-            try {
-                const tx = await contract.trigger({ gasLimit: 1500000 });
-                addLog("TRIGGER SENT: BATCH 25x", "#00ff88");
-                await tx.wait();
-                m += 25; document.getElementById('mCount').innerText = m;
-                if(m % 50 === 0) { b += 25; document.getElementById('bCount').innerText = b; addLog("HBURN BURNED", "#ff3366"); bt=0; }
-                mt=0; sync();
-            } catch(e) { addLog("NODE_WAIT: RECALIBRATING..."); }
-        }, 6500);
+            addLog("XCM_REMOTE_EXECUTION: INJECTING PIPELINE...", "#e6007a");
+            for(let i=0; i<3; i++) {
+                contract.trigger({ gasLimit: 1500000, nonce: currentNonce }).then(tx => {
+                    addLog(`XCM_TX [${tx.nonce}] ROUTED TO HUB`, "#00ff88");
+                    tx.wait().then(() => { m += 25; document.getElementById('mCount').innerText = m; });
+                });
+                currentNonce++;
+                document.getElementById('curNonce').innerText = currentNonce;
+            }
+        }, 7000);
 
+        // JUNK XCM FLOOD (Ping)
         setInterval(async () => {
-            try {
-                await contract.ping("SPAM_V25", { gasLimit: 500000 });
-                addLog("JUNK FLOOD: 50x PAYLOAD", "#008cff");
-                jt = 0; sync();
-            } catch(e) {}
+            addLog("XCM_TRANSPORT_LAYER: FLOODING CHANNELS...", "#e6007a");
+            for(let i=0; i<2; i++) {
+                contract.ping("PASEO_XCM_STRESS_TEST", { gasLimit: 500000, nonce: currentNonce }).then(tx => {
+                    addLog(`XCM_JUNK [${tx.nonce}] DISPATCHED`, "#e6007a");
+                    x++; document.getElementById('xCount').innerText = x;
+                });
+                currentNonce++;
+                document.getElementById('curNonce').innerText = currentNonce;
+            }
+            xt = 0;
         }, 10000);
     };
 </script>
