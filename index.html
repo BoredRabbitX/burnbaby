@@ -10,7 +10,7 @@
             --primary: #00ffa3;
             --secondary: #ff3e8d;
             --bg: #050608;
-            --panel: rgba(15, 18, 24, 0.85);
+            --panel: rgba(10, 12, 18, 0.9);
         }
 
         * { box-sizing: border-box; }
@@ -20,66 +20,61 @@
             font-family: 'Outfit', sans-serif; overflow: hidden;
         }
 
-        /* SFONDO ANIMATO SPAM */
+        /* SFONDO ANIMATO SPAM & ERRORI */
         #bgCanvas {
-            position: fixed; top: 0; left: 0; z-index: 1; opacity: 0.15;
+            position: fixed; top: 0; left: 0; z-index: 1; opacity: 0.3;
+            filter: blur(1px);
         }
 
-        /* LAYOUT CENTRALE */
         .wrapper {
             position: relative; z-index: 2;
             display: flex; justify-content: center; align-items: center;
             width: 100vw; height: 100vh;
+            background: radial-gradient(circle at center, transparent 0%, var(--bg) 90%);
         }
 
         .main-panel {
-            width: 800px; height: 500px;
+            width: 850px; height: 550px;
             background: var(--panel);
-            backdrop-filter: blur(30px);
-            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(40px);
+            border: 1px solid rgba(0, 255, 163, 0.2);
             border-radius: 40px;
             display: grid;
             grid-template-columns: 320px 1fr;
             overflow: hidden;
-            box-shadow: 0 50px 100px rgba(0,0,0,0.9);
+            box-shadow: 0 0 100px rgba(0,0,0,1), 0 0 30px rgba(0, 255, 163, 0.1);
         }
 
-        /* SINISTRA: CONTROLLI */
         .controls {
             padding: 40px; border-right: 1px solid rgba(255,255,255,0.05);
             display: flex; flex-direction: column; justify-content: space-between;
+            background: rgba(0,0,0,0.2);
         }
 
-        .brand { font-weight: 600; letter-spacing: 2px; color: var(--primary); font-size: 14px; }
-        
-        .balance-label { font-size: 11px; color: #666; text-transform: uppercase; margin-top: 30px; }
-        .balance-value { font-family: 'JetBrains Mono'; font-size: 32px; font-weight: 700; margin-bottom: 30px; }
+        .brand { font-weight: 600; letter-spacing: 3px; color: var(--primary); font-size: 12px; }
+        .balance-label { font-size: 10px; color: #666; text-transform: uppercase; margin-top: 40px; }
+        .balance-value { font-family: 'JetBrains Mono'; font-size: 38px; font-weight: 700; color: #fff; margin-bottom: 20px; }
 
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .stat-card { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 20px; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
-        .stat-card div { font-size: 10px; color: #555; text-transform: uppercase; margin-bottom: 5px; }
-        .stat-card span { font-family: 'JetBrains Mono'; font-size: 20px; font-weight: bold; }
+        .stat-card { background: rgba(255,255,255,0.02); padding: 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px; }
+        .stat-card div { font-size: 9px; color: #555; text-transform: uppercase; }
+        .stat-card span { font-family: 'JetBrains Mono'; font-size: 22px; font-weight: bold; }
 
         #btnLaunch {
-            background: #fff; color: #000; border: none; padding: 20px; 
-            border-radius: 20px; font-weight: 700; cursor: pointer;
-            transition: all 0.3s; margin-top: 20px; text-transform: uppercase;
+            background: var(--primary); color: #000; border: none; padding: 22px; 
+            border-radius: 20px; font-weight: 800; cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            text-transform: uppercase; letter-spacing: 1px;
         }
-        #btnLaunch.active { background: var(--primary); transform: scale(0.95); opacity: 0.5; }
+        #btnLaunch:hover { transform: scale(1.05); box-shadow: 0 0 20px var(--primary); }
+        #btnLaunch.active { background: #1a1d23; color: var(--primary); transform: scale(0.98); cursor: default; box-shadow: none; }
 
-        /* DESTRA: LOG FLUIDO */
-        .feed { padding: 40px; display: flex; flex-direction: column; }
-        .feed-header { font-size: 11px; color: #444; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px; }
-        
+        .feed { padding: 40px; display: flex; flex-direction: column; background: rgba(0,0,0,0.1); }
         #console {
-            flex-grow: 1; overflow-y: auto; padding-right: 10px;
-            font-family: 'JetBrains Mono'; font-size: 11px; color: #888;
-            mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+            flex-grow: 1; overflow-y: auto; font-family: 'JetBrains Mono'; font-size: 11px; color: #666;
+            mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
         }
-        #console::-webkit-scrollbar { width: 4px; }
-        #console::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-
-        .log-entry { margin-bottom: 10px; line-height: 1.4; border-left: 2px solid #222; padding-left: 12px; }
+        .log-entry { margin-bottom: 12px; padding-left: 15px; border-left: 1px solid #222; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
         .log-m { color: var(--primary); border-color: var(--primary); }
         .log-b { color: var(--secondary); border-color: var(--secondary); }
     </style>
@@ -91,119 +86,110 @@
 <div class="wrapper">
     <div class="main-panel">
         <div class="controls">
-            <div class="brand">PROTOCOL_V8</div>
-            
+            <div class="brand">CORE_AUTO_v8.1</div>
             <div>
-                <div class="balance-label">Available Supply</div>
+                <div class="balance-label">Contract Internal Supply</div>
                 <div id="balance" class="balance-value">0.00</div>
-
-                <div class="stat-grid">
-                    <div class="stat-card">
-                        <div>Mints</div>
-                        <span id="mintCount">0</span>
-                    </div>
-                    <div class="stat-card">
-                        <div>Burns</div>
-                        <span id="burnCount" style="color: var(--secondary)">0</span>
-                    </div>
+                <div class="stat-card">
+                    <div>Mints Confirmed</div>
+                    <span id="mCount">0</span>
+                </div>
+                <div class="stat-card">
+                    <div>Burns Confirmed</div>
+                    <span id="bCount" style="color: var(--secondary)">0</span>
                 </div>
             </div>
-
-            <button id="btnLaunch">Execute Loop</button>
+            <button id="btnLaunch">Initiate Loop</button>
         </div>
-
         <div class="feed">
-            <div class="feed-header">Live Internal Activity</div>
+            <div style="font-size: 10px; color: #333; margin-bottom: 20px; letter-spacing: 2px;">LIVE_STRESS_MONITOR</div>
             <div id="console"></div>
         </div>
     </div>
 </div>
 
 <script>
-    // BG ANIMATION (Spam/Error Rain)
+    // --- MATRIX BACKGROUND LOGIC ---
     const canvas = document.getElementById('bgCanvas');
     const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    const drops = [];
-    const chars = "01x459739728d2FAfE3Bc23e507B703304DdF7ab102ERROR_GAS_LIMIT_EXCEEDED_NULL_POINTER_SPAM_BLOCK_FULL";
-    for(let i=0; i<canvas.width/20; i++) drops[i] = 1;
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
 
-    function drawBg() {
-        ctx.fillStyle = "rgba(5, 6, 8, 0.1)";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "#222";
-        ctx.font = "10px monospace";
-        for(let i=0; i<drops.length; i++) {
-            const text = chars[Math.floor(Math.random()*chars.length)];
-            ctx.fillText(text, i*20, drops[i]*20);
-            if(drops[i]*20 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+    const messages = ["0x01edfe...", "GAS_LIMIT", "MINTING", "BURNING", "SPAM_V8", "NULL", "ERROR", "TX_PENDING", "0x11b5bd..."];
+    const columns = Math.floor(width / 25);
+    const drops = Array(columns).fill(1);
+
+    function drawMatrix() {
+        ctx.fillStyle = "rgba(5, 6, 8, 0.15)";
+        ctx.fillRect(0, 0, width, height);
+        
+        ctx.font = "10px 'JetBrains Mono'";
+        
+        for (let i = 0; i < drops.length; i++) {
+            const text = messages[Math.floor(Math.random() * messages.length)];
+            const x = i * 25;
+            const y = drops[i] * 15;
+
+            // Colore dinamico: alterna verde e rosso per gli errori
+            ctx.fillStyle = Math.random() > 0.9 ? "#ff3e8d" : "#00ffa3";
+            ctx.fillText(text, x, y);
+
+            if (y > height && Math.random() > 0.975) drops[i] = 0;
             drops[i]++;
         }
     }
-    setInterval(drawBg, 50);
+    setInterval(drawMatrix, 50);
 
-    // BLOCKCHAIN LOGIC
+    window.addEventListener('resize', () => {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    });
+
+    // --- BLOCKCHAIN LOGIC ---
     const CONFIG = {
         rpc: "https://testnet-passet-hub-eth-rpc.polkadot.io",
         key: "e7b0f8447fb5c168c7f2f33e30ed2377aef70a71546c58e4cc3690e62769df12",
         contract: "0xb4310dc7a7d5624443e3ff6977c4fb7fcb36b967"
     };
 
-    const abi = [
-        "function trigger() public",
-        "function ping(string memory) public",
-        "function balanceOf(address) view returns (uint256)"
-    ];
+    const abi = ["function trigger() public", "function ping(string memory) public", "function balanceOf(address) view returns (uint256)"];
+    let m = 0, b = 0;
 
-    let mints = 0, burns = 0;
-    const addLog = (m, cls="") => {
+    const addLog = (msg, cls="") => {
         const c = document.getElementById('console');
         const d = document.createElement('div');
         d.className = `log-entry ${cls}`;
-        d.innerHTML = `[${new Date().toLocaleTimeString()}] ${m}`;
+        d.innerHTML = `<span>${new Date().toLocaleTimeString()}</span> > ${msg}`;
         c.prepend(d);
-        if(c.childNodes.length > 50) c.removeChild(c.lastChild);
+        if(c.childNodes.length > 40) c.removeChild(c.lastChild);
     };
 
     document.getElementById('btnLaunch').onclick = async function() {
-        this.disabled = true;
-        this.classList.add('active');
-        this.innerText = "Loop Running";
-
+        this.disabled = true; this.classList.add('active'); this.innerText = "System Live";
+        
         const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
         const wallet = new ethers.Wallet(CONFIG.key, provider);
         const contract = new ethers.Contract(CONFIG.contract, abi, wallet);
 
-        addLog("SYSTEM INITIALIZED. INTERNAL MODE ACTIVE.");
+        addLog("DECODING KERNEL... STRESS TEST START.");
 
-        // CORE TRIGGER (Mint/Burn 11s)
         setInterval(async () => {
             try {
-                const tx = await contract.trigger({ gasLimit: 250000 });
-                addLog("TX_TRIGGER: BROADCASTED");
+                const tx = await contract.trigger({ gasLimit: 300000 });
+                addLog("TRIGGER_SENT: BROADCASTING...");
                 await tx.wait();
                 
-                const b = await contract.balanceOf(CONFIG.contract);
-                document.getElementById('balance').innerText = parseFloat(ethers.formatEther(b)).toFixed(2);
+                const bal = await contract.balanceOf(CONFIG.contract);
+                document.getElementById('balance').innerText = parseFloat(ethers.formatEther(bal)).toFixed(2);
                 
-                mints++;
-                document.getElementById('mintCount').innerText = mints;
-                if(mints % 3 === 0) {
-                    burns++;
-                    document.getElementById('burnCount').innerText = burns;
-                    addLog("EVENT: TOKEN_BURN_SUCCESS", "log-b");
-                }
-            } catch(e) { addLog("RETRYING: Waiting for block...", "log-entry"); }
+                m++; document.getElementById('mCount').innerText = m;
+                if(m % 3 === 0) { b++; document.getElementById('bCount').innerText = b; addLog("ACTION: INTERNAL_BURN_COMPLETE", "log-b"); }
+            } catch(e) { addLog("NODE_DELAY: RECALIBRATING...", "log-entry"); }
         }, 11000);
 
-        // SPAM PING (15s)
         setInterval(async () => {
-            try {
-                await contract.ping("SPAM_V8_ACTIVE", { gasLimit: 100000 });
-                addLog("JUNK_INJECTED: PING_EVENT", "log-m");
-            } catch(e) {}
-        }, 15000);
+            try { await contract.ping("SPAM_DETECTOR_OFF", { gasLimit: 120000 }); addLog("JUNK_INJECTED", "log-m"); } catch(e) {}
+        }, 16000);
     };
 </script>
 </body>
