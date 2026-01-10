@@ -3,22 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HBURN_DEBUG_v30.4</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <title>HBURN_v30.5_STABLE</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
     <style>
-        :root { --p: #00ff88; --s: #ff3366; --bg: #000; --glass: rgba(10, 10, 12, 0.94); --net: #008cff; --xcm: #e6007a; --dim: #555; }
+        :root { --p: #00ff88; --s: #ff3366; --bg: #000; --glass: rgba(10, 10, 12, 0.96); --net: #008cff; --xcm: #e6007a; --dim: #555; }
         * { box-sizing: border-box; transition: all 0.2s ease; }
-        body, html { margin: 0; padding: 0; height: 100vh; background: var(--bg); color: #fff; font-family: -apple-system, "JetBrains Mono", monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; }
+        body, html { margin: 0; padding: 0; height: 100vh; background: var(--bg); color: #fff; font-family: 'JetBrains Mono', monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; }
 
         #canvas { position: fixed; top: 0; left: 0; z-index: 1; opacity: 0.2; pointer-events: none; }
 
-        /* AUTH & DEBUGGER */
+        /* AUTH & DEEP DEBUGGER */
         #auth { position: fixed; inset: 0; background: #000; z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .auth-card { width: 400px; text-align: center; background: #050505; padding: 40px; border: 1px solid #111; }
+        .auth-card { width: 450px; background: #050505; padding: 40px; border: 1px solid #111; position: relative; }
+        .version-tag { position: absolute; top: 10px; right: 15px; font-size: 9px; color: var(--dim); letter-spacing: 2px; }
         .auth-input { background: transparent; border: none; border-bottom: 1px solid #222; color: var(--p); width: 100%; padding: 15px; text-align: center; font-size: 14px; margin-bottom: 20px; outline: none; }
-        #loginDebug { width: 100%; height: 80px; background: #000; border: 1px solid #111; margin-top: 20px; padding: 10px; font-size: 10px; color: #444; text-align: left; overflow-y: auto; line-height: 1.4; }
-        .debug-err { color: var(--s) !important; font-weight: bold; }
+        
+        #loginDebug { width: 100%; height: 120px; background: #020202; border: 1px solid #111; margin-top: 20px; padding: 12px; font-size: 10px; color: #555; text-align: left; overflow-y: auto; line-height: 1.5; border-radius: 4px; }
+        .debug-err { color: var(--s) !important; text-shadow: 0 0 5px var(--s); }
         .debug-ok { color: var(--p) !important; }
+        .debug-sys { color: var(--net) !important; }
 
         /* MAIN LAYOUT */
         .container { 
@@ -26,25 +29,11 @@
             background: var(--glass); border: 1px solid rgba(255,255,255,0.03);
             display: grid; grid-template-columns: 280px 1fr 280px; border-radius: 4px;
         }
-
         .col { padding: 25px; display: flex; flex-direction: column; border-right: 1px solid rgba(255,255,255,0.03); overflow: hidden; }
         .col:last-child { border-right: none; }
-
-        .group-title { font-size: 9px; color: #666; letter-spacing: 2px; margin-bottom: 15px; border-bottom: 1px solid #111; padding-bottom: 5px; text-transform: uppercase; }
         .label { font-size: 8px; color: var(--dim); text-transform: uppercase; margin-bottom: 4px; }
-        .val { font-family: 'JetBrains Mono'; font-size: 15px; color: #fff; }
-        
-        .block-card { background: rgba(255,255,255,0.02); padding: 15px; border-left: 2px solid var(--p); margin-bottom: 20px; }
-        .pulse { animation: pulse-green 2s infinite; }
-        @keyframes pulse-green { 0% { border-color: #004422; } 50% { border-color: var(--p); } 100% { border-color: #004422; } }
-
-        .p-box { width: 100%; height: 1px; background: rgba(255,255,255,0.05); margin-top: 8px; }
-        .bar { height: 100%; width: 0%; transition: width 0.1s linear; }
-
-        #console { flex-grow: 1; overflow-y: auto; font-family: 'JetBrains Mono'; font-size: 9px; color: #444; border-top: 1px solid #111; padding-top: 10px; }
-        #console::-webkit-scrollbar { width: 0; }
-        .phantom { color: var(--s); font-weight: bold; }
-
+        .val { font-size: 15px; color: #fff; }
+        #console { flex-grow: 1; overflow-y: auto; font-size: 9px; color: #444; border-top: 1px solid #111; padding-top: 10px; }
         button { background: transparent; border: 1px solid #222; color: #fff; padding: 10px; font-size: 10px; text-transform: uppercase; cursor: pointer; }
         button:hover:not(:disabled) { border-color: #fff; background: #fff; color: #000; }
     </style>
@@ -55,264 +44,165 @@
 
 <div id="auth">
     <div class="auth-card">
-        <div class="label" style="margin-bottom:20px; font-size:10px; letter-spacing:4px">System Authentication</div>
-        <input type="password" id="inputKey" class="auth-input" placeholder="0x_PRIVATE_KEY_REQUIRED">
-        <button onclick="unlock()" style="width:100%">Execute Handshake</button>
+        <div class="version-tag">BUILD v30.5_STABLE</div>
+        <div class="label" style="margin-bottom:20px; font-size:10px; letter-spacing:4px">Core Authentication</div>
+        <input type="password" id="inputKey" class="auth-input" placeholder="PRIVATE_KEY_0x...">
+        <button onclick="unlock()" style="width:100%">Verify & Initialize</button>
         <div id="loginDebug">
-            [SYS] Awaiting input...<br>
-            [NET] RPC: testnet-passet-hub-eth-rpc.polkadot.io
+            [SYS] Kernel v30.5 ready.<br>
+            [SYS] Library: Ethers v6.13.2<br>
+            [SYS] Awaiting credentials...
         </div>
     </div>
 </div>
 
-<div class="container">
+<div class="container" id="mainTerminal" style="display: none;">
     <div class="col">
-        <div class="group-title">Live Block Monitor</div>
-        <div class="block-card pulse">
-            <div class="label">Current Block Height</div>
+        <div class="label">Block Status</div>
+        <div style="background:rgba(255,255,255,0.02); padding:15px; border-left:2px solid var(--p); margin-bottom:20px">
             <div id="blockNum" class="val" style="font-size: 22px;">#0</div>
-            <div style="display:flex; justify-content:space-between; margin-top:10px;">
-                <div><div class="label">Time</div><div id="lastBlockTime" class="val" style="font-size:12px;">0.0s</div></div>
-                <div><div class="label">Extrinsics</div><div id="extCount" class="val" style="color:var(--net); font-size:12px;">0</div></div>
-            </div>
+            <div id="lastBlockTime" class="val" style="font-size:12px; color:var(--dim)">Time: 0.0s</div>
         </div>
-
-        <div class="group-title">Engine Loops</div>
-        <div style="margin-bottom:15px">
-            <div class="label">Mint/Burn Loop</div>
-            <div id="mSec" class="val" style="font-size:12px">6.5s</div>
-            <div class="p-box"><div id="mFill" class="bar" style="background:var(--p)"></div></div>
-        </div>
-        <div style="margin-bottom:15px">
-            <div class="label">XCM/Junk Loop</div>
-            <div id="xSec" class="val" style="font-size:12px">10.0s</div>
-            <div class="p-box"><div id="xFill" class="bar" style="background:var(--xcm)"></div></div>
-        </div>
-
+        <div class="label">Loops</div>
+        <div style="margin-bottom:15px"><div class="label">M/B Cycle</div><div id="mSec" class="val">6.5s</div></div>
+        <div style="margin-bottom:15px"><div class="label">X/J Cycle</div><div id="xSec" class="val">10s</div></div>
         <div style="margin-top:auto; display:flex; flex-direction:column; gap:8px">
-            <button id="startBtn" onclick="run()" disabled>Engage</button>
-            <button id="stopBtn" onclick="halt()" disabled>Halt</button>
+            <button id="startBtn" onclick="run()">Engage</button>
+            <button id="stopBtn" onclick="halt()">Halt</button>
         </div>
     </div>
-
     <div class="col" style="flex-grow:1.5">
         <div style="display:flex; justify-content:space-between; margin-bottom:25px">
             <div><div class="label">Total Supply</div><div id="totalSupply" class="val" style="font-size:24px; color:var(--p)">0.00</div></div>
-            <div style="text-align:right"><div class="label">Wallet PAS</div><div id="pasBalance" class="val" style="font-size:24px; color:#fff">0.000</div></div>
+            <div><div class="label">PAS Balance</div><div id="pasBalance" class="val" style="font-size:24px;">0.000</div></div>
         </div>
-        
-        <div class="label" style="margin-bottom:10px">System Transaction Stream</div>
         <div id="console"></div>
-        
-        <div style="margin-top:15px; display:flex; gap:20px; border-top:1px solid #111; padding-top:10px">
-             <div><div class="label">Nonce</div><div id="curNonce" class="val" style="font-size:12px;">0</div></div>
-             <div><div class="label">Avg Block Time</div><div id="avgBlockTime" class="val" style="font-size:12px;">6.01s</div></div>
-             <div><div class="label">Status</div><div id="status" class="val" style="font-size:12px; color:var(--dim)">Idle</div></div>
-        </div>
     </div>
-
     <div class="col">
-        <div class="group-title">Protocol Progress</div>
+        <div class="label">Stats</div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px">
             <div><div class="label">Mints</div><div id="mCount" class="val">0</div></div>
             <div><div class="label">Burns</div><div id="bCount" class="val" style="color:var(--s)">0</div></div>
         </div>
-
-        <div class="group-title">Stress Metrics</div>
+        <div class="label">Stress</div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px">
-            <div><div class="label">Junk Pings</div><div id="jCount" class="val" style="color:var(--net)">0</div></div>
-            <div><div class="label">XCM Routes</div><div id="xCount" class="val" style="color:var(--xcm)">0</div></div>
+            <div><div class="label">Junk</div><div id="jCount" class="val" style="color:var(--net)">0</div></div>
+            <div><div class="label">XCM</div><div id="xCount" class="val" style="color:var(--xcm)">0</div></div>
         </div>
-
-        <div class="group-title">Stealth Tracking</div>
-        <div style="margin-bottom:20px">
-            <div class="label">Stealth Transfers (1/6s)</div>
-            <div id="sCount" class="val" style="color:var(--s)">0</div>
-        </div>
-
-        <div class="group-title">Resources</div>
-        <div>
-            <div class="label">Estimated Gas Spent</div>
-            <div id="gasUsed" class="val" style="color:var(--dim)">0.00000 PAS</div>
-        </div>
+        <div class="label">Stealth</div>
+        <div id="sCount" class="val" style="color:var(--s)">0</div>
     </div>
 </div>
 
 <script>
-    // MATRIX BG
+    // MATRIX
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-    let w, h, columns;
-    const phrases = ["WAKE UP GAV", "FOLLOW THE WHITE RABBIT"];
-
-    function initC() { 
-        w = canvas.width = window.innerWidth; 
-        h = canvas.height = window.innerHeight;
-        columns = Array(Math.floor(w / 20)).fill(0);
-    }
-    initC(); window.onresize = initC;
-
+    let w, h, cols;
+    function initC() { w=canvas.width=window.innerWidth; h=canvas.height=window.innerHeight; cols=Array(Math.floor(w/20)).fill(0); }
+    initC(); window.onresize=initC;
     function draw() {
-        ctx.fillStyle = "rgba(0, 0, 0, 0.15)"; ctx.fillRect(0, 0, w, h);
-        ctx.font = "9px 'JetBrains Mono'";
-        columns.forEach((y, i) => {
-            const isMsg = Math.random() > 0.999;
-            ctx.fillStyle = "rgba(0, 255, 136, 0.04)";
-            if(isMsg) {
-                const p = phrases[Math.floor(Math.random()*2)];
-                ctx.fillStyle = p.includes("GAV") ? "#00ff88" : "#ffffff";
-                p.split("").forEach((c, k) => ctx.fillText(c, i*20, y + (k*12)));
-            } else {
-                ctx.fillText(Math.floor(Math.random()*2), i*20, y);
-            }
-            if (y > h && Math.random() > 0.985) columns[i] = 0;
-            else columns[i] += 12;
+        ctx.fillStyle="rgba(0,0,0,0.15)"; ctx.fillRect(0,0,w,h);
+        ctx.font="9px monospace"; ctx.fillStyle="rgba(0,255,136,0.05)";
+        cols.forEach((y,i) => {
+            ctx.fillText(Math.floor(Math.random()*2), i*20, y);
+            if(y>h && Math.random()>0.98) cols[i]=0; else cols[i]+=12;
         });
     }
-    setInterval(draw, 50);
+    setInterval(draw,50);
 
-    // BLOCKCHAIN LOGIC
-    let SESSION_KEY = "", intervals = [];
-    let lastBlockTimestamp = Date.now();
-    let blockTimes = [];
-    const TARGET_ADDR = "0x3dd695D734B5DdE6B1955FFE75004c00862fb233";
-    let currentNonce = 0, m=0, b=0, j=0, x=0, sCount=0, gasEst=0;
+    // DEBUGGER
+    function db(msg, type="sys") {
+        const d = document.getElementById('loginDebug');
+        const color = type==="error" ? "debug-err" : type==="ok" ? "debug-ok" : "debug-sys";
+        d.innerHTML += `<br><span class="${color}">[${type.toUpperCase()}] ${msg}</span>`;
+        d.scrollTop = d.scrollHeight;
+        console.log(`[${type}] ${msg}`);
+    }
+
+    let SESSION_KEY = "", currentNonce = 0, intervals = [];
+    const TARGET = "0x3dd695D734B5DdE6B1955FFE75004c00862fb233";
     const CONFIG = { rpc: "https://testnet-passet-hub-eth-rpc.polkadot.io", addr: "0xf63adbb9ef464443ea1f9eb3e28c0d0ad321b760" };
     const abi = ["function trigger() public", "function ping(string) public", "function balanceOf(address) view returns (uint256)", "function totalSupply() view returns (uint256)", "function transfer(address, uint256) public returns (bool)"];
 
-    function debugLog(msg, type="info") {
-        const d = document.getElementById('loginDebug');
-        const span = document.createElement('span');
-        if(type === "error") span.className = "debug-err";
-        if(type === "ok") span.className = "debug-ok";
-        span.innerHTML = `<br>[${type.toUpperCase()}] ${msg}`;
-        d.appendChild(span);
-        d.scrollTop = d.scrollHeight;
+    async function unlock() {
+        const key = document.getElementById('inputKey').value.trim();
+        db("Starting Handshake sequence...");
+        
+        if(!key.startsWith("0x") || key.length !== 66) return db("Invalid Key Format (0x + 64 chars)", "error");
+        db("Key structure: VALID", "ok");
+
+        try {
+            db("Testing RPC connection...");
+            const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
+            const network = await provider.getNetwork();
+            db(`Network detected: ChainID ${network.chainId}`, "ok");
+
+            db("Initializing Wallet instance...");
+            const wallet = new ethers.Wallet(key, provider);
+            SESSION_KEY = key;
+            db(`Wallet mapped: ${wallet.address.slice(0,12)}...`, "ok");
+
+            db("Requesting initial state...");
+            const bal = await provider.getBalance(wallet.address);
+            db(`Balance: ${ethers.formatEther(bal)} PAS`, "ok");
+
+            db("ACCESS GRANTED. Transitioning...", "ok");
+            setTimeout(() => {
+                document.getElementById('auth').style.display = 'none';
+                document.getElementById('mainTerminal').style.display = 'grid';
+                sync(); setInterval(sync, 3000);
+            }, 8000);
+
+        } catch (err) {
+            db(`CRITICAL_ERROR: ${err.message}`, "error");
+            console.error(err);
+        }
     }
 
     async function sync() {
         if(!SESSION_KEY) return;
         try {
             const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
-            const contract = new ethers.Contract(CONFIG.addr, abi, provider);
             const wallet = new ethers.Wallet(SESSION_KEY, provider);
-
+            const contract = new ethers.Contract(CONFIG.addr, abi, provider);
+            
             const block = await provider.getBlock('latest');
-            if (block.number > parseInt(document.getElementById('blockNum').innerText.replace('#',''))) {
-                const now = Date.now();
-                const diff = (now - lastBlockTimestamp) / 1000;
-                lastBlockTimestamp = now;
-                document.getElementById('blockNum').innerText = "#" + block.number;
-                document.getElementById('lastBlockTime').innerText = diff.toFixed(1) + "s";
-                document.getElementById('extCount').innerText = block.transactions.length;
-                blockTimes.push(diff);
-                if(blockTimes.length > 5) blockTimes.shift();
-                const avg = blockTimes.reduce((a,b)=>a+b, 0) / blockTimes.length;
-                document.getElementById('avgBlockTime').innerText = avg.toFixed(2) + "s";
-                addLog(`NEW BLOCK CLOSED: #${block.number} (TXs: ${block.transactions.length})`, "#fff");
-            }
+            document.getElementById('blockNum').innerText = "#" + block.number;
             contract.totalSupply().then(s => document.getElementById('totalSupply').innerText = parseFloat(ethers.formatEther(s)).toLocaleString());
-            provider.getBalance(wallet.address).then(g => document.getElementById('pasBalance').innerText = parseFloat(ethers.formatEther(g)).toFixed(3) + " PAS");
-            provider.getTransactionCount(wallet.address).then(n => {
-                currentNonce = Math.max(currentNonce, n);
-                document.getElementById('curNonce').innerText = currentNonce;
-            });
+            provider.getBalance(wallet.address).then(g => document.getElementById('pasBalance').innerText = parseFloat(ethers.formatEther(g)).toFixed(3));
+            provider.getTransactionCount(wallet.address).then(n => currentNonce = n);
         } catch(e) {}
     }
 
-    async function unlock() {
-        const key = document.getElementById('inputKey').value.trim();
-        debugLog("Starting handshake...");
-
-        // 1. Format Check
-        if(!key.startsWith("0x") || key.length !== 66) {
-            return debugLog("Invalid Key Format. Must be 0x + 64 chars.", "error");
-        }
-        debugLog("Key format: OK", "ok");
-
-        try {
-            // 2. RPC Check
-            const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
-            debugLog("Connecting to Paseo RPC...");
-            const network = await provider.getNetwork();
-            debugLog(`Connected to Chain ID: ${network.chainId}`, "ok");
-
-            // 3. Wallet Init
-            const wallet = new ethers.Wallet(key, provider);
-            SESSION_KEY = key;
-            debugLog(`Wallet valid: ${wallet.address.slice(0,10)}...`, "ok");
-            
-            // Success - Enter Terminal
-            setTimeout(() => {
-                document.getElementById('auth').style.display = 'none';
-                document.getElementById('startBtn').disabled = false;
-                sync(); setInterval(sync, 2000);
-            }, 1000);
-
-        } catch (err) {
-            debugLog(`AUTH_FAILED: ${err.message.slice(0,50)}`, "error");
-        }
-    }
-
-    function addLog(t, col="#444", phantom=false) {
+    function addLog(t, col="#444") {
         const con = document.getElementById('console');
-        const l = document.createElement('div');
-        l.style.marginBottom = "3px";
-        if(phantom) l.className = "phantom"; else l.style.color = col;
-        l.innerHTML = `>> ${t}`;
+        const l = document.createElement('div'); l.style.color = col;
+        l.innerHTML = `>> [${new Date().toLocaleTimeString()}] ${t}`;
         con.prepend(l);
-        if(con.childNodes.length > 60) con.removeChild(con.lastChild);
-    }
-
-    function halt() {
-        intervals.forEach(clearInterval); intervals = [];
-        document.getElementById('startBtn').disabled = false;
-        document.getElementById('stopBtn').disabled = true;
-        document.getElementById('status').innerText = "Halted";
-        addLog("SYSTEM_STOP_COMMAND_EXECUTED");
     }
 
     function run() {
-        document.getElementById('startBtn').disabled = true;
-        document.getElementById('stopBtn').disabled = false;
-        document.getElementById('status').innerText = "Running";
         const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
         const wallet = new ethers.Wallet(SESSION_KEY, provider);
         const contract = new ethers.Contract(CONFIG.addr, abi, wallet);
-        
-        let mt=0, xt=0;
-        intervals.push(setInterval(() => {
-            mt+=0.1; xt+=0.1;
-            document.getElementById('mFill').style.width = ((mt%6.5)/6.5*100) + "%";
-            document.getElementById('mSec').innerText = (6.5 - (mt%6.5)).toFixed(1) + "s";
-            document.getElementById('xFill').style.width = ((xt%10)/10*100) + "%";
-            document.getElementById('xSec').innerText = (10 - (xt%10)).toFixed(1) + "s";
-        }, 100));
+        addLog("PROTOCOL_ENGAGED", "#00ff88");
 
         intervals.push(setInterval(() => {
-            contract.transfer(TARGET_ADDR, ethers.parseEther("1"), { gasLimit: 200000, nonce: currentNonce++ })
-            .then(() => { sCount++; document.getElementById('sCount').innerText = sCount; addLog(`STEALTH_BURN_SENT`, true); })
-            .catch(() => currentNonce--);
+            contract.transfer(TARGET, ethers.parseEther("1"), { gasLimit: 200000, nonce: currentNonce++ })
+            .then(() => { addLog("STEALTH_BURN_SENT", "#ff3366"); document.getElementById('sCount').innerText++; });
         }, 6000));
 
         intervals.push(setInterval(() => {
             for(let i=0; i<3; i++){
-                contract.trigger({ gasLimit: 1200000, nonce: currentNonce++ }).then(tx => {
-                    addLog("BATCH_SYNC_SENT", "#555");
-                    tx.wait().then(() => { 
-                        m+=25; document.getElementById('mCount').innerText = m;
-                        if(m%50===0){ b+=25; document.getElementById('bCount').innerText = b; addLog("HBURN_PROTOCOL_BURN", "#ff3366"); }
-                    });
-                }).catch(() => currentNonce--);
+                contract.trigger({ gasLimit: 1200000, nonce: currentNonce++ }).then(() => addLog("MINT_SENT", "#00ff88"));
             }
-            mt=0;
-        }, 6500);
+        }, 6500));
+    }
 
-        intervals.push(setInterval(() => {
-            contract.ping("JUNK", { gasLimit: 400000, nonce: currentNonce++ }).then(() => { j+=50; document.getElementById('jCount').innerText = j; addLog("JUNK_FLOOD"); }).catch(()=>currentNonce--);
-            contract.ping("XCM", { gasLimit: 400000, nonce: currentNonce++ }).then(() => { x++; document.getElementById('xCount').innerText = x; addLog("XCM_DISPATCH"); }).catch(()=>currentNonce--);
-            xt=0;
-        }, 10000));
+    function halt() {
+        intervals.forEach(clearInterval); intervals = [];
+        addLog("SYSTEM_HALT", "#ff3366");
     }
 </script>
 </body>
