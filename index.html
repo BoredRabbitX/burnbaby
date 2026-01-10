@@ -2,201 +2,128 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>BURN_V11_FINAL</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HBURN_STEALTH_v15</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
-        :root { --p: #00ff88; --s: #ff3366; --bg: #050608; }
+        :root { --p: #00ff88; --s: #ff3366; --bg: #030406; --glass: rgba(12, 14, 18, 0.98); }
         * { box-sizing: border-box; }
+        body, html { margin: 0; padding: 0; height: 100vh; width: 100vw; background: var(--bg); color: #fff; font-family: 'Consolas', monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; }
+        #canvas { position: fixed; top: 0; left: 0; z-index: 1; opacity: 0.25; pointer-events: none; }
+
+        /* MODAL DI SICUREZZA */
+        #authOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 100; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(10px); }
+        .auth-box { width: 400px; padding: 40px; border: 1px solid var(--p); border-radius: 20px; text-align: center; box-shadow: 0 0 30px rgba(0,255,136,0.2); }
+        .auth-input { background: #000; border: 1px solid #333; color: var(--p); width: 100%; padding: 15px; margin: 20px 0; border-radius: 10px; text-align: center; font-family: monospace; }
         
-        body, html { 
-            margin: 0; padding: 0; height: 100vh; width: 100vw;
-            background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif;
-            display: flex; justify-content: center; align-items: center; overflow: hidden;
-        }
-
-        /* SFONDO MATRIX - VISIBILITÀ MIGLIORATA */
-        #canvas { 
-            position: fixed; top: 0; left: 0; z-index: 1; 
-            opacity: 0.4; /* Aumentata opacità */
-            pointer-events: none;
-        }
-
-        .container {
-            position: relative; z-index: 10;
-            width: 850px; height: 500px;
-            background: rgba(10, 12, 15, 0.92);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(0, 255, 136, 0.3); 
-            border-radius: 24px;
-            display: grid; grid-template-columns: 300px 1fr;
-            box-shadow: 0 0 50px rgba(0,0,0,1);
-            overflow: hidden;
-        }
-
-        .side {
-            padding: 30px; border-right: 1px solid #222;
-            display: flex; flex-direction: column; justify-content: space-between;
-            background: rgba(0,0,0,0.3);
-        }
-        .val { font-family: monospace; font-size: 32px; color: #fff; margin: 10px 0 30px; }
-        .stat { font-size: 10px; color: var(--p); letter-spacing: 1px; text-transform: uppercase; }
-        .num { font-family: monospace; font-size: 22px; color: #fff; }
-
-        .log-area {
-            padding: 30px; display: flex; flex-direction: column;
-            height: 100%; overflow: hidden;
-        }
-        #console {
-            flex-grow: 1;
-            overflow-y: auto;
-            font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #888;
-            padding-right: 10px;
-        }
-        #console::-webkit-scrollbar { width: 4px; }
-        #console::-webkit-scrollbar-thumb { background: var(--p); border-radius: 10px; }
-
-        .line { margin-bottom: 8px; padding-left: 10px; border-left: 1px solid #333; }
-        .m { color: var(--p); } .b { color: var(--s); font-weight: bold; }
-
-        button {
-            background: var(--p); color: #000; border: none; padding: 18px;
-            border-radius: 12px; font-weight: bold; cursor: pointer; text-transform: uppercase;
-            transition: 0.2s;
-        }
-        button:hover { filter: brightness(1.2); transform: scale(1.02); }
-        button:disabled { background: #222; color: #555; cursor: not-allowed; transform: none; }
+        /* DASHBOARD */
+        .container { position: relative; z-index: 10; width: 95%; max-width: 950px; height: 600px; background: var(--glass); border: 1px solid rgba(255,255,255,0.05); border-radius: 30px; display: grid; grid-template-columns: 320px 1fr; overflow: hidden; box-shadow: 0 0 100px #000; }
+        .side { padding: 40px; border-right: 1px solid #1a1d23; display: flex; flex-direction: column; justify-content: space-between; background: rgba(0,0,0,0.3); }
+        .stat-label { font-size: 10px; color: var(--p); letter-spacing: 2px; text-transform: uppercase; }
+        .val { font-size: 34px; font-weight: bold; margin: 10px 0; }
+        .timer-bar { width: 100%; height: 4px; background: #111; border-radius: 10px; overflow: hidden; margin: 15px 0; }
+        .fill { height: 100%; width: 0%; transition: width 0.1s linear; }
+        #console { padding: 40px; overflow-y: auto; font-size: 11px; color: #555; line-height: 1.6; }
+        button { background: var(--p); color: #000; border: none; padding: 20px; border-radius: 15px; font-weight: 900; cursor: pointer; text-transform: uppercase; width: 100%; }
+        .log-m { color: var(--p); } .log-b { color: var(--s); font-weight: bold; }
     </style>
 </head>
 <body>
 
 <canvas id="canvas"></canvas>
 
-<div class="container">
-    <div class="side">
-        <div>
-            <div style="color: var(--p); font-size: 10px; letter-spacing: 3px; font-weight: bold;">HBURN_SYSTEM_v11</div>
-            <div style="margin-top:40px" class="stat">INTERNAL BALANCE</div>
-            <div id="bal" class="val">0.00</div>
-            
-            <div class="stat">MINTS</div>
-            <div id="mCount" class="num">0</div>
-            <div style="margin-top:20px" class="stat">BURNS</div>
-            <div id="bCount" class="num" style="color: var(--s)">0</div>
-        </div>
-        <button id="start">Launch Sequence</button>
-    </div>
-
-    <div class="log-area">
-        <div style="font-size: 10px; color: #444; margin-bottom: 15px; letter-spacing: 1px;">CORE_LOG_STREAM</div>
-        <div id="console"></div>
+<div id="authOverlay">
+    <div class="auth-box">
+        <div class="stat-label">System Authentication</div>
+        <p style="font-size: 11px; color: #666;">Insert Private Key to inject into session RAM</p>
+        <input type="password" id="inputKey" class="auth-input" placeholder="0x...">
+        <button onclick="unlock()">Initialize Stealth</button>
     </div>
 </div>
 
+<div class="container">
+    <div class="side">
+        <div>
+            <div class="stat-label">HBURN Stealth Terminal</div>
+            <div style="margin-top:40px" class="stat-label">Internal Balance</div>
+            <div id="bal" class="val">0.00</div>
+            
+            <div style="display: flex; gap: 30px;">
+                <div><div class="stat-label">Mints</div><div id="mCount" style="font-size:20px; font-weight:bold">0</div></div>
+                <div><div class="stat-label" style="color:var(--s)">Burns</div><div id="bCount" style="font-size:20px; font-weight:bold; color:var(--s)">0</div></div>
+            </div>
+
+            <div style="margin-top:30px">
+                <div class="stat-label">Mint T-Minus</div>
+                <div class="timer-bar"><div id="mFill" class="fill" style="background:var(--p)"></div></div>
+                <div class="stat-label" style="color:var(--s)">Burn T-Minus</div>
+                <div class="timer-bar"><div id="bFill" class="fill" style="background:var(--s)"></div></div>
+            </div>
+        </div>
+        <button id="start" disabled>Awaiting Auth</button>
+    </div>
+    <div id="console"></div>
+</div>
+
 <script>
-    // --- FIX SFONDO MATRIX ---
-    const c = document.getElementById('canvas');
-    const x = c.getContext('2d');
-    
-    let w, h, columns, drops;
+    let SESSION_KEY = ""; // La chiave rimane vuota nel codice
+    const CONFIG = { rpc: "https://testnet-passet-hub-eth-rpc.polkadot.io", addr: "0xb4310dc7a7d5624443e3ff6977c4fb7fcb36b967" };
+    const abi = ["function trigger() public", "function ping(string) public", "function balanceOf(address) view returns (uint256)"];
 
-    function initCanvas() {
-        w = c.width = window.innerWidth;
-        h = c.height = window.innerHeight;
-        columns = Math.floor(w / 20);
-        drops = Array(columns).fill(1);
+    // 1. FUNZIONE DI SBLOCCO (INJECTOR)
+    function unlock() {
+        const val = document.getElementById('inputKey').value;
+        if(val.length < 64) return alert("Invalid Key Length");
+        SESSION_KEY = val;
+        document.getElementById('authOverlay').remove(); // Cancella l'intero modulo dalla pagina
+        document.getElementById('start').disabled = false;
+        document.getElementById('start').innerText = "Execute Protocol";
+        addLog("KEY INJECTED INTO VOLATILE MEMORY.", "#00ff88");
     }
 
-    function draw() {
-        // Fondo semi-trasparente per l'effetto scia
-        x.fillStyle = "rgba(5, 6, 8, 0.15)";
-        x.fillRect(0, 0, w, h);
-        
-        x.font = "12px monospace";
-        
-        for (let i = 0; i < drops.length; i++) {
-            // Testo casuale (spam style)
-            const txt = Math.random() > 0.5 ? "ERROR" : "0x" + Math.floor(Math.random()*16).toString(16);
-            
-            // Colore casuale tra verde e rosso
-            x.fillStyle = Math.random() > 0.9 ? "#ff3366" : "#00ff88";
-            
-            x.fillText(txt, i * 20, drops[i] * 20);
-            
-            if (drops[i] * 20 > h && Math.random() > 0.975) {
-                drops[i] = 0;
-            }
-            drops[i]++;
-        }
-    }
-
-    window.addEventListener('resize', initCanvas);
-    initCanvas();
+    // --- LOGICA GRAFICA & BLOCKCHAIN ---
+    const c = document.getElementById('canvas'); const x = c.getContext('2d');
+    let w, h, drops;
+    function init() { w=c.width=window.innerWidth; h=c.height=window.innerHeight; drops=Array(Math.floor(w/20)).fill(1); }
+    init();
+    function draw() { x.fillStyle="rgba(3,4,6,0.15)"; x.fillRect(0,0,w,h); x.font="12px monospace"; drops.forEach((y,i)=>{ x.fillStyle=Math.random()>0.95?"#ff3366":"#00ff88"; x.fillText(Math.random()>0.5?"1":"0",i*20,y*20); if(y*20>h&&Math.random()>0.98)drops[i]=0; drops[i]++; }); }
     setInterval(draw, 50);
 
-    // --- LOGICA BLOCKCHAIN ---
-    const CONFIG = {
-        rpc: "https://testnet-passet-hub-eth-rpc.polkadot.io",
-        key: "e7b0f8447fb5c168c7f2f33e30ed2377aef70a71546c58e4cc3690e62769df12",
-        addr: "0xb4310dc7a7d5624443e3ff6977c4fb7fcb36b967"
-    };
-
-    const abi = [
-        "function trigger() public", 
-        "function ping(string) public", 
-        "function balanceOf(address) view returns (uint256)"
-    ];
-    
-    let m = 0, b = 0;
-
-    function addLog(t, cls="") {
+    function addLog(t, col="#555") {
         const con = document.getElementById('console');
-        const l = document.createElement('div');
-        l.className = `line ${cls}`;
-        l.innerHTML = `<span>${new Date().toLocaleTimeString()}</span> > ${t}`;
+        const l = document.createElement('div'); l.style.color = col; l.style.marginBottom="5px";
+        l.innerHTML = `[${new Date().toLocaleTimeString()}] > ${t}`;
         con.prepend(l);
-        if(con.childNodes.length > 50) con.removeChild(con.lastChild);
     }
 
     document.getElementById('start').onclick = async function() {
-        this.disabled = true; this.innerText = "System Active";
+        this.disabled = true; this.innerText = "Running...";
+        const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
+        const wallet = new ethers.Wallet(SESSION_KEY, provider); // Usa la chiave iniettata
+        const contract = new ethers.Contract(CONFIG.addr, abi, wallet);
         
-        try {
-            const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
-            const wallet = new ethers.Wallet(CONFIG.key, provider);
-            const contract = new ethers.Contract(CONFIG.addr, abi, wallet);
+        let m=0, b=0, mt=0, bt=0;
+        setInterval(() => { 
+            mt += 0.1; bt += 0.1; 
+            document.getElementById('mFill').style.width = (mt/11*100)%100 + "%";
+            document.getElementById('bFill').style.width = (bt/33*100)%100 + "%";
+        }, 100);
 
-            addLog("PROTOCOL INITIALIZED. SCANNING CHAIN...");
+        setInterval(async () => {
+            try {
+                const tx = await contract.trigger({ gasLimit: 300000 });
+                addLog("TRIGGER SENT"); await tx.wait();
+                const bal = await contract.balanceOf(CONFIG.addr);
+                document.getElementById('bal').innerText = parseFloat(ethers.formatEther(bal)).toFixed(2);
+                m++; document.getElementById('mCount').innerText = m;
+                if(m % 3 === 0) { b++; document.getElementById('bCount').innerText = b; addLog("BURN CONFIRMED", "#ff3366"); bt=0; }
+                mt=0;
+            } catch(e) { addLog("RETRYING..."); }
+        }, 11000);
 
-            // Mint/Burn Loop (11s)
-            setInterval(async () => {
-                try {
-                    const tx = await contract.trigger({ gasLimit: 300000 });
-                    addLog("TX_DISPATCHED");
-                    await tx.wait();
-                    
-                    const bal = await contract.balanceOf(CONFIG.addr);
-                    document.getElementById('bal').innerText = parseFloat(ethers.formatEther(bal)).toFixed(2);
-                    
-                    m++; document.getElementById('mCount').innerText = m;
-                    if(m % 3 === 0) { 
-                        b++; 
-                        document.getElementById('bCount').innerText = b; 
-                        addLog("BURN_EVENT_CONFIRMED", "b"); 
-                    }
-                } catch(e) { addLog("RETRY_PENDING..."); }
-            }, 11000);
-
-            // Spam Loop (15s)
-            setInterval(async () => {
-                try { 
-                    await contract.ping("SPAM_V11", { gasLimit: 120000 }); 
-                    addLog("JUNK_INJECTED", "m"); 
-                } catch(e) {}
-            }, 15000);
-
-        } catch (err) {
-            addLog("CONNECTION_ERROR: " + err.message, "b");
-        }
+        setInterval(async () => {
+            try { await contract.ping("STEALTH_V15", { gasLimit: 120000 }); addLog("JUNK_PING", "#008cff"); } catch(e) {}
+        }, 16000);
     };
 </script>
 </body>
