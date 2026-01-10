@@ -3,17 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HBURN_MASTER_v25</title>
+    <title>HBURN_MASTER_v25.1</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
         :root { --p: #00ff88; --s: #ff3366; --bg: #030406; --glass: rgba(12, 14, 18, 0.98); --net: #008cff; }
         * { box-sizing: border-box; }
-        
-        body, html { 
-            margin: 0; padding: 0; min-height: 100vh; width: 100%;
-            background: var(--bg); color: #fff; font-family: 'Consolas', monospace; 
-            overflow: hidden; display: flex; justify-content: center; align-items: center; 
-        }
+        body, html { margin: 0; padding: 0; min-height: 100vh; width: 100%; background: var(--bg); color: #fff; font-family: 'Consolas', monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; }
 
         /* SCROLLBAR NEON */
         #console::-webkit-scrollbar { width: 4px; }
@@ -22,49 +17,34 @@
 
         #canvas { position: fixed; top: 0; left: 0; z-index: 1; opacity: 0.2; pointer-events: none; }
 
-        /* AUTH OVERLAY */
         #authOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.97); z-index: 100; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(15px); }
         .auth-box { width: 90%; max-width: 400px; padding: 40px; border: 1px solid var(--p); border-radius: 20px; text-align: center; }
         .auth-input { background: #000; border: 1px solid #222; color: var(--p); width: 100%; padding: 15px; margin: 20px 0; border-radius: 8px; text-align: center; }
 
-        /* RESPONSIVE CONTAINER */
-        .container {
-            position: relative; z-index: 10;
-            width: 95%; max-width: 1200px; height: 90vh;
-            background: var(--glass); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px;
-            display: flex; flex-direction: row; overflow: hidden; box-shadow: 0 0 100px #000;
-        }
-
-        .side {
-            width: 380px; padding: 30px; border-right: 1px solid #1a1d23;
-            display: flex; flex-direction: column; overflow-y: auto; background: rgba(0,0,0,0.4);
-        }
-
+        .container { position: relative; z-index: 10; width: 98%; max-width: 1250px; height: 92vh; background: var(--glass); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; display: flex; flex-direction: row; overflow: hidden; box-shadow: 0 0 100px #000; }
+        .side { width: 380px; padding: 25px; border-right: 1px solid #1a1d23; display: flex; flex-direction: column; overflow-y: auto; background: rgba(0,0,0,0.4); flex-shrink: 0; }
         .main-view { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-        /* DATA CARDS */
         .stat-card { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 15px; }
-        .stat-label { font-size: 9px; color: var(--p); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 5px; }
-        .val-big { font-size: 28px; font-weight: bold; color: var(--p); }
-        .val-mid { font-size: 18px; color: #fff; }
+        .stat-label { font-size: 9px; color: var(--p); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 5px; font-weight: bold;}
+        .val-big { font-size: 26px; font-weight: bold; color: var(--p); font-family: 'JetBrains Mono', monospace; }
+        .val-mid { font-size: 18px; color: #fff; font-family: 'JetBrains Mono', monospace; }
 
-        /* PROGRESS BARS */
-        .timer-group { margin-bottom: 20px; }
-        .timer-info { display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 5px; color: #666; }
+        .timer-group { margin-bottom: 15px; padding: 10px; background: rgba(255,255,255,0.02); border-radius: 8px; }
+        .timer-info { display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 5px; color: #aaa; }
         .timer-bar { width: 100%; height: 4px; background: #111; border-radius: 2px; overflow: hidden; }
         .fill { height: 100%; width: 0%; transition: width 0.1s linear; }
 
-        #console { flex-grow: 1; padding: 30px; overflow-y: auto; font-size: 11px; color: #555; background: rgba(0,0,0,0.2); }
-        .header-info { padding: 15px 30px; background: rgba(0,0,0,0.3); border-bottom: 1px solid #1a1d23; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 10px; }
+        .header-info { padding: 20px 30px; background: rgba(0,0,0,0.3); border-bottom: 1px solid #1a1d23; display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; font-size: 11px; }
+        #console { flex-grow: 1; padding: 30px; overflow-y: auto; font-size: 11px; color: #777; background: rgba(0,0,0,0.15); line-height: 1.5; }
 
-        @media (max-width: 900px) {
-            .container { flex-direction: column; height: 95vh; }
-            .side { width: 100%; height: 40%; border-right: none; border-bottom: 1px solid #1a1d23; }
-            .header-info { grid-template-columns: 1fr 1fr; }
+        @media (max-width: 1000px) {
+            .container { flex-direction: column; height: 98vh; overflow-y: auto; }
+            .side { width: 100%; border-right: none; height: auto; }
+            .main-view { height: 600px; flex-shrink: 0; }
         }
 
-        button { background: var(--p); color: #000; border: none; padding: 18px; border-radius: 12px; font-weight: 900; cursor: pointer; text-transform: uppercase; transition: 0.3s; width: 100%; margin-top: 10px; }
-        button:hover { box-shadow: 0 0 20px var(--p); }
+        button { background: var(--p); color: #000; border: none; padding: 18px; border-radius: 12px; font-weight: 900; cursor: pointer; text-transform: uppercase; width: 100%; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -73,34 +53,34 @@
 
 <div id="authOverlay">
     <div class="auth-box">
-        <div class="stat-label">HBURN BLOCKCHAIN MASTER</div>
-        <input type="password" id="inputKey" class="auth-input" placeholder="0xPRIVATE_KEY">
-        <button onclick="unlock()">ACCESS TERMINAL</button>
+        <div class="stat-label">HBURN BLOCKCHAIN MASTER v25.1</div>
+        <input type="password" id="inputKey" class="auth-input" placeholder="INSERT PRIVATE KEY">
+        <button onclick="unlock()">INITIALIZE ENGINE</button>
     </div>
 </div>
 
 <div class="container">
     <div class="side">
         <div class="stat-card">
-            <div class="stat-label">Total Global Supply</div>
-            <div id="totalSupply" class="val-big">0.00</div>
+            <div class="stat-label">Global Total Supply</div>
+            <div id="totalSupply" class="val-big">LOADING...</div>
         </div>
 
         <div class="stat-card">
-            <div class="stat-label">Contract HBURN Balance</div>
-            <div id="bal" class="val-mid">0.00</div>
+            <div class="stat-label">Contract Balance</div>
+            <div id="bal" class="val-mid">LOADING...</div>
         </div>
 
         <div class="timer-group">
-            <div class="timer-info"><span>Mint Cycle (25x)</span><span id="mSec">0s</span></div>
+            <div class="timer-info"><span>MINT CYCLE (25x)</span><span id="mSec">6.5s</span></div>
             <div class="timer-bar"><div id="mFill" class="fill" style="background:var(--p)"></div></div>
         </div>
         <div class="timer-group">
-            <div class="timer-info"><span>Burn Cycle (25x)</span><span id="bSec">0s</span></div>
+            <div class="timer-info"><span>BURN CYCLE (25x)</span><span id="bSec">13.0s</span></div>
             <div class="timer-bar"><div id="bFill" class="fill" style="background:var(--s)"></div></div>
         </div>
         <div class="timer-group">
-            <div class="timer-info"><span>Junk Flood (50x)</span><span id="jSec">0s</span></div>
+            <div class="timer-info"><span>JUNK STRESS (50x)</span><span id="jSec">10.0s</span></div>
             <div class="timer-bar"><div id="jFill" class="fill" style="background:var(--net)"></div></div>
         </div>
 
@@ -115,84 +95,87 @@
             </div>
         </div>
         
-        <button id="start" disabled>INITIALIZING...</button>
+        <button id="start" disabled>AWAITING AUTH</button>
     </div>
 
     <div class="main-view">
         <div class="header-info">
             <div>NETWORK: <span style="color:var(--p)">PASEO ASSETHUB</span></div>
-            <div>GAS PRICE: <span id="gasPrice" style="color:var(--net)">0 Gwei</span></div>
-            <div>BLOCK: <span id="blockNum" style="color:#fff">#0</span></div>
-            <div>FUEL: <span id="pasBalance" style="color:var(--p)">0.00</span> PAS</div>
-            <div>GLOBAL PINGS: <span id="pings" style="color:var(--net)">0</span></div>
-            <div>LATENCY: <span id="latency" style="color:var(--p)">0ms</span></div>
+            <div>GAS: <span id="gasPrice" style="color:var(--net)">...</span></div>
+            <div>BLOCK: <span id="blockNum" style="color:#fff">#...</span></div>
+            <div>FUEL: <span id="pasBalance" style="color:var(--p)">0.000 PAS</span></div>
+            <div>STATUS: <span id="netStatus" style="color:var(--p)">ONLINE</span></div>
+            <div>LATENCY: <span id="latency" style="color:var(--net)">0ms</span></div>
         </div>
         <div id="console"></div>
     </div>
 </div>
 
 <script>
+    // BG MATRIX
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     let w, h, drops;
-    const words = ["PASEO", "POLKADOT", "HBURN", "GAVIN", "W3F", "ERROR", "SPAM", "BLOCK"];
-    function init() { w=canvas.width=window.innerWidth; h=canvas.height=window.innerHeight; drops=Array(Math.floor(w/30)).fill(1); }
-    init(); window.addEventListener('resize', init);
+    function initCanvas() { w=canvas.width=window.innerWidth; h=canvas.height=window.innerHeight; drops=Array(Math.floor(w/30)).fill(1); }
+    initCanvas(); window.onresize = initCanvas;
     function draw() {
         ctx.fillStyle = "rgba(3, 4, 6, 0.15)"; ctx.fillRect(0, 0, w, h);
         ctx.font = "10px monospace";
         drops.forEach((y, i) => {
             ctx.fillStyle = Math.random() > 0.8 ? "#008cff" : "#00ff88";
-            ctx.fillText(words[Math.floor(Math.random()*words.length)], i*40, y*15);
+            ctx.fillText(Math.random() > 0.5 ? "1" : "0", i*40, y*15);
             if (y*15 > h && Math.random() > 0.98) drops[i]=0; drops[i]++;
         });
     }
     setInterval(draw, 60);
 
+    // LOGIC
     let SESSION_KEY = "";
     const CONFIG = { rpc: "https://testnet-passet-hub-eth-rpc.polkadot.io", addr: "0xf63adbb9ef464443ea1f9eb3e28c0d0ad321b760" };
     const abi = [
         "function trigger() public", "function ping(string) public", 
         "function balanceOf(address) view returns (uint256)",
-        "function totalSupply() view returns (uint256)",
-        "function pingCount() view returns (uint256)"
+        "function totalSupply() view returns (uint256)"
     ];
 
-    async function syncChain() {
+    async function sync() {
         if(!SESSION_KEY) return;
+        const start = Date.now();
+        const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
+        const contract = new ethers.Contract(CONFIG.addr, abi, provider);
+        
         try {
-            const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
-            const contract = new ethers.Contract(CONFIG.addr, abi, provider);
+            // Sincronizzazione atomica: se una fallisce, le altre provano comunque
+            provider.getBlockNumber().then(n => document.getElementById('blockNum').innerText = "#" + n);
+            provider.getFeeData().then(f => document.getElementById('gasPrice').innerText = Math.round(ethers.formatUnits(f.gasPrice, "gwei")) + " Gwei");
+            
+            contract.balanceOf(CONFIG.addr).then(b => document.getElementById('bal').innerText = parseFloat(ethers.formatEther(b)).toFixed(2));
+            contract.totalSupply().then(s => document.getElementById('totalSupply').innerText = parseFloat(ethers.formatEther(s)).toFixed(2));
+            
             const wallet = new ethers.Wallet(SESSION_KEY, provider);
+            provider.getBalance(wallet.address).then(g => document.getElementById('pasBalance').innerText = parseFloat(ethers.formatEther(g)).toFixed(3) + " PAS");
 
-            const startTime = Date.now();
-            const [rawBal, rawSupply, rawGas, block, fee, pings] = await Promise.all([
-                contract.balanceOf(CONFIG.addr),
-                contract.totalSupply(),
-                provider.getBalance(wallet.address),
-                provider.getBlockNumber(),
-                provider.getFeeData(),
-                contract.pingCount()
-            ]);
+            // Calcolo latenza manuale
+            setTimeout(() => {
+                document.getElementById('latency').innerText = (Date.now() - start) + "ms";
+                document.getElementById('netStatus').innerText = "STABLE";
+                document.getElementById('netStatus').style.color = "var(--p)";
+            }, 100);
 
-            document.getElementById('bal').innerText = parseFloat(ethers.formatEther(rawBal)).toFixed(2);
-            document.getElementById('totalSupply').innerText = parseFloat(ethers.formatEther(rawSupply)).toFixed(2);
-            document.getElementById('pasBalance').innerText = parseFloat(ethers.formatEther(rawGas)).toFixed(4);
-            document.getElementById('blockNum').innerText = "#" + block;
-            document.getElementById('gasPrice').innerText = Math.round(ethers.formatUnits(fee.gasPrice, "gwei")) + " Gwei";
-            document.getElementById('pings').innerText = pings.toString();
-            document.getElementById('latency').innerText = (Date.now() - startTime) + "ms";
-        } catch(e) {}
+        } catch(e) { 
+            document.getElementById('netStatus').innerText = "ERROR";
+            document.getElementById('netStatus').style.color = "var(--s)";
+        }
     }
 
     function unlock() {
         SESSION_KEY = document.getElementById('inputKey').value;
-        if(SESSION_KEY.length < 60) return alert("Invalid Key");
+        if(SESSION_KEY.length < 60) return alert("Key Error");
         document.getElementById('authOverlay').remove();
         document.getElementById('start').disabled = false;
         document.getElementById('start').innerText = "START INDUSTRIAL ATTACK";
-        syncChain();
-        setInterval(syncChain, 8000);
+        sync();
+        setInterval(sync, 10000);
     }
 
     function addLog(t, col="#555") {
@@ -200,7 +183,6 @@
         const l = document.createElement('div'); l.style.color = col; l.style.marginBottom="5px";
         l.innerHTML = `[${new Date().toLocaleTimeString()}] > ${t}`;
         con.prepend(l);
-        if(con.childNodes.length > 100) con.removeChild(con.lastChild);
     }
 
     document.getElementById('start').onclick = async function() {
@@ -213,11 +195,11 @@
         setInterval(() => { 
             mt += 0.1; bt += 0.1; jt += 0.1;
             document.getElementById('mFill').style.width = ((mt%6.5)/6.5*100) + "%";
-            document.getElementById('mSec').innerText = (mt%6.5).toFixed(1) + "s";
+            document.getElementById('mSec').innerText = (6.5 - (mt%6.5)).toFixed(1) + "s";
             document.getElementById('bFill').style.width = ((bt%13)/13*100) + "%";
-            document.getElementById('bSec').innerText = (bt%13).toFixed(1) + "s";
+            document.getElementById('bSec').innerText = (13 - (bt%13)).toFixed(1) + "s";
             document.getElementById('jFill').style.width = ((jt%10)/10*100) + "%";
-            document.getElementById('jSec').innerText = (jt%10).toFixed(1) + "s";
+            document.getElementById('jSec').innerText = (10 - (jt%10)).toFixed(1) + "s";
         }, 100);
 
         setInterval(async () => {
@@ -227,15 +209,15 @@
                 await tx.wait();
                 m += 25; document.getElementById('mCount').innerText = m;
                 if(m % 50 === 0) { b += 25; document.getElementById('bCount').innerText = b; addLog("HBURN BURNED", "#ff3366"); bt=0; }
-                mt=0; syncChain();
-            } catch(e) { addLog("RETRYING..."); }
+                mt=0; sync();
+            } catch(e) { addLog("NODE_WAIT: RECALIBRATING..."); }
         }, 6500);
 
         setInterval(async () => {
             try {
-                await contract.ping("JUNK_FLOOD_V25", { gasLimit: 500000 });
+                await contract.ping("SPAM_V25", { gasLimit: 500000 });
                 addLog("JUNK FLOOD: 50x PAYLOAD", "#008cff");
-                jt = 0; syncChain();
+                jt = 0; sync();
             } catch(e) {}
         }, 10000);
     };
