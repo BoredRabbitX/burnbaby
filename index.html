@@ -3,41 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HBURN_COMPACT_v27.4</title>
+    <title>HBURN_PRECISION_v27.6</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
-        :root { --p: #00ff88; --s: #ff3366; --bg: #050505; --glass: rgba(10, 10, 10, 0.95); --xcm: #e6007a; }
+        :root { --p: #00ff88; --s: #ff3366; --bg: #030406; --glass: rgba(5, 5, 5, 0.95); --net: #008cff; --xcm: #e6007a; }
         * { box-sizing: border-box; }
         body, html { margin: 0; padding: 0; height: 100vh; background: var(--bg); color: #fff; font-family: 'Consolas', 'Courier New', monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; }
 
-        /* SCROLLBAR COMPATTA */
+        #canvas { position: fixed; top: 0; left: 0; z-index: 1; opacity: 0.3; pointer-events: none; }
         #console::-webkit-scrollbar { width: 3px; }
         #console::-webkit-scrollbar-thumb { background: var(--p); border-radius: 5px; }
 
-        #canvas { position: fixed; top: 0; left: 0; z-index: 1; opacity: 0.25; }
-
         #authOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 100; display: flex; justify-content: center; align-items: center; }
-        .auth-box { width: 320px; padding: 30px; border: 1px solid var(--p); border-radius: 10px; text-align: center; }
+        .auth-box { width: 350px; padding: 30px; border: 1px solid var(--p); border-radius: 10px; text-align: center; box-shadow: 0 0 20px var(--p); }
         .auth-input { background: #000; border: 1px solid #333; color: var(--p); width: 100%; padding: 12px; margin: 15px 0; border-radius: 5px; text-align: center; font-family: monospace; }
 
-        /* PANNELLO RIDOTTO */
-        .container { position: relative; z-index: 10; width: 900px; height: 550px; background: var(--glass); border: 1px solid #1a1a1a; border-radius: 15px; display: grid; grid-template-columns: 280px 1fr; overflow: hidden; box-shadow: 0 0 50px #000; }
-        .side { padding: 20px; border-right: 1px solid #1a1a1a; display: flex; flex-direction: column; justify-content: space-between; background: rgba(0,0,0,0.3); }
+        .container { position: relative; z-index: 10; width: 1000px; height: 650px; background: var(--glass); border: 1px solid #1a1a1a; border-radius: 20px; display: grid; grid-template-columns: 320px 1fr; overflow: hidden; box-shadow: 0 0 80px #000; }
+        .side { padding: 25px; border-right: 1px solid #1a1a1a; display: flex; flex-direction: column; background: rgba(0,0,0,0.5); overflow-y: auto; }
 
-        .stat-card { background: rgba(255,255,255,0.02); padding: 10px; border-radius: 8px; margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.05); }
+        .stat-card { background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.05); }
         .stat-label { font-size: 8px; color: var(--p); letter-spacing: 1px; text-transform: uppercase; font-weight: bold; }
-        .val-big { font-size: 18px; font-weight: bold; color: var(--p); }
-        .val-small { font-size: 13px; color: #aaa; }
+        .val-big { font-size: 20px; font-weight: bold; color: var(--p); font-family: 'JetBrains Mono', monospace; }
+        .val-small { font-size: 14px; color: #fff; }
 
-        .m-box { margin-bottom: 10px; }
-        .m-bar { width: 100%; height: 3px; background: #111; border-radius: 2px; overflow: hidden; margin-top: 4px; }
+        .m-box { margin-bottom: 15px; }
+        .m-info { display: flex; justify-content: space-between; font-size: 8px; margin-bottom: 4px; font-weight: bold; text-transform: uppercase; }
+        .m-bar { width: 100%; height: 4px; background: #111; border-radius: 2px; overflow: hidden; }
         .m-fill { height: 100%; width: 0%; transition: width 0.1s linear; }
 
-        .header { padding: 12px 20px; background: rgba(0,0,0,0.5); border-bottom: 1px solid #1a1a1a; display: flex; justify-content: space-between; font-size: 10px; color: #888; }
-        #console { flex-grow: 1; padding: 20px; overflow-y: auto; font-size: 11px; color: #555; line-height: 1.5; }
+        .header { padding: 15px 25px; background: rgba(0,0,0,0.6); border-bottom: 1px solid #1a1a1a; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 10px; color: #888; }
+        #console { flex-grow: 1; padding: 25px; overflow-y: auto; font-size: 11px; color: #666; line-height: 1.6; }
 
-        button { background: var(--p); color: #000; border: none; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; width: 100%; font-size: 11px; }
-        button:disabled { background: #222; color: #444; }
+        .grid-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 5px; }
+        button { background: var(--p); color: #000; border: none; padding: 16px; border-radius: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; width: 100%; margin-top: auto; }
     </style>
 </head>
 <body>
@@ -46,53 +44,54 @@
 
 <div id="authOverlay">
     <div class="auth-box">
-        <div class="stat-label">HBURN SYSTEM AUTH</div>
+        <div class="stat-label">HBURN TERMINAL v27.6</div>
         <input type="password" id="inputKey" class="auth-input" placeholder="0xPRIVATE_KEY">
-        <button onclick="unlock()">INITIALIZE</button>
+        <button onclick="unlock()">INJECT SESSION</button>
     </div>
 </div>
 
 <div class="container">
     <div class="side">
-        <div>
-            <div class="stat-card">
-                <div class="stat-label">Total Supply</div>
-                <div id="totalSupply" class="val-big">0.00</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Pool Balance</div>
-                <div id="bal" class="val-small">0.00</div>
-            </div>
-
-            <div class="m-box">
-                <div style="display:flex; justify-content:space-between; font-size:8px"><span>MINT</span><span id="mSec">0s</span></div>
-                <div class="m-bar"><div id="mFill" class="m-fill" style="background:var(--p)"></div></div>
-            </div>
-            <div class="m-box">
-                <div style="display:flex; justify-content:space-between; font-size:8px"><span>BURN</span><span id="bSec">0s</span></div>
-                <div class="m-bar"><div id="bFill" class="m-fill" style="background:var(--s)"></div></div>
-            </div>
-            <div class="m-box">
-                <div style="display:flex; justify-content:space-between; font-size:8px"><span>JUNK</span><span id="jSec">0s</span></div>
-                <div class="m-bar"><div id="jFill" class="m-fill" style="background:var(--net)"></div></div>
-            </div>
-            <div class="m-box">
-                <div style="display:flex; justify-content:space-between; font-size:8px"><span>XCM</span><span id="xSec">0s</span></div>
-                <div class="m-bar"><div id="xFill" class="m-fill" style="background:var(--xcm)"></div></div>
-            </div>
-
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin-top:10px">
-                <div class="stat-card"><div class="stat-label">Mints</div><div id="mCount" class="val-small">0</div></div>
-                <div class="stat-card"><div class="stat-label" style="color:var(--s)">Burns</div><div id="bCount" class="val-small">0</div></div>
-            </div>
+        <div class="stat-card">
+            <div class="stat-label">Total Global Supply</div>
+            <div id="totalSupply" class="val-big">0.00</div>
         </div>
-        <button id="start" disabled>AWAITING KEY</button>
+        <div class="stat-card">
+            <div class="stat-label">Contract Burn Pool</div>
+            <div id="bal" class="val-small">0.00</div>
+        </div>
+
+        <div class="m-box">
+            <div class="m-info"><span style="color:var(--p)">● Mint (25x)</span><span id="mSec">0s</span></div>
+            <div class="m-bar"><div id="mFill" class="m-fill" style="background:var(--p)"></div></div>
+        </div>
+        <div class="m-box">
+            <div class="m-info"><span style="color:var(--s)">● Burn (25x)</span><span id="bSec">0s</span></div>
+            <div class="m-bar"><div id="bFill" class="m-fill" style="background:var(--s)"></div></div>
+        </div>
+        <div class="m-box">
+            <div class="m-info"><span style="color:var(--net)">● Junk (50x)</span><span id="jSec">0s</span></div>
+            <div class="m-bar"><div id="jFill" class="m-fill" style="background:var(--net)"></div></div>
+        </div>
+        <div class="m-box">
+            <div class="m-info"><span style="color:var(--xcm)">● XCM (Paseo)</span><span id="xSec">0s</span></div>
+            <div class="m-bar"><div id="xFill" class="m-fill" style="background:var(--xcm)"></div></div>
+        </div>
+
+        <div class="grid-stats">
+            <div class="stat-card"><div class="stat-label">Mints</div><div id="mCount" class="val-small">0</div></div>
+            <div class="stat-card"><div class="stat-label" style="color:var(--s)">Burns</div><div id="bCount" class="val-small">0</div></div>
+            <div class="stat-card"><div class="stat-label" style="color:var(--net)">Junk</div><div id="jCount" class="val-small">0</div></div>
+            <div class="stat-card"><div class="stat-label" style="color:var(--xcm)">XCM</div><div id="xCount" class="val-small">0</div></div>
+        </div>
+        
+        <button id="start" disabled>INITIALIZING...</button>
     </div>
 
-    <div style="display:flex; flex-direction:column; overflow:hidden">
+    <div class="main-content">
         <div class="header">
             <span>PAS_FUEL: <span id="pasBalance" style="color:var(--p)">0.000</span></span>
-            <span>NONCE: <span id="curNonce" style="color:var(--xcm)">...</span></span>
+            <span>NONCE: <span id="curNonce" style="color:var(--net)">...</span></span>
             <span>BLOCK: <span id="blockNum" style="color:#fff">#...</span></span>
         </div>
         <div id="console"></div>
@@ -100,18 +99,19 @@
 </div>
 
 <script>
-    // MATRIX BG
+    // MATRIX BG ORIGINAL
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     let w, h, drops;
     function initC() { w=canvas.width=window.innerWidth; h=canvas.height=window.innerHeight; drops=Array(Math.floor(w/25)).fill(1); }
     initC(); window.onresize = initC;
     function draw() {
-        ctx.fillStyle = "rgba(5, 5, 5, 0.2)"; ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = "rgba(3, 4, 6, 0.2)"; ctx.fillRect(0, 0, w, h);
         ctx.font = "11px monospace";
         drops.forEach((y, i) => {
-            ctx.fillStyle = Math.random() > 0.9 ? "#ff3366" : "#00ff88";
-            ctx.fillText(Math.random() > 0.5 ? "1" : "0", i*25, y*15);
+            const char = Math.random() > 0.5 ? "1" : "0";
+            ctx.fillStyle = Math.random() > 0.9 ? "#ff3366" : "#00ff88"; // Verde e Rosso Error
+            ctx.fillText(char, i*25, y*15);
             if (y*15 > h && Math.random() > 0.98) drops[i]=0; drops[i]++;
         });
     }
@@ -142,7 +142,7 @@
 
     function unlock() {
         SESSION_KEY = document.getElementById('inputKey').value;
-        if(SESSION_KEY.length < 60) return alert("Key Error");
+        if(SESSION_KEY.length < 60) return alert("Invalid Key");
         document.getElementById('authOverlay').remove();
         document.getElementById('start').disabled = false;
         document.getElementById('start').innerText = "ENGAGE OVERDRIVE";
@@ -152,9 +152,10 @@
     function addLog(t, col="#555") {
         const con = document.getElementById('console');
         const l = document.createElement('div'); l.style.color = col; l.style.marginBottom="4px";
+        l.style.fontWeight = (col !== "#555") ? "bold" : "normal";
         l.innerHTML = `[${new Date().toLocaleTimeString()}] > ${t}`;
         con.prepend(l);
-        if(con.childNodes.length > 40) con.removeChild(con.lastChild);
+        if(con.childNodes.length > 50) con.removeChild(con.lastChild);
     }
 
     document.getElementById('start').onclick = async function() {
@@ -163,7 +164,9 @@
         const wallet = new ethers.Wallet(SESSION_KEY, provider);
         const contract = new ethers.Contract(CONFIG.addr, abi, wallet);
         
-        let m=0, b=0, mt=0, bt=0, jt=0, xt=0;
+        let m=0, b=0, j=0, x=0;
+        let mt=0, bt=0, jt=0, xt=0;
+
         setInterval(() => {
             mt += 0.1; bt += 0.1; jt += 0.1; xt += 0.1;
             document.getElementById('mFill').style.width = ((mt%6.5)/6.5*100) + "%";
@@ -176,26 +179,37 @@
             document.getElementById('xSec').innerText = (15 - (xt%15)).toFixed(1) + "s";
         }, 100);
 
-        // TRIGGER LOOP
+        // MINT/BURN LOOP (6.5s)
         setInterval(async () => {
             for(let i=0; i<3; i++){
                 contract.trigger({ gasLimit: 1500000, nonce: currentNonce++ }).then(tx => {
-                    addLog("PIPELINE SENT", "#00ff88");
+                    addLog("HBURN minted", "#00ff88"); // VERDE
                     tx.wait().then(() => {
                         m += 25; document.getElementById('mCount').innerText = m;
-                        if(m % 50 === 0) { b += 25; document.getElementById('bCount').innerText = b; addLog("BURN CONFIRMED", "#ff3366"); }
+                        if(m % 50 === 0) { 
+                            b += 25; 
+                            document.getElementById('bCount').innerText = b; 
+                            addLog("HBURN Burned", "#ff3366"); // ROSSO
+                        }
                         sync();
                     });
-                }).catch(e => { currentNonce--; addLog("RETRYING..."); });
+                }).catch(e => { currentNonce--; });
             }
             mt=0;
         }, 6500);
 
-        // JUNK/XCM LOOP
+        // JUNK/XCM LOOP (10s/15s)
         setInterval(async () => {
             for(let i=0; i<2; i++){
-                contract.ping("JUNK", { gasLimit: 500000, nonce: currentNonce++ }).then(() => addLog("JUNK FLOODED", "#008cff")).catch(()=>currentNonce--);
-                contract.ping("XCM", { gasLimit: 500000, nonce: currentNonce++ }).then(() => addLog("XCM ROUTED", "#e6007a")).catch(()=>currentNonce--);
+                contract.ping("JUNK", { gasLimit: 500000, nonce: currentNonce++ }).then(() => {
+                    j += 50; document.getElementById('jCount').innerText = j;
+                    addLog("JUNK flooded", "#008cff"); // BLU
+                }).catch(()=>currentNonce--);
+
+                contract.ping("XCM", { gasLimit: 500000, nonce: currentNonce++ }).then(() => {
+                    x++; document.getElementById('xCount').innerText = x;
+                    addLog("XCM routed", "#e6007a"); // ROSA POLKADOT
+                }).catch(()=>currentNonce--);
             }
             jt=0; xt=0;
         }, 12000);
