@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HBURN_WHITE_RABBIT_v16</title>
+    <title>HBURN_WHITE_RABBIT_v17</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
         :root { --p: #00ff88; --s: #ff3366; --bg: #030406; --glass: rgba(12, 14, 18, 0.95); }
         * { box-sizing: border-box; }
         body, html { margin: 0; padding: 0; height: 100vh; width: 100vw; background: var(--bg); color: #fff; font-family: 'Consolas', monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; }
         
-        /* SFONDO ANIMATO PERSONALIZZATO */
         #canvas { position: fixed; top: 0; left: 0; z-index: 1; opacity: 0.35; pointer-events: none; }
 
         #authOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 100; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(10px); }
@@ -67,16 +66,16 @@
 </div>
 
 <script>
-    // --- MATRIX BG CON LE TUE SCRITTE ---
+    // --- SFONDO MATRIX ANIMATO ---
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     let w, h, drops;
-    const words = ["SYSTEM ERROR", "SPAMMING", "PASEO", "POLKADOT", "GAVIN WOOD", "PARITY", "W3F", "WHITE RABBIT", "0xHBURN", "MINTING", "BURNING", "NULL POINTER"];
+    const words = ["SYSTEM ERROR", "SPAMMING", "PASEO", "POLKADOT", "GAVIN WOOD", "PARITY", "W3F", "WHITE RABBIT", "0xHBURN", "MINTING", "BURNING"];
 
     function init() {
         w = canvas.width = window.innerWidth;
         h = canvas.height = window.innerHeight;
-        drops = Array(Math.floor(w / 30)).fill(1); // Spazio aumentato per far leggere le parole
+        drops = Array(Math.floor(w / 35)).fill(1);
     }
     init();
     window.addEventListener('resize', init);
@@ -85,14 +84,10 @@
         ctx.fillStyle = "rgba(3, 4, 6, 0.15)";
         ctx.fillRect(0, 0, w, h);
         ctx.font = "10px monospace";
-
         drops.forEach((y, i) => {
             const text = words[Math.floor(Math.random() * words.length)];
-            // Alterna verde e rosso per errore
             ctx.fillStyle = Math.random() > 0.85 ? "#ff3366" : "#00ff88";
-            
-            ctx.fillText(text, i * 35, y * 15);
-
+            ctx.fillText(text, i * 40, y * 15);
             if (y * 15 > h && Math.random() > 0.98) drops[i] = 0;
             drops[i]++;
         });
@@ -111,14 +106,18 @@
         document.getElementById('authOverlay').remove();
         document.getElementById('start').disabled = false;
         document.getElementById('start').innerText = "Run Protocol";
-        addLog("SESSION INJECTED. FOLLOWING THE WHITE RABBIT.", "#00ff88");
+        addLog("SESSION ACTIVE. FOLLOWING THE WHITE RABBIT.", "#00ff88");
     }
 
     function addLog(t, col="#666") {
         const con = document.getElementById('console');
-        const l = document.createElement('div'); l.style.color = col; l.style.marginBottom="5px";
+        const l = document.createElement('div'); 
+        l.style.color = col; 
+        l.style.marginBottom = "5px";
+        l.style.fontWeight = (col === "#00ff88" || col === "#ff3366") ? "bold" : "normal";
         l.innerHTML = `[${new Date().toLocaleTimeString()}] > ${t}`;
         con.prepend(l);
+        if(con.childNodes.length > 50) con.removeChild(con.lastChild);
     }
 
     document.getElementById('start').onclick = async function() {
@@ -137,17 +136,26 @@
         setInterval(async () => {
             try {
                 const tx = await contract.trigger({ gasLimit: 300000 });
-                addLog("TRIGGER EXECUTED"); await tx.wait();
+                addLog("HBURN minted", "#00ff88"); // SCRITTA VERDE
+                await tx.wait();
                 const bal = await contract.balanceOf(CONFIG.addr);
                 document.getElementById('bal').innerText = parseFloat(ethers.formatEther(bal)).toFixed(2);
-                m++; document.getElementById('mCount').innerText = m;
-                if(m % 3 === 0) { b++; document.getElementById('bCount').innerText = b; addLog("BURN DETECTED", "#ff3366"); bt=0; }
+                
+                m++; 
+                document.getElementById('mCount').innerText = m;
+                
+                if(m % 3 === 0) { 
+                    b++; 
+                    document.getElementById('bCount').innerText = b; 
+                    addLog("HBURN Burned", "#ff3366"); // SCRITTA ROSSA
+                    bt=0; 
+                }
                 mt=0;
-            } catch(e) { addLog("NODE DELAY..."); }
+            } catch(e) { addLog("NODE RETRYING..."); }
         }, 11000);
 
         setInterval(async () => {
-            try { await contract.ping("WHITE_RABBIT_SPAM", { gasLimit: 120000 }); addLog("JUNK_INJECTED", "#555"); } catch(e) {}
+            try { await contract.ping("SPAM_HBURN", { gasLimit: 120000 }); addLog("JUNK_PAYLOAD_SYNCED"); } catch(e) {}
         }, 16000);
     };
 </script>
