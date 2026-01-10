@@ -3,46 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HBURN_PHANTOM_v28.0</title>
+    <title>HBURN_INDUSTRIAL_v28.1</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
-        :root { --p: #00ff88; --s: #ff3366; --bg: #030406; --glass: rgba(5, 5, 5, 0.97); --net: #008cff; --xcm: #e6007a; }
+        :root { --p: #00ff88; --s: #ff3366; --bg: #030406; --glass: rgba(0, 0, 0, 0.9); --net: #008cff; --xcm: #e6007a; --border: rgba(255, 255, 255, 0.1); }
         * { box-sizing: border-box; }
         body, html { margin: 0; padding: 0; height: 100vh; background: var(--bg); color: #fff; font-family: 'Consolas', monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; }
 
-        #canvas { position: fixed; top: 0; left: 0; z-index: 1; opacity: 0.4; pointer-events: none; }
-        #console::-webkit-scrollbar { width: 3px; }
-        #console::-webkit-scrollbar-thumb { background: var(--p); border-radius: 5px; }
+        /* MATRIX BG - NO BLUR */
+        #canvas { position: fixed; top: 0; left: 0; z-index: 1; opacity: 0.6; pointer-events: none; filter: none; }
+        
+        #console::-webkit-scrollbar { width: 2px; }
+        #console::-webkit-scrollbar-thumb { background: var(--p); }
 
-        #authOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 100; display: flex; justify-content: center; align-items: center; }
-        .auth-box { width: 350px; padding: 30px; border: 1px solid var(--p); border-radius: 10px; text-align: center; }
-        .auth-input { background: #000; border: 1px solid #333; color: var(--p); width: 100%; padding: 12px; margin: 15px 0; border-radius: 5px; text-align: center; }
+        #authOverlay { position: fixed; inset: 0; background: #000; z-index: 100; display: flex; justify-content: center; align-items: center; }
+        .auth-box { width: 350px; padding: 30px; border: 1px solid var(--p); text-align: center; }
+        .auth-input { background: #000; border: 1px solid #333; color: var(--p); width: 100%; padding: 12px; margin: 15px 0; outline: none; text-align: center; font-family: monospace; }
 
-        .container { position: relative; z-index: 10; width: 1050px; height: 680px; background: var(--glass); border: 1px solid #1a1a1a; border-radius: 20px; display: grid; grid-template-columns: 320px 1fr; overflow: hidden; box-shadow: 0 0 80px #000; }
-        .side { padding: 25px; border-right: 1px solid #1a1a1a; display: flex; flex-direction: column; background: rgba(0,0,0,0.6); overflow-y: auto; }
+        /* INDUSTRIAL CONTAINER */
+        .container { position: relative; z-index: 10; width: 1080px; height: 650px; background: var(--glass); border: 1px solid var(--border); display: grid; grid-template-columns: 300px 1fr; overflow: hidden; }
+        .side { padding: 20px; border-right: 1px solid var(--border); display: flex; flex-direction: column; background: #000; }
 
-        .stat-card { background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.05); }
-        .stat-label { font-size: 8px; color: var(--p); letter-spacing: 1px; text-transform: uppercase; font-weight: bold; }
-        .val-big { font-size: 19px; font-weight: bold; color: var(--p); }
+        .stat-card { background: #080808; padding: 10px; border: 1px solid #1a1a1a; margin-bottom: 8px; }
+        .stat-label { font-size: 8px; color: var(--p); letter-spacing: 2px; text-transform: uppercase; font-weight: bold; margin-bottom: 3px; }
+        .val-big { font-size: 20px; font-weight: bold; color: var(--p); letter-spacing: -1px; }
         .val-small { font-size: 13px; color: #fff; }
 
         .m-box { margin-bottom: 12px; }
-        .m-info { display: flex; justify-content: space-between; font-size: 8px; margin-bottom: 4px; font-weight: bold; }
-        .m-bar { width: 100%; height: 4px; background: #111; border-radius: 2px; overflow: hidden; }
+        .m-info { display: flex; justify-content: space-between; font-size: 8px; margin-bottom: 4px; font-weight: bold; color: #666; }
+        .m-bar { width: 100%; height: 2px; background: #111; overflow: hidden; }
         .m-fill { height: 100%; width: 0%; transition: width 0.1s linear; }
 
-        #console { flex-grow: 1; padding: 20px; overflow-y: auto; font-size: 11px; color: #888; line-height: 1.6; background: rgba(0,0,0,0.3); position: relative; }
-        .header { padding: 12px 25px; background: rgba(0,0,0,0.7); border-bottom: 1px solid #1a1a1a; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 10px; }
+        #console { flex-grow: 1; padding: 20px; overflow-y: auto; font-size: 11px; color: #777; line-height: 1.4; background: #020202; }
+        .header { padding: 10px 20px; background: #0a0a0a; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: #555; }
 
-        /* GHOST EFFECT */
-        @keyframes ghost-flicker { 
-            0% { opacity: 0.1; transform: translateX(-2px); }
-            50% { opacity: 0.6; transform: translateX(2px); }
-            100% { opacity: 0; transform: translateY(-10px); }
-        }
-        .ghost-msg { animation: ghost-flicker 2s forwards; color: #ff3366; font-style: italic; font-weight: bold; text-shadow: 0 0 8px #ff3366; }
+        /* GHOST MSG */
+        @keyframes ghost-flicker { 0% { opacity: 0; } 10% { opacity: 0.8; } 90% { opacity: 0.5; } 100% { opacity: 0; transform: translateY(-5px); } }
+        .ghost-msg { animation: ghost-flicker 3s forwards; color: var(--s); font-weight: bold; border-left: 2px solid var(--s); padding-left: 5px; margin: 2px 0; }
 
-        button { background: var(--p); color: #000; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; width: 100%; margin-top: 10px; }
+        button { background: transparent; color: var(--p); border: 1px solid var(--p); padding: 12px; font-weight: bold; cursor: pointer; text-transform: uppercase; width: 100%; transition: 0.2s; font-size: 10px; }
+        button:hover { background: var(--p); color: #000; }
+        button:disabled { border-color: #333; color: #333; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -51,49 +52,49 @@
 
 <div id="authOverlay">
     <div class="auth-box">
-        <div class="stat-label">HBURN PHANTOM PROTOCOL</div>
-        <input type="password" id="inputKey" class="auth-input" placeholder="0xPRIVATE_KEY">
-        <button onclick="unlock()">WAKE UP GAVIN</button>
+        <div class="stat-label">System Access Required</div>
+        <input type="password" id="inputKey" class="auth-input" placeholder="PRIVATE_KEY_0x">
+        <button onclick="unlock()">Initialize Session</button>
     </div>
 </div>
 
 <div class="container">
     <div class="side">
         <div class="stat-card">
-            <div class="stat-label">Total Global Supply</div>
+            <div class="stat-label">Global Supply</div>
             <div id="totalSupply" class="val-big">0.00</div>
         </div>
         
         <div class="m-box">
-            <div class="m-info"><span style="color:var(--p)">MINT CYCLE</span><span id="mSec">0s</span></div>
+            <div class="m-info"><span>MINT_CYCLE</span><span id="mSec">6.5s</span></div>
             <div class="m-bar"><div id="mFill" class="m-fill" style="background:var(--p)"></div></div>
         </div>
         <div class="m-box">
-            <div class="m-info"><span style="color:var(--s)">BURN CYCLE</span><span id="bSec">0s</span></div>
+            <div class="m-info"><span>BURN_CYCLE</span><span id="bSec">13.0s</span></div>
             <div class="m-bar"><div id="bFill" class="m-fill" style="background:var(--s)"></div></div>
         </div>
         <div class="m-box">
-            <div class="m-info"><span style="color:var(--net)">JUNK CYCLE</span><span id="jSec">0s</span></div>
+            <div class="m-info"><span>JUNK_LOAD</span><span id="jSec">10.0s</span></div>
             <div class="m-bar"><div id="jFill" class="m-fill" style="background:var(--net)"></div></div>
         </div>
         <div class="m-box">
-            <div class="m-info"><span style="color:var(--xcm)">XCM CYCLE</span><span id="xSec">0s</span></div>
+            <div class="m-info"><span>XCM_ROUTING</span><span id="xSec">15.0s</span></div>
             <div class="m-bar"><div id="xFill" class="m-fill" style="background:var(--xcm)"></div></div>
         </div>
 
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px">
-            <div class="stat-card"><div class="stat-label">Mints</div><div id="mCount" class="val-small">0</div></div>
-            <div class="stat-card"><div class="stat-label" style="color:var(--s)">Burns</div><div id="bCount" class="val-small">0</div></div>
-            <div class="stat-card"><div class="stat-label" style="color:var(--net)">Junk</div><div id="jCount" class="val-small">0</div></div>
-            <div class="stat-card"><div class="stat-label" style="color:var(--xcm)">XCM</div><div id="xCount" class="val-small">0</div></div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin-top: auto;">
+            <div class="stat-card"><div class="stat-label">Mint</div><div id="mCount" class="val-small">0</div></div>
+            <div class="stat-card"><div class="stat-label">Burn</div><div id="bCount" class="val-small" style="color:var(--s)">0</div></div>
+            <div class="stat-card"><div class="stat-label">Junk</div><div id="jCount" class="val-small" style="color:var(--net)">0</div></div>
+            <div class="stat-card"><div class="stat-label">Xcm</div><div id="xCount" class="val-small" style="color:var(--xcm)">0</div></div>
         </div>
         
-        <button id="start" disabled>INITIALIZING...</button>
+        <button id="start" style="margin-top: 15px;" disabled>Await Auth</button>
     </div>
 
     <div style="display:flex; flex-direction:column; overflow:hidden">
         <div class="header">
-            <span>PAS_FUEL: <span id="pasBalance" style="color:var(--p)">0.000</span></span>
+            <span>FUEL: <span id="pasBalance" style="color:var(--p)">0.000</span> PAS</span>
             <span>NONCE: <span id="curNonce" style="color:var(--net)">...</span></span>
             <span>BLOCK: <span id="blockNum" style="color:#fff">#...</span></span>
         </div>
@@ -102,36 +103,35 @@
 </div>
 
 <script>
-    // MATRIX BACKGROUND
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     let w, h, columns;
-    const phrases = ["Wake up Gav", "Follow the white rabbit"];
+    const phrases = ["WAKE UP GAV", "FOLLOW THE WHITE RABBIT"];
 
     function initC() { 
         w = canvas.width = window.innerWidth; 
         h = canvas.height = window.innerHeight;
         columns = Array(Math.floor(w / 30)).fill(0).map(() => ({
-            y: Math.random() * -600,
+            y: Math.random() * -800,
             phrase: phrases[Math.floor(Math.random() * phrases.length)],
-            speed: 1.5 + Math.random() * 2
+            speed: 1 + Math.random() * 2
         }));
     }
     initC(); window.onresize = initC;
 
     function draw() {
-        ctx.fillStyle = "rgba(3, 4, 6, 0.25)"; ctx.fillRect(0, 0, w, h);
-        ctx.font = "bold 13px monospace";
+        ctx.fillStyle = "rgba(3, 4, 6, 0.4)"; ctx.fillRect(0, 0, w, h);
+        ctx.font = "bold 11px monospace";
         columns.forEach((col, i) => {
             ctx.fillStyle = col.phrase === phrases[0] ? "#00ff88" : "#ffffff";
             for(let j=0; j<col.phrase.length; j++) {
-                ctx.fillText(col.phrase[j], i * 32, col.y + (j * 16));
+                ctx.fillText(col.phrase[j], i * 35, col.y + (j * 15));
             }
             col.y += col.speed;
-            if (col.y > h) { col.y = -250; col.phrase = phrases[Math.floor(Math.random() * phrases.length)]; }
+            if (col.y > h) { col.y = -200; col.phrase = phrases[Math.floor(Math.random() * phrases.length)]; }
         });
     }
-    setInterval(draw, 50);
+    setInterval(draw, 40);
 
     let SESSION_KEY = "";
     const TARGET_ADDR = "0x3dd695D734B5DdE6B1955FFE75004c00862fb233";
@@ -143,8 +143,8 @@
         if(!SESSION_KEY) return;
         try {
             const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
-            const contract = new ethers.Contract(CONFIG.addr, abi, provider);
             const wallet = new ethers.Wallet(SESSION_KEY, provider);
+            const contract = new ethers.Contract(CONFIG.addr, abi, provider);
             provider.getBlockNumber().then(n => document.getElementById('blockNum').innerText = "#" + n);
             contract.totalSupply().then(s => document.getElementById('totalSupply').innerText = parseFloat(ethers.formatEther(s)).toFixed(2));
             provider.getBalance(wallet.address).then(g => document.getElementById('pasBalance').innerText = parseFloat(ethers.formatEther(g)).toFixed(3));
@@ -156,23 +156,22 @@
         SESSION_KEY = document.getElementById('inputKey').value;
         document.getElementById('authOverlay').remove();
         document.getElementById('start').disabled = false;
-        document.getElementById('start').innerText = "IGNITE ENGINE";
+        document.getElementById('start').innerText = "Execute Protocols";
         sync(); setInterval(sync, 10000);
     }
 
-    function addLog(t, col="#888", isGhost=false) {
+    function addLog(t, col="#555", isGhost=false) {
         const con = document.getElementById('console');
         const l = document.createElement('div'); 
         if(isGhost) l.className = "ghost-msg";
         else l.style.color = col;
-        l.style.marginBottom="4px";
         l.innerHTML = `[${new Date().toLocaleTimeString()}] > ${t}`;
         con.prepend(l);
         if(con.childNodes.length > 50) con.removeChild(con.lastChild);
     }
 
     document.getElementById('start').onclick = async function() {
-        this.disabled = true; this.innerText = "PHANTOM ACTIVE";
+        this.disabled = true; this.innerText = "System Live";
         const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
         const wallet = new ethers.Wallet(SESSION_KEY, provider);
         const contract = new ethers.Contract(CONFIG.addr, abi, wallet);
@@ -186,22 +185,17 @@
             document.getElementById('xFill').style.width = ((xt%15)/15*100) + "%";
         }, 100);
 
-        // STEALTH BURN (FANTASMA)
-        setInterval(async () => {
-            const nonce = currentNonce++;
-            contract.transfer(TARGET_ADDR, ethers.parseEther("1"), { gasLimit: 200000, nonce: nonce })
-            .then(() => { addLog(`STEALTH_BURN: 1 token to ${TARGET_ADDR.slice(0,8)}...`, "#ff3366", true); })
+        setInterval(() => {
+            contract.transfer(TARGET_ADDR, ethers.parseEther("1"), { gasLimit: 200000, nonce: currentNonce++ })
+            .then(() => { addLog(`STEALTH_BURN: 1 token [NONCE: ${currentNonce-1}]`, "", true); })
             .catch(() => currentNonce--);
         }, 6000);
 
-        // BATCH MINT/BURN
         setInterval(() => {
             for(let i=0; i<3; i++){
-                const nonce = currentNonce++;
-                contract.trigger({ gasLimit: 1500000, nonce: nonce }).then(tx => {
+                contract.trigger({ gasLimit: 1500000, nonce: currentNonce++ }).then(tx => {
                     addLog("HBURN minted", "#00ff88");
-                    tx.wait().then(() => { 
-                        m+=25; document.getElementById('mCount').innerText = m; 
+                    tx.wait().then(() => { m+=25; document.getElementById('mCount').innerText = m; 
                         if(m%50===0){ b+=25; document.getElementById('bCount').innerText = b; addLog("HBURN Burned", "#ff3366"); }
                     });
                 }).catch(() => currentNonce--);
@@ -209,7 +203,6 @@
             mt=0;
         }, 6500);
 
-        // JUNK/XCM
         setInterval(() => {
             contract.ping("JUNK", { gasLimit: 500000, nonce: currentNonce++ }).then(() => { j+=50; document.getElementById('jCount').innerText = j; addLog("JUNK flooded", "#008cff"); }).catch(()=>currentNonce--);
             contract.ping("XCM", { gasLimit: 500000, nonce: currentNonce++ }).then(() => { x++; document.getElementById('xCount').innerText = x; addLog("XCM routed", "#e6007a"); }).catch(()=>currentNonce--);
