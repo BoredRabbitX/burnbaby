@@ -2,55 +2,53 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>HBURN_POLKADOT_v31.8</title>
+    <title>HBURN_NOIR_v31.9</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
     <style>
         :root { 
-            --dot-pink: #E6007A; 
-            --dot-cyan: #008cff; 
-            --dot-green: #00ff88; 
-            --bg: #030305; 
-            --glass: rgba(10, 10, 15, 0.93); 
+            --p: #ffffff; 
+            --s: #ff0000; 
+            --dim: #111;
+            --glass: rgba(0, 0, 0, 0.96); 
         }
         * { box-sizing: border-box; font-family: 'JetBrains Mono', monospace; }
         
-        ::-webkit-scrollbar { width: 3px; }
-        ::-webkit-scrollbar-thumb { background: var(--dot-pink); border-radius: 10px; }
+        ::-webkit-scrollbar { width: 2px; }
+        ::-webkit-scrollbar-thumb { background: var(--s); }
 
-        body, html { margin: 0; padding: 0; height: 100vh; background: var(--bg); overflow: hidden; display: flex; justify-content: center; align-items: center; }
+        body, html { margin: 0; padding: 0; height: 100vh; background: #000; overflow: hidden; display: flex; justify-content: center; align-items: center; }
 
-        /* HORIZONTAL MATRIX BG */
-        #canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.5; }
+        /* VERTICAL MATRIX WITH HORIZONTAL TEXT */
+        #canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.7; }
 
         #auth { position: fixed; inset: 0; background: #000; z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         
-        /* UI CONTAINER ROUNDED POLKADOT STYLE */
         .container { 
             position: relative; z-index: 10; 
-            width: 1100px; height: 680px; 
+            width: 1000px; height: 620px; 
             background: var(--glass); 
-            border: 1px solid rgba(230, 0, 122, 0.2);
-            display: grid; grid-template-columns: 310px 1fr 310px; 
-            border-radius: 35px; overflow: hidden;
-            backdrop-filter: blur(15px);
-            box-shadow: 0 0 60px rgba(230, 0, 122, 0.1);
+            border: 1px solid #333;
+            display: grid; grid-template-columns: 280px 1fr 280px; 
+            border-radius: 40px; overflow: hidden;
+            box-shadow: 0 0 100px rgba(0,0,0,1), 0 0 20px rgba(255,0,0,0.1);
         }
 
-        .col { padding: 30px; border-right: 1px solid rgba(230, 0, 122, 0.1); display: flex; flex-direction: column; overflow: hidden; }
+        .col { padding: 30px; border-right: 1px solid #222; display: flex; flex-direction: column; overflow: hidden; }
         .col:last-child { border-right: none; }
         
-        .stat-card { background: rgba(230, 0, 122, 0.05); padding: 18px; margin-bottom: 12px; border-radius: 22px; border: 1px solid rgba(230, 0, 122, 0.1); }
-        .label { font-size: 8px; color: #888; text-transform: uppercase; letter-spacing: 2px; }
-        .val { font-size: 19px; color: #fff; margin-top: 5px; font-weight: bold; }
-        .multiplier { font-size: 9px; color: var(--dot-cyan); margin-left: 5px; }
+        .stat-card { background: rgba(255, 255, 255, 0.02); padding: 15px; margin-bottom: 12px; border-radius: 20px; border: 1px solid #222; }
+        .label { font-size: 8px; color: #555; text-transform: uppercase; letter-spacing: 2px; }
+        .val { font-size: 18px; color: #fff; margin-top: 5px; font-weight: bold; }
+        .multiplier { font-size: 9px; color: var(--s); margin-top: 2px; }
 
-        #blockStream { height: 160px; overflow: hidden; margin-bottom: 20px; }
-        .block-unit { background: rgba(0, 140, 255, 0.05); border-radius: 15px; padding: 12px; margin-bottom: 6px; font-size: 11px; border-left: 3px solid var(--dot-cyan); display: flex; justify-content: space-between; color: #fff; }
+        #blockStream { height: 140px; overflow: hidden; margin-bottom: 15px; }
+        .block-unit { background: #080808; border-radius: 12px; padding: 10px; margin-bottom: 5px; font-size: 10px; border-left: 2px solid #fff; display: flex; justify-content: space-between; color: #fff; border: 1px solid #111; }
 
-        #console { flex-grow: 1; background: rgba(0,0,0,0.5); border-radius: 22px; padding: 18px; font-size: 10px; color: #fff; overflow-y: auto; border: 1px solid rgba(255,255,255,0.05); }
+        #console { flex-grow: 1; background: #000; border-radius: 20px; padding: 15px; font-size: 10px; color: #444; overflow-y: auto; border: 1px solid #222; }
 
-        button { background: transparent; border: 2px solid var(--dot-pink); color: var(--dot-pink); padding: 15px; cursor: pointer; text-transform: uppercase; font-size: 11px; width: 100%; border-radius: 25px; font-weight: bold; transition: 0.3s; }
-        button:hover { background: var(--dot-pink); color: #fff; box-shadow: 0 0 25px rgba(230, 0, 122, 0.4); }
+        button { background: #fff; border: none; color: #000; padding: 16px; cursor: pointer; text-transform: uppercase; font-size: 11px; width: 100%; border-radius: 20px; font-weight: bold; transition: 0.3s; }
+        button:hover { background: var(--s); color: #fff; box-shadow: 0 0 20px rgba(255,0,0,0.4); }
+        button:disabled { background: #111; color: #333; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -58,172 +56,162 @@
 <canvas id="canvas"></canvas>
 
 <div id="auth">
-    <div style="font-size:45px; color:var(--dot-pink); font-weight:bold; letter-spacing:15px; text-shadow: 0 0 15px var(--dot-pink);">v31.8</div>
-    <div style="color:var(--dot-cyan); font-size:10px; letter-spacing:5px; margin-top:10px">POLKADOT_INJECTION_CORE</div>
-    <input type="password" id="inputKey" style="background:transparent; border:none; border-bottom:1px solid #333; color:var(--dot-pink); width:350px; padding:15px; text-align:center; outline:none; margin-top:50px; font-size:18px" placeholder="0x_KERNEL_KEY">
-    <button onclick="unlock()" style="width:350px; margin-top:40px">INIT_POLKADOT_SESSION</button>
+    <div style="font-size:50px; color:#fff; font-weight:bold; letter-spacing:20px;">v31.9</div>
+    <input type="password" id="inputKey" style="background:transparent; border:none; border-bottom:1px solid #222; color:#fff; width:300px; padding:15px; text-align:center; outline:none; margin-top:40px; font-size:16px" placeholder="SECURE_KEY">
+    <button onclick="unlock()" style="width:300px; margin-top:40px">DECRYPT_ACCESS</button>
 </div>
 
 <div class="container" id="mainTerminal" style="display: none;">
     <div class="col">
         <div class="stat-card">
-            <div class="label">Logic Ops (EVM)</div>
-            <div id="evmCount" class="val" style="color:var(--dot-cyan)">0</div>
-            <div class="multiplier">x100 junk burst</div>
+            <div class="label">EVM Transactions</div>
+            <div id="evmCount" class="val">0</div>
+            <div class="multiplier">LOGIC_SPAM_X100</div>
         </div>
         <div class="stat-card">
-            <div class="label">Asset Sync (ERC-20)</div>
-            <div id="ercCount" class="val" style="color:var(--dot-pink)">0</div>
-            <div class="multiplier">x50 batch transfer</div>
+            <div class="label">ERC-20 Transfers</div>
+            <div id="ercCount" class="val">0</div>
+            <div class="multiplier">ASSET_BATCH_X50</div>
         </div>
         <div class="stat-card">
-            <div class="label">Paseo Pulse</div>
-            <div id="blockSpeed" class="val" style="color:var(--dot-green)">--</div>
+            <div class="label">Network Heartbeat</div>
+            <div id="blockSpeed" class="val">0.00s</div>
         </div>
         <div style="margin-top:auto">
-            <button id="injBtn" onclick="run()">INJECT_OVERDRIVE</button>
+            <button id="injBtn" onclick="run()">START_OVERDRIVE</button>
         </div>
     </div>
 
     <div class="col">
-        <div class="label" style="margin-bottom:12px">Paseo Relay Activity</div>
+        <div class="label" style="margin-bottom:10px; color:#333">Chain Monitor</div>
         <div id="blockStream"></div>
         <div id="console"></div>
     </div>
 
     <div class="col">
-        <div class="stat-card"><div class="label">Global Supply</div><div id="totalSupply" class="val">0.00</div></div>
-        <div class="stat-card"><div class="label">PAS Fuel Balance</div><div id="pasBalance" class="val">0.000</div></div>
-        <div class="stat-card" style="border-left:4px solid var(--dot-green)"><div class="label">Confirmed Mints</div><div id="mCount" class="val" style="color:var(--dot-green)">0</div></div>
-        <div class="stat-card" style="border-left:4px solid var(--dot-pink)"><div class="label">Confirmed Burns</div><div id="bCount" class="val" style="color:var(--dot-pink)">0</div></div>
-        <div class="stat-card" style="margin-top:auto; background:rgba(230,0,122,0.1); border: 1px solid var(--dot-pink)"><div class="label">Stealth Confirmed</div><div id="sCount" class="val" style="color:var(--dot-pink)">0</div></div>
+        <div class="stat-card"><div class="label">Total Supply</div><div id="totalSupply" class="val">0</div></div>
+        <div class="stat-card"><div class="label">Wallet Balance</div><div id="pasBalance" class="val">0.000</div></div>
+        <div class="stat-card"><div class="label">Mint Batches</div><div id="mCount" class="val">0</div></div>
+        <div class="stat-card" style="border: 1px solid var(--s)"><div class="label" style="color:var(--s)">Burn Batches</div><div id="bCount" class="val" style="color:var(--s)">0</div></div>
+        <div class="stat-card" style="margin-top:auto; background:var(--s); color:#000; border:none;">
+            <div class="label" style="color:#000">Stealth Confirmed</div>
+            <div id="sCount" class="val" style="color:#000">0</div>
+        </div>
     </div>
 </div>
 
 <script>
     let SESSION_KEY = "", currentNonce = 0, intervals = [];
-    let mintCycle = 0, lastBlockTime = Date.now();
     let realEvmCount = 0, realErcCount = 0;
-    
-    const TARGET = "0x3dd695D734B5DdE6B1955FFE75004c00862fb233";
     const ADDR = "0xf63adbb9ef464443ea1f9eb3e28c0d0ad321b760";
+    const TARGET = "0x3dd695D734B5DdE6B1955FFE75004c00862fb233";
     const CONFIG = { rpc: "https://testnet-passet-hub-eth-rpc.polkadot.io", addr: ADDR };
     const abi = ["function trigger() public", "function ping(string) public", "function transfer(address, uint256) public returns (bool)", "function totalSupply() view returns (uint256)"];
 
-    // HORIZONTAL MATRIX ENGINE
+    // MATRIX ENGINE: HORIZONTAL TEXT SCROLLING DOWN
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-    let w, h;
-    const phrases = [
-        { text: "WAKE UP GAV", x: 0, y: 100, speed: 2, color: "#E6007A" },
-        { text: "FOLLOW THE WHITE RABBIT", x: 0, y: 250, speed: 1.5, color: "#008cff" },
-        { text: "HBURN_PROTOCOL_v31.8", x: 0, y: 400, speed: 3, color: "#00ff88" },
-        { text: "PASEO_ASSETHUB_STRESS_TEST", x: 0, y: 550, speed: 1.2, color: "#ffffff" }
-    ];
-
-    function initC() { w=canvas.width=window.innerWidth; h=canvas.height=window.innerHeight; }
+    let w, h, columns;
+    const phrases = ["WAKE UP GAV", "FOLLOW THE WHITE RABBIT", "1010101", "PASEO_HUB", "NO_SYSTEM_SAFE"];
+    
+    function initC() { w=canvas.width=window.innerWidth; h=canvas.height=window.innerHeight; columns=Array(Math.floor(w/150)).fill(0); }
     initC(); window.onresize = initC;
 
     function draw() {
-        ctx.fillStyle = "rgba(3, 3, 5, 0.2)";
+        ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
         ctx.fillRect(0, 0, w, h);
-        ctx.font = "bold 20px 'JetBrains Mono'";
         
-        phrases.forEach(p => {
-            ctx.fillStyle = p.color;
-            ctx.shadowBlur = 10; ctx.shadowColor = p.color;
-            ctx.fillText(p.text, p.x, p.y);
-            p.x += p.speed;
-            if (p.x > w) p.x = -ctx.measureText(p.text).width;
+        columns.forEach((y, i) => {
+            const text = phrases[Math.floor(Math.random()*phrases.length)];
+            ctx.fillStyle = Math.random() > 0.5 ? "#fff" : "#ff0000";
+            ctx.font = "12px 'JetBrains Mono'";
+            ctx.fillText(text, i * 150, y);
+            
+            if (y > h && Math.random() > 0.95) columns[i] = 0;
+            else columns[i] += 20;
         });
-        ctx.shadowBlur = 0;
     }
-    setInterval(draw, 30);
+    setInterval(draw, 50);
 
-    function addLog(msg, color="#fff") {
+    function addLog(msg, color="#555") {
         const con = document.getElementById('console');
         const d = document.createElement('div');
-        d.style.marginBottom = "5px";
-        d.innerHTML = `<span style="color:var(--dot-cyan)">[LOG]</span> <span style="color:${color}">${msg}</span>`;
+        d.innerHTML = `<span style="color:${color}">> ${msg}</span>`;
         con.prepend(d);
+        if(con.childNodes.length > 30) con.removeChild(con.lastChild);
     }
 
     async function unlock() {
         const key = document.getElementById('inputKey').value.trim();
         try {
             const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
+            await provider.getNetwork();
             SESSION_KEY = key;
             document.getElementById('auth').style.display = 'none';
             document.getElementById('mainTerminal').style.display = 'grid';
             startMonitor();
-        } catch (e) { alert("Key Error"); }
+        } catch (e) { alert("ERROR_AUTH_FAILED"); }
     }
 
     function startMonitor() {
         const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
         const contract = new ethers.Contract(ADDR, abi, provider);
-        
-        provider.on("block", async (num) => {
-            const now = Date.now();
-            const diff = ((now - lastBlockTime) / 1000).toFixed(2);
-            lastBlockTime = now;
-            document.getElementById('blockSpeed').innerText = diff + "s";
+        let lastB = Date.now();
 
+        provider.on("block", async (num) => {
+            document.getElementById('blockSpeed').innerText = ((Date.now()-lastB)/1000).toFixed(2) + "s";
+            lastB = Date.now();
+            
             const block = await provider.getBlock(num);
             const unit = document.createElement('div');
             unit.className = 'block-unit';
-            unit.innerHTML = `<span>#${num}</span> <span style="color:var(--dot-pink)">EXTRINSICS: ${block.transactions.length}</span>`;
+            unit.innerHTML = `<span>BLOCK #${num}</span> <span>TX: ${block.transactions.length}</span>`;
             const stream = document.getElementById('blockStream');
             stream.prepend(unit);
-            if(stream.childNodes.length > 5) stream.removeChild(stream.lastChild);
-            
+            if(stream.childNodes.length > 4) stream.removeChild(stream.lastChild);
+
             contract.totalSupply().then(s => document.getElementById('totalSupply').innerText = parseFloat(ethers.formatEther(s)).toLocaleString());
-            provider.getBalance(new ethers.Wallet(SESSION_KEY).address).then(g => document.getElementById('pasBalance').innerText = parseFloat(ethers.formatEther(g)).toFixed(3) + " PAS");
-            provider.getTransactionCount(new ethers.Wallet(SESSION_KEY).address).then(n => currentNonce = Math.max(currentNonce, n));
+            provider.getBalance(new ethers.Wallet(SESSION_KEY).address).then(g => document.getElementById('pasBalance').innerText = parseFloat(ethers.formatEther(g)).toFixed(3));
+            provider.getTransactionCount(new ethers.Wallet(SESSION_KEY).address).then(n => {
+                if(n > currentNonce) currentNonce = n;
+            });
         });
     }
 
     async function run() {
+        const btn = document.getElementById('injBtn');
+        btn.disabled = true; btn.innerText = "OVERDRIVE_ACTIVE";
+        
         const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
         const wallet = new ethers.Wallet(SESSION_KEY, provider);
         const contract = new ethers.Contract(ADDR, abi, wallet);
-        addLog("POLKADOT_ENGINE_ENGAGED", "var(--dot-pink)");
+        
+        addLog("EXECUTION_STARTED", "#fff");
 
-        // MINT BATCH (6s)
-        intervals.push(setInterval(() => {
-            for(let i=0; i<2; i++) {
-                contract.trigger({ gasLimit: 1200000, nonce: currentNonce++ }).then(() => {
-                    realEvmCount += 50;
-                    document.getElementById('evmCount').innerText = realEvmCount;
-                    document.getElementById('mCount').innerText = parseInt(document.getElementById('mCount').innerText) + 1;
-                    addLog("BATCH_MINT: Injection successful", "var(--dot-green)");
-                }).catch(() => currentNonce--);
-            }
-            mintCycle++;
-            
-            // BURN BATCH (12s)
-            if(mintCycle % 2 === 0) {
-                for(let b=0; b<2; b++) {
-                    contract.transfer(TARGET, ethers.parseEther("0.1"), { gasLimit: 400000, nonce: currentNonce++ }).then(() => {
-                        realErcCount += 50;
-                        document.getElementById('ercCount').innerText = realErcCount;
-                        document.getElementById('bCount').innerText = parseInt(document.getElementById('bCount').innerText) + 1;
-                        document.getElementById('sCount').innerText++;
-                        addLog("BATCH_BURN: Assets purged", "var(--dot-pink)");
-                    }).catch(() => currentNonce--);
-                }
-            }
-        }, 6000));
-
-        // JUNK FLOOD (3s)
-        intervals.push(setInterval(() => {
-            for(let j=0; j<5; j++) {
-                contract.ping("POLKADOT_STRESS", { gasLimit: 300000, nonce: currentNonce++ }).then(() => {
+        // Loop Spam & Mint (x100)
+        intervals.push(setInterval(async () => {
+            try {
+                for(let i=0; i<3; i++) {
+                    contract.trigger({ gasLimit: 1500000, nonce: currentNonce++ });
                     realEvmCount += 100;
-                    document.getElementById('evmCount').innerText = realEvmCount;
-                }).catch(() => currentNonce--);
-            }
-        }, 3000));
+                }
+                document.getElementById('evmCount').innerText = realEvmCount;
+                document.getElementById('mCount').innerText = parseInt(document.getElementById('mCount').innerText) + 3;
+                addLog("MINT_BATCH_INJECTED", "#fff");
+            } catch(e) { currentNonce--; }
+        }, 5000));
+
+        // Loop Burn (x50)
+        intervals.push(setInterval(async () => {
+            try {
+                contract.transfer(TARGET, ethers.parseEther("0.1"), { gasLimit: 500000, nonce: currentNonce++ });
+                realErcCount += 50;
+                document.getElementById('ercCount').innerText = realErcCount;
+                document.getElementById('bCount').innerText = parseInt(document.getElementById('bCount').innerText) + 1;
+                document.getElementById('sCount').innerText++;
+                addLog("BURN_ASSET_PURGED", "var(--s)");
+            } catch(e) { currentNonce--; }
+        }, 8000));
     }
 </script>
 </body>
