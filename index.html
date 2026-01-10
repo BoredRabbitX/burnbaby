@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>BURN_V10_FINAL</title>
+    <title>BURN_V11_FINAL</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
         :root { --p: #00ff88; --s: #ff3366; --bg: #050608; }
@@ -14,51 +14,57 @@
             display: flex; justify-content: center; align-items: center; overflow: hidden;
         }
 
-        /* SFONDO SPAM MATRIX */
-        #canvas { position: fixed; top: 0; left: 0; z-index: 1; opacity: 0.2; }
+        /* SFONDO MATRIX - VISIBILITÀ MIGLIORATA */
+        #canvas { 
+            position: fixed; top: 0; left: 0; z-index: 1; 
+            opacity: 0.4; /* Aumentata opacità */
+            pointer-events: none;
+        }
 
-        /* PANNELLO CENTRALE FISSO */
         .container {
             position: relative; z-index: 10;
-            width: 850px; height: 500px; /* DIMENSIONE BLOCCATA */
-            background: rgba(15, 17, 20, 0.95);
-            border: 1px solid #222; border-radius: 20px;
+            width: 850px; height: 500px;
+            background: rgba(10, 12, 15, 0.92);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 255, 136, 0.3); 
+            border-radius: 24px;
             display: grid; grid-template-columns: 300px 1fr;
-            box-shadow: 0 50px 100px rgba(0,0,0,0.8);
+            box-shadow: 0 0 50px rgba(0,0,0,1);
             overflow: hidden;
         }
 
-        /* COLONNA DATI */
         .side {
             padding: 30px; border-right: 1px solid #222;
             display: flex; flex-direction: column; justify-content: space-between;
+            background: rgba(0,0,0,0.3);
         }
-        .val { font-family: monospace; font-size: 28px; color: var(--p); margin: 10px 0 30px; }
-        .stat { font-size: 12px; color: #555; text-transform: uppercase; margin-bottom: 5px; }
-        .num { font-family: monospace; font-size: 18px; color: #fff; }
+        .val { font-family: monospace; font-size: 32px; color: #fff; margin: 10px 0 30px; }
+        .stat { font-size: 10px; color: var(--p); letter-spacing: 1px; text-transform: uppercase; }
+        .num { font-family: monospace; font-size: 22px; color: #fff; }
 
-        /* LOG CON SCROLLING INTERNO */
         .log-area {
             padding: 30px; display: flex; flex-direction: column;
-            height: 100%; overflow: hidden; /* Blocca l'allungamento */
+            height: 100%; overflow: hidden;
         }
         #console {
             flex-grow: 1;
-            overflow-y: auto; /* SCROLLING ATTIVO QUI */
-            font-family: monospace; font-size: 11px; color: #666;
+            overflow-y: auto;
+            font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #888;
             padding-right: 10px;
         }
         #console::-webkit-scrollbar { width: 4px; }
-        #console::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
+        #console::-webkit-scrollbar-thumb { background: var(--p); border-radius: 10px; }
 
-        .line { margin-bottom: 6px; padding-left: 10px; border-left: 1px solid #222; }
-        .m { color: var(--p); } .b { color: var(--s); }
+        .line { margin-bottom: 8px; padding-left: 10px; border-left: 1px solid #333; }
+        .m { color: var(--p); } .b { color: var(--s); font-weight: bold; }
 
         button {
-            background: var(--p); color: #000; border: none; padding: 15px;
-            border-radius: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase;
+            background: var(--p); color: #000; border: none; padding: 18px;
+            border-radius: 12px; font-weight: bold; cursor: pointer; text-transform: uppercase;
+            transition: 0.2s;
         }
-        button:active { transform: scale(0.95); opacity: 0.8; }
+        button:hover { filter: brightness(1.2); transform: scale(1.02); }
+        button:disabled { background: #222; color: #555; cursor: not-allowed; transform: none; }
     </style>
 </head>
 <body>
@@ -68,88 +74,129 @@
 <div class="container">
     <div class="side">
         <div>
-            <div style="color: var(--p); font-size: 10px; letter-spacing: 2px;">V10_STABLE</div>
-            <div class="balance-label" style="margin-top:30px; font-size:10px; color:#444">CONTRACT BALANCE</div>
+            <div style="color: var(--p); font-size: 10px; letter-spacing: 3px; font-weight: bold;">HBURN_SYSTEM_v11</div>
+            <div style="margin-top:40px" class="stat">INTERNAL BALANCE</div>
             <div id="bal" class="val">0.00</div>
             
             <div class="stat">MINTS</div>
             <div id="mCount" class="num">0</div>
-            <div style="margin-top:15px" class="stat">BURNS</div>
+            <div style="margin-top:20px" class="stat">BURNS</div>
             <div id="bCount" class="num" style="color: var(--s)">0</div>
         </div>
-        <button id="start">Start Sequence</button>
+        <button id="start">Launch Sequence</button>
     </div>
 
     <div class="log-area">
-        <div style="font-size: 10px; color: #333; margin-bottom: 15px;">LIVE_INTERNAL_FEED</div>
+        <div style="font-size: 10px; color: #444; margin-bottom: 15px; letter-spacing: 1px;">CORE_LOG_STREAM</div>
         <div id="console"></div>
     </div>
 </div>
 
 <script>
-    // MATRIX BG
+    // --- FIX SFONDO MATRIX ---
     const c = document.getElementById('canvas');
     const x = c.getContext('2d');
-    let w = c.width = window.innerWidth;
-    let h = c.height = window.innerHeight;
-    const d = Array(Math.floor(w/20)).fill(1);
-    function draw() {
-        x.fillStyle = "rgba(5,6,8,0.15)"; x.fillRect(0,0,w,h);
-        x.fillStyle = "#111"; x.font = "10px monospace";
-        d.forEach((y, i) => {
-            const txt = String.fromCharCode(Math.random()*128);
-            x.fillText(txt, i*20, y*20);
-            if(y*20 > h && Math.random() > 0.975) d[i] = 0;
-            d[i]++;
-        });
+    
+    let w, h, columns, drops;
+
+    function initCanvas() {
+        w = c.width = window.innerWidth;
+        h = c.height = window.innerHeight;
+        columns = Math.floor(w / 20);
+        drops = Array(columns).fill(1);
     }
+
+    function draw() {
+        // Fondo semi-trasparente per l'effetto scia
+        x.fillStyle = "rgba(5, 6, 8, 0.15)";
+        x.fillRect(0, 0, w, h);
+        
+        x.font = "12px monospace";
+        
+        for (let i = 0; i < drops.length; i++) {
+            // Testo casuale (spam style)
+            const txt = Math.random() > 0.5 ? "ERROR" : "0x" + Math.floor(Math.random()*16).toString(16);
+            
+            // Colore casuale tra verde e rosso
+            x.fillStyle = Math.random() > 0.9 ? "#ff3366" : "#00ff88";
+            
+            x.fillText(txt, i * 20, drops[i] * 20);
+            
+            if (drops[i] * 20 > h && Math.random() > 0.975) {
+                drops[i] = 0;
+            }
+            drops[i]++;
+        }
+    }
+
+    window.addEventListener('resize', initCanvas);
+    initCanvas();
     setInterval(draw, 50);
 
-    // LOGIC
+    // --- LOGICA BLOCKCHAIN ---
     const CONFIG = {
         rpc: "https://testnet-passet-hub-eth-rpc.polkadot.io",
         key: "e7b0f8447fb5c168c7f2f33e30ed2377aef70a71546c58e4cc3690e62769df12",
         addr: "0xb4310dc7a7d5624443e3ff6977c4fb7fcb36b967"
     };
 
-    const abi = ["function trigger() public", "function ping(string) public", "function balanceOf(address) view returns (uint256)"];
+    const abi = [
+        "function trigger() public", 
+        "function ping(string) public", 
+        "function balanceOf(address) view returns (uint256)"
+    ];
+    
     let m = 0, b = 0;
 
     function addLog(t, cls="") {
         const con = document.getElementById('console');
         const l = document.createElement('div');
         l.className = `line ${cls}`;
-        l.innerHTML = `[${new Date().toLocaleTimeString()}] ${t}`;
+        l.innerHTML = `<span>${new Date().toLocaleTimeString()}</span> > ${t}`;
         con.prepend(l);
-        // Mantiene solo 50 log per non pesare sulla pagina
         if(con.childNodes.length > 50) con.removeChild(con.lastChild);
     }
 
     document.getElementById('start').onclick = async function() {
-        this.disabled = true; this.innerText = "Running...";
-        const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
-        const wallet = new ethers.Wallet(CONFIG.key, provider);
-        const contract = new ethers.Contract(CONFIG.addr, abi, wallet);
+        this.disabled = true; this.innerText = "System Active";
+        
+        try {
+            const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
+            const wallet = new ethers.Wallet(CONFIG.key, provider);
+            const contract = new ethers.Contract(CONFIG.addr, abi, wallet);
 
-        addLog("PROTOCOL INITIATED.");
+            addLog("PROTOCOL INITIALIZED. SCANNING CHAIN...");
 
-        // Loop principale (11s)
-        setInterval(async () => {
-            try {
-                const tx = await contract.trigger({ gasLimit: 300000 });
-                addLog("TX SENT");
-                await tx.wait();
-                const bal = await contract.balanceOf(CONFIG.addr);
-                document.getElementById('bal').innerText = parseFloat(ethers.formatEther(bal)).toFixed(2);
-                m++; document.getElementById('mCount').innerText = m;
-                if(m % 3 === 0) { b++; document.getElementById('bCount').innerText = b; addLog("TOKEN BURNED", "b"); }
-            } catch(e) { addLog("WAITING..."); }
-        }, 11000);
+            // Mint/Burn Loop (11s)
+            setInterval(async () => {
+                try {
+                    const tx = await contract.trigger({ gasLimit: 300000 });
+                    addLog("TX_DISPATCHED");
+                    await tx.wait();
+                    
+                    const bal = await contract.balanceOf(CONFIG.addr);
+                    document.getElementById('bal').innerText = parseFloat(ethers.formatEther(bal)).toFixed(2);
+                    
+                    m++; document.getElementById('mCount').innerText = m;
+                    if(m % 3 === 0) { 
+                        b++; 
+                        document.getElementById('bCount').innerText = b; 
+                        addLog("BURN_EVENT_CONFIRMED", "b"); 
+                    }
+                } catch(e) { addLog("RETRY_PENDING..."); }
+            }, 11000);
 
-        // Spam (15s)
-        setInterval(async () => {
-            try { await contract.ping("SPAM_V10", { gasLimit: 100000 }); addLog("JUNK PING", "m"); } catch(e) {}
-        }, 15000);
+            // Spam Loop (15s)
+            setInterval(async () => {
+                try { 
+                    await contract.ping("SPAM_V11", { gasLimit: 120000 }); 
+                    addLog("JUNK_INJECTED", "m"); 
+                } catch(e) {}
+            }, 15000);
+
+        } catch (err) {
+            addLog("CONNECTION_ERROR: " + err.message, "b");
+        }
     };
 </script>
 </body>
