@@ -3,44 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HBURN_XCM_PASEO_v27.1</title>
+    <title>HBURN_ULTIMATE_v27.2</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
-        :root { --p: #00ff88; --s: #ff3366; --bg: #030406; --glass: rgba(12, 14, 18, 0.98); --net: #008cff; --warning: #ffaa00; --xcm: #e6007a; }
+        :root { --p: #00ff88; --s: #ff3366; --bg: #030406; --glass: rgba(12, 14, 18, 0.98); --net: #008cff; --warn: #ffaa00; --xcm: #e6007a; }
         * { box-sizing: border-box; }
         body, html { margin: 0; padding: 0; min-height: 100vh; width: 100%; background: var(--bg); color: #fff; font-family: 'Consolas', monospace; overflow: hidden; display: flex; justify-content: center; align-items: center; }
 
         #canvas { position: fixed; top: 0; left: 0; z-index: 1; opacity: 0.2; pointer-events: none; }
-        
-        /* SCROLLBAR */
         #console::-webkit-scrollbar { width: 4px; }
-        #console::-webkit-scrollbar-thumb { background: var(--xcm); border-radius: 10px; }
+        #console::-webkit-scrollbar-thumb { background: var(--p); border-radius: 10px; }
 
-        #authOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.97); z-index: 100; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(15px); }
-        .auth-box { width: 90%; max-width: 400px; padding: 40px; border: 1px solid var(--xcm); border-radius: 20px; text-align: center; }
-        .auth-input { background: #000; border: 1px solid #222; color: var(--xcm); width: 100%; padding: 15px; margin: 20px 0; border-radius: 8px; text-align: center; }
+        #authOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 100; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(15px); }
+        .auth-box { width: 90%; max-width: 400px; padding: 40px; border: 1px solid var(--p); border-radius: 20px; text-align: center; box-shadow: 0 0 50px rgba(0,255,136,0.1); }
+        .auth-input { background: #000; border: 1px solid #222; color: var(--p); width: 100%; padding: 15px; margin: 20px 0; border-radius: 8px; text-align: center; }
 
-        .container { position: relative; z-index: 10; width: 98%; max-width: 1250px; height: 92vh; background: var(--glass); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; display: flex; flex-direction: row; overflow: hidden; box-shadow: 0 0 100px #000; }
-        .side { width: 380px; padding: 25px; border-right: 1px solid #1a1d23; display: flex; flex-direction: column; overflow-y: auto; background: rgba(0,0,0,0.4); flex-shrink: 0; }
-        .main-view { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .container { position: relative; z-index: 10; width: 98%; max-width: 1300px; height: 94vh; background: var(--glass); border: 1px solid rgba(255,255,255,0.05); border-radius: 24px; display: grid; grid-template-columns: 380px 1fr; overflow: hidden; box-shadow: 0 0 100px #000; }
+        .side { padding: 25px; border-right: 1px solid #1a1d23; display: flex; flex-direction: column; overflow-y: auto; background: rgba(0,0,0,0.4); }
+        .main-view { display: flex; flex-direction: column; overflow: hidden; }
 
-        .stat-card { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 12px; }
-        .stat-label { font-size: 9px; color: var(--p); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 5px; font-weight: bold;}
-        .val-big { font-size: 24px; font-weight: bold; color: var(--p); font-family: 'JetBrains Mono', monospace; }
+        /* STAT CARDS */
+        .stat-card { background: rgba(255,255,255,0.03); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px; }
+        .stat-label { font-size: 9px; color: var(--p); letter-spacing: 1px; text-transform: uppercase; font-weight: bold; margin-bottom: 4px; }
+        .val-big { font-size: 22px; font-weight: bold; color: var(--p); font-family: 'JetBrains Mono', monospace; }
+        .val-mid { font-size: 16px; color: #fff; }
 
-        /* XCM MONITORING BARS */
-        .xcm-monitor { margin-bottom: 20px; padding: 12px; border: 1px solid rgba(230, 0, 122, 0.2); border-radius: 10px; background: rgba(230, 0, 122, 0.05); }
-        .xcm-bar-label { display: flex; justify-content: space-between; font-size: 9px; color: var(--xcm); margin-bottom: 5px; font-weight: 900; }
-        .xcm-timer-bar { width: 100%; height: 4px; background: #200; border-radius: 2px; overflow: hidden; }
-        .xcm-fill { height: 100%; width: 0%; background: var(--xcm); box-shadow: 0 0 10px var(--xcm); transition: width 0.1s linear; }
+        /* PROGRESS MONITOR */
+        .monitor-box { margin-bottom: 15px; padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.3); border-left: 3px solid #222; }
+        .m-info { display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 6px; font-weight: bold; }
+        .m-bar { width: 100%; height: 4px; background: #111; border-radius: 2px; overflow: hidden; }
+        .m-fill { height: 100%; width: 0%; transition: width 0.1s linear; }
 
-        .header-info { padding: 20px 30px; background: rgba(0,0,0,0.3); border-bottom: 1px solid #1a1d23; display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; font-size: 11px; }
-        #console { flex-grow: 1; padding: 30px; overflow-y: auto; font-size: 11px; color: #777; background: rgba(0,0,0,0.15); line-height: 1.5; }
+        .header-info { padding: 15px 30px; background: rgba(0,0,0,0.3); border-bottom: 1px solid #1a1d23; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-size: 10px; }
+        #console { flex-grow: 1; padding: 25px; overflow-y: auto; font-size: 11px; color: #666; background: rgba(0,0,0,0.1); line-height: 1.6; }
 
-        .status-badge { font-size: 10px; font-weight: bold; text-align: center; margin-bottom: 15px; border: 1px solid; padding: 8px; border-radius: 5px; text-transform: uppercase; }
-        .xcm-active { color: var(--xcm); border-color: var(--xcm); box-shadow: inset 0 0 10px rgba(230, 0, 122, 0.1); }
-        
-        button { background: var(--xcm); color: #fff; border: none; padding: 18px; border-radius: 12px; font-weight: 900; cursor: pointer; text-transform: uppercase; width: 100%; margin-top: 5px; }
+        button { background: var(--p); color: #000; border: none; padding: 18px; border-radius: 12px; font-weight: 900; cursor: pointer; text-transform: uppercase; width: 100%; margin-top: 10px; }
+        button:disabled { opacity: 0.5; background: #333; color: #666; }
     </style>
 </head>
 <body>
@@ -49,60 +47,63 @@
 
 <div id="authOverlay">
     <div class="auth-box">
-        <div class="stat-label" style="color:var(--xcm)">HBURN XCM PASEO ENGINE</div>
+        <div class="stat-label">HBURN ULTIMATE TERMINAL v27.2</div>
         <input type="password" id="inputKey" class="auth-input" placeholder="PRIVATE_KEY_0x">
-        <button onclick="unlock()">INIZIALIZZA XCM OVERDRIVE</button>
+        <button onclick="unlock()">ACCESS ALL PROTOCOLS</button>
     </div>
 </div>
 
 <div class="container">
     <div class="side">
-        <div class="status-badge xcm-active">PASEO CROSS-CHAIN ROUTING: ON</div>
-        
-        <div class="xcm-monitor">
-            <div class="xcm-bar-label"><span>HRMP CHANNEL LOAD</span><span id="xcmSec">0.0s</span></div>
-            <div class="xcm-timer-bar"><div id="xcmFill" class="xcm-fill"></div></div>
-            <div style="font-size: 8px; color: #666; margin-top: 5px;">TARGET: Relay Chain / Parachain 1000</div>
-        </div>
-
         <div class="stat-card">
-            <div class="stat-label">Global Total Supply</div>
-            <div id="totalSupply" class="val-big">0.00</div>
+            <div class="stat-label">Total Global Supply</div>
+            <div id="totalSupply" class="val-big" style="color:var(--p)">0.00</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Contract Balance (Pool)</div>
+            <div id="bal" class="val-mid">0.00</div>
         </div>
 
-        <div style="display:flex; gap:10px">
-            <div class="stat-card" style="flex:1">
-                <div class="stat-label">Mints</div>
-                <div id="mCount" style="color:var(--p); font-size: 20px; font-weight: bold;">0</div>
-            </div>
-            <div class="stat-card" style="flex:1">
-                <div class="stat-label">XCM Msg</div>
-                <div id="xCount" style="color:var(--xcm); font-size: 20px; font-weight: bold;">0</div>
-            </div>
+        <div class="monitor-box" style="border-color: var(--p)">
+            <div class="m-info"><span style="color:var(--p)">MINT CYCLE (25x)</span><span id="mSec">0.0s</span></div>
+            <div class="m-bar"><div id="mFill" class="m-fill" style="background:var(--p); box-shadow: 0 0 10px var(--p)"></div></div>
+        </div>
+        <div class="monitor-box" style="border-color: var(--s)">
+            <div class="m-info"><span style="color:var(--s)">BURN CYCLE (25x)</span><span id="bSec">0.0s</span></div>
+            <div class="m-bar"><div id="bFill" class="m-fill" style="background:var(--s); box-shadow: 0 0 10px var(--s)"></div></div>
+        </div>
+        <div class="monitor-box" style="border-color: var(--net)">
+            <div class="m-info"><span style="color:var(--net)">JUNK STRESS (50x)</span><span id="jSec">0.0s</span></div>
+            <div class="m-bar"><div id="jFill" class="m-fill" style="background:var(--net); box-shadow: 0 0 10px var(--net)"></div></div>
+        </div>
+        <div class="monitor-box" style="border-color: var(--xcm)">
+            <div class="m-info"><span style="color:var(--xcm)">XCM ROUTING (PASEO)</span><span id="xSec">0.0s</span></div>
+            <div class="m-bar"><div id="xFill" class="m-fill" style="background:var(--xcm); box-shadow: 0 0 10px var(--xcm)"></div></div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <div class="stat-card"><div class="stat-label">Mints</div><div id="mCount" class="val-mid">0</div></div>
+            <div class="stat-card"><div class="stat-label" style="color:var(--s)">Burns</div><div id="bCount" class="val-mid">0</div></div>
+            <div class="stat-card"><div class="stat-label" style="color:var(--net)">Junk</div><div id="jCount" class="val-mid">0</div></div>
+            <div class="stat-card"><div class="stat-label" style="color:var(--xcm)">XCM</div><div id="xCount" class="val-mid">0</div></div>
         </div>
         
-        <button id="start" disabled>AWAITING AUTH</button>
-        <div style="font-size: 9px; color: #444; margin-top: 20px;">
-            > XCM Version: v3<br>
-            > Network: Paseo (Testnet)<br>
-            > Nonce Strategy: Pipelined
-        </div>
+        <button id="start" disabled>INITIALIZING ENGINE...</button>
     </div>
 
     <div class="main-view">
         <div class="header-info">
-            <div>RELAY: <span style="color:var(--xcm)">PASEO</span></div>
-            <div>NONCE: <span id="curNonce" style="color:var(--warning)">...</span></div>
+            <div>NONCE: <span id="curNonce" style="color:var(--warn)">...</span></div>
             <div>BLOCK: <span id="blockNum" style="color:#fff">#...</span></div>
             <div>FUEL: <span id="pasBalance" style="color:var(--p)">0.00 PAS</span></div>
-            <div>LATENCY: <span id="latency" style="color:var(--net)">0ms</span></div>
-            <div>XCM STATE: <span style="color:var(--xcm)">DISPATCHING</span></div>
+            <div>XCM: <span style="color:var(--xcm)">ACTIVE</span></div>
         </div>
         <div id="console"></div>
     </div>
 </div>
 
 <script>
+    // BG MATRIX EFFECT
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     let w, h, drops;
@@ -112,8 +113,9 @@
         ctx.fillStyle = "rgba(3, 4, 6, 0.15)"; ctx.fillRect(0, 0, w, h);
         ctx.font = "10px monospace";
         drops.forEach((y, i) => {
-            ctx.fillStyle = Math.random() > 0.8 ? "#e6007a" : "#00ff88";
-            ctx.fillText(Math.random() > 0.5 ? "X" : "M", i*40, y*15);
+            const char = ["0","1","X","M","B"][Math.floor(Math.random()*5)];
+            ctx.fillStyle = Math.random() > 0.9 ? "#e6007a" : "#00ff88";
+            ctx.fillText(char, i*40, y*15);
             if (y*15 > h && Math.random() > 0.98) drops[i]=0; drops[i]++;
         });
     }
@@ -132,6 +134,7 @@
         
         provider.getBlockNumber().then(n => document.getElementById('blockNum').innerText = "#" + n);
         contract.totalSupply().then(s => document.getElementById('totalSupply').innerText = parseFloat(ethers.formatEther(s)).toFixed(2));
+        contract.balanceOf(CONFIG.addr).then(b => document.getElementById('bal').innerText = parseFloat(ethers.formatEther(b)).toFixed(2));
         provider.getBalance(wallet.address).then(g => document.getElementById('pasBalance').innerText = parseFloat(ethers.formatEther(g)).toFixed(3) + " PAS");
         provider.getTransactionCount(wallet.address).then(n => {
             currentNonce = Math.max(currentNonce, n);
@@ -141,11 +144,11 @@
 
     function unlock() {
         SESSION_KEY = document.getElementById('inputKey').value;
-        if(SESSION_KEY.length < 60) return alert("Key Errata");
+        if(SESSION_KEY.length < 60) return alert("Key Error");
         document.getElementById('authOverlay').remove();
         document.getElementById('start').disabled = false;
-        document.getElementById('start').innerText = "IGNITE XCM ENGINE";
-        sync(); setInterval(sync, 10000);
+        document.getElementById('start').innerText = "IGNITE ALL PROTOCOLS";
+        sync(); setInterval(sync, 8000);
     }
 
     function addLog(t, col="#555") {
@@ -153,50 +156,62 @@
         const l = document.createElement('div'); l.style.color = col; l.style.marginBottom="5px";
         l.innerHTML = `[${new Date().toLocaleTimeString()}] > ${t}`;
         con.prepend(l);
+        if(con.childNodes.length > 50) con.removeChild(con.lastChild);
     }
 
     document.getElementById('start').onclick = async function() {
-        this.disabled = true; this.innerText = "XCM ENGINE LIVE";
+        this.disabled = true; this.innerText = "OVERDRIVE LIVE";
         const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
         const wallet = new ethers.Wallet(SESSION_KEY, provider);
         const contract = new ethers.Contract(CONFIG.addr, abi, wallet);
         
-        let m=0, x=0, xt=0;
+        let m=0, b=0, j=0, x=0;
+        let mt=0, bt=0, jt=0, xt=0;
 
-        // XCM Timer Loop
+        // Unified Timer Loop
         setInterval(() => {
-            xt += 0.1;
-            const xVal = (xt % 10.0);
-            document.getElementById('xcmFill').style.width = (xVal/10.0*100) + "%";
-            document.getElementById('xcmSec').innerText = xVal.toFixed(1) + "s / 10s";
+            mt += 0.1; bt += 0.1; jt += 0.1; xt += 0.1;
+            document.getElementById('mFill').style.width = ((mt%6.5)/6.5*100) + "%";
+            document.getElementById('mSec').innerText = (6.5 - (mt%6.5)).toFixed(1) + "s";
+            document.getElementById('bFill').style.width = ((bt%13)/13*100) + "%";
+            document.getElementById('bSec').innerText = (13 - (bt%13)).toFixed(1) + "s";
+            document.getElementById('jFill').style.width = ((jt%10)/10*100) + "%";
+            document.getElementById('jSec').innerText = (10 - (jt%10)).toFixed(1) + "s";
+            document.getElementById('xFill').style.width = ((xt%15)/15*100) + "%";
+            document.getElementById('xSec').innerText = (15 - (xt%15)).toFixed(1) + "s";
         }, 100);
 
-        // PIPELINED XCM DISPATCH (Trigger)
+        // TRIGGER PIPELINE (Mint & Burn)
         setInterval(async () => {
-            addLog("XCM_REMOTE_EXECUTION: INJECTING PIPELINE...", "#e6007a");
-            for(let i=0; i<3; i++) {
+            addLog("PIPELINE_EXEC: TRIGGERING BATCH...", var(--p));
+            for(let i=0; i<3; i++){
                 contract.trigger({ gasLimit: 1500000, nonce: currentNonce }).then(tx => {
-                    addLog(`XCM_TX [${tx.nonce}] ROUTED TO HUB`, "#00ff88");
-                    tx.wait().then(() => { m += 25; document.getElementById('mCount').innerText = m; });
+                    tx.wait().then(() => {
+                        m += 25; document.getElementById('mCount').innerText = m;
+                        if(m % 50 === 0) { b += 25; document.getElementById('bCount').innerText = b; addLog("HBURN DESTROYED", "#ff3366"); bt=0; }
+                    });
                 });
-                currentNonce++;
-                document.getElementById('curNonce').innerText = currentNonce;
+                currentNonce++; mt=0;
             }
-        }, 7000);
+        }, 6500);
 
-        // JUNK XCM FLOOD (Ping)
+        // JUNK & XCM PIPELINE
         setInterval(async () => {
-            addLog("XCM_TRANSPORT_LAYER: FLOODING CHANNELS...", "#e6007a");
-            for(let i=0; i<2; i++) {
-                contract.ping("PASEO_XCM_STRESS_TEST", { gasLimit: 500000, nonce: currentNonce }).then(tx => {
-                    addLog(`XCM_JUNK [${tx.nonce}] DISPATCHED`, "#e6007a");
+            addLog("OVERDRIVE: INJECTING JUNK + XCM PING", "#e6007a");
+            for(let i=0; i<2; i++){
+                // Junk Ping
+                contract.ping("STRESS_TEST_v27", { gasLimit: 500000, nonce: currentNonce }).then(() => {
+                    j += 50; document.getElementById('jCount').innerText = j;
+                });
+                currentNonce++; jt=0;
+                
+                // XCM Ping (simulato tramite payload junk su Paseo)
+                contract.ping("XCM_REMOTE_MSG", { gasLimit: 500000, nonce: currentNonce }).then(() => {
                     x++; document.getElementById('xCount').innerText = x;
                 });
-                currentNonce++;
-                document.getElementById('curNonce').innerText = currentNonce;
+                currentNonce++; xt=0;
             }
-            xt = 0;
-        }, 10000);
+        }, 12000);
     };
 </script>
 </body>
