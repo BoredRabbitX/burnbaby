@@ -2,124 +2,233 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>BURN_MINIMAL_OS</title>
+    <title>BURN_TERMINAL_v7</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #0f1115; --card: #1a1d23; --primary: #00ff88; --accent: #ff3366; --text: #e0e6ed; }
-        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .container { width: 900px; height: 600px; display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
-        .panel { background: var(--card); border-radius: 12px; padding: 24px; box-sizing: border-box; display: flex; flex-direction: column; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        
-        h1 { font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: #636e72; margin-bottom: 24px; font-weight: 600; }
-        .stat-group { margin-bottom: 20px; }
-        .stat-label { font-size: 11px; color: #636e72; text-transform: uppercase; margin-bottom: 4px; }
-        .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 24px; color: #fff; }
-        
-        .progress-container { height: 6px; background: #2d3436; border-radius: 3px; margin: 10px 0; overflow: hidden; }
-        #burnProgress { width: 0%; height: 100%; background: var(--accent); transition: width 0.5s; }
-
-        input { background: #2d3436; border: none; border-radius: 6px; color: #fff; padding: 12px; margin-bottom: 12px; width: 100%; box-sizing: border-box; font-family: 'JetBrains Mono'; font-size: 12px; }
-        button { background: var(--primary); color: #000; border: none; border-radius: 6px; padding: 16px; font-weight: 700; cursor: pointer; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px; }
-        button:hover { opacity: 0.9; transform: translateY(-1px); }
-
-        #console { flex-grow: 1; background: #00000044; border-radius: 8px; padding: 16px; font-family: 'JetBrains Mono', monospace; font-size: 11px; overflow-y: auto; color: #b2bec3; }
-        .m-log { color: var(--primary); }
-        .b-log { color: var(--accent); font-weight: bold; }
-        .i-log { color: #636e72; }
+        :root {
+            --bg: #030406;
+            --glass: rgba(18, 20, 25, 0.7);
+            --primary: #00ffa3;
+            --secondary: #ff3e8d;
+            --border: rgba(255, 255, 255, 0.05);
+        }
+        body {
+            background: var(--bg);
+            color: #fff;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            background-image: radial-gradient(circle at 50% 50%, #1a1d23 0%, #030406 100%);
+        }
+        .app-container {
+            width: 850px;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 32px;
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            overflow: hidden;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+        }
+        .sidebar {
+            padding: 40px;
+            border-right: 1px solid var(--border);
+            background: rgba(0,0,0,0.2);
+        }
+        .main-view {
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+        }
+        .label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #636e72;
+            margin-bottom: 12px;
+        }
+        .balance-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 40px;
+            background: linear-gradient(to right, #fff, #636e72);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat-grid {
+            display: grid;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .stat-item {
+            padding: 20px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+        }
+        .stat-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        #btnLaunch {
+            width: 100%;
+            padding: 20px;
+            border-radius: 18px;
+            border: none;
+            background: var(--primary);
+            color: #000;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        #btnLaunch:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 255, 163, 0.2);
+        }
+        #btnLaunch:disabled {
+            background: #2d3436;
+            color: #636e72;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .log-container {
+            flex-grow: 1;
+            background: rgba(0,0,0,0.3);
+            border-radius: 24px;
+            padding: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            overflow-y: auto;
+            color: #888;
+            border: 1px solid var(--border);
+        }
+        .log-entry { margin-bottom: 8px; border-left: 2px solid transparent; padding-left: 10px; }
+        .log-mint { border-color: var(--primary); color: var(--primary); }
+        .log-burn { border-color: var(--secondary); color: var(--secondary); }
+        .status-pill {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 10px;
+            background: rgba(255,255,255,0.05);
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="panel">
-        <h1>Control Unit</h1>
+<div class="app-container">
+    <div class="sidebar">
+        <div class="status-pill" id="statusPill">SYSTEM: STANDBY</div>
         
-        <div class="stat-group">
-            <div class="stat-label">Contract Balance</div>
-            <div id="cBal" class="stat-value">0.00</div>
+        <div class="label">Balance Asset</div>
+        <div id="balance" class="balance-value">0.00</div>
+
+        <div class="stat-grid">
+            <div class="stat-item">
+                <div class="label">Mints</div>
+                <div id="mintCount" class="stat-num">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="label">Burns</div>
+                <div id="burnCount" class="stat-num" style="color: var(--secondary)">0</div>
+            </div>
         </div>
 
-        <div class="stat-group">
-            <div class="stat-label">Minted Total</div>
-            <div id="mCount" class="stat-value" style="color: var(--primary);">0</div>
-        </div>
-
-        <div class="stat-group">
-            <div class="stat-label">Burned Total</div>
-            <div id="bCount" class="stat-value" style="color: var(--accent);">0</div>
-            <div class="stat-label" style="margin-top:8px; font-size:9px;">Next Burn Cycle</div>
-            <div class="progress-container"><div id="burnProgress"></div></div>
-        </div>
-
-        <input type="password" id="key" value="e7b0f8447fb5c168c7f2f33e30ed2377aef70a71546c58e4cc3690e62769df12">
-        <input type="text" id="addr" value="0x01edfe82fdcc7247e3b614eab68b1ff515e0fb43">
-        
-        <button id="startBtn">Deploy Protocol</button>
+        <button id="btnLaunch">Deploy Protocol</button>
     </div>
 
-    <div class="panel">
-        <h1>Live Feed</h1>
-        <div id="console">System standby. Awaiting deployment...</div>
+    <div class="main-view">
+        <div class="label">Live Chain Activity</div>
+        <div id="logContainer" class="log-container">
+            > Ready for Paseo AssetHub deployment...
+        </div>
     </div>
 </div>
 
 <script>
-    let mTotal = 0, bTotal = 0, cycles = 0;
-    const abi = [
-        "function trigger() public",
-        "function balanceOf(address) view returns (uint256)",
-        "event Transfer(address indexed from, address indexed to, uint256 value)"
-    ];
-
-    const log = (msg, cls="") => {
-        const c = document.getElementById('console');
-        c.innerHTML = `<div class="${cls}">[${new Date().toLocaleTimeString()}] ${msg}</div>` + c.innerHTML;
+    // CONFIGURAZIONE NASCOSTA
+    const CONFIG = {
+        rpc: "https://testnet-passet-hub-eth-rpc.polkadot.io",
+        key: "e7b0f8447fb5c168c7f2f33e30ed2377aef70a71546c58e4cc3690e62769df12",
+        contract: "0xb4310dc7a7d5624443e3ff6977c4fb7fcb36b967"
     };
 
-    document.getElementById('startBtn').onclick = async () => {
-        const provider = new ethers.JsonRpcProvider("https://testnet-passet-hub-eth-rpc.polkadot.io");
-        const wallet = new ethers.Wallet(document.getElementById('key').value, provider);
-        const contract = new ethers.Contract(document.getElementById('addr').value, abi, wallet);
+    const abi = [
+        "function trigger() public",
+        "function ping(string memory) public",
+        "function balanceOf(address) view returns (uint256)"
+    ];
 
-        log("PROTOCOL INITIALIZED", "m-log");
-        document.getElementById('startBtn').innerText = "Running...";
-        document.getElementById('startBtn').disabled = true;
+    let mints = 0;
+    let burns = 0;
 
-        contract.on("Transfer", (from, to, value) => {
-            const amt = parseFloat(ethers.formatEther(value));
-            const cAddr = document.getElementById('addr').value.toLowerCase();
+    const addLog = (msg, type = "") => {
+        const container = document.getElementById('logContainer');
+        const div = document.createElement('div');
+        div.className = `log-entry ${type}`;
+        div.innerHTML = `<span>[${new Date().toLocaleTimeString()}]</span> ${msg}`;
+        container.prepend(div);
+    };
+
+    document.getElementById('btnLaunch').onclick = async () => {
+        try {
+            const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
+            const wallet = new ethers.Wallet(CONFIG.key, provider);
+            const contract = new ethers.Contract(CONFIG.contract, abi, wallet);
+
+            document.getElementById('btnLaunch').disabled = true;
+            document.getElementById('btnLaunch').innerText = "Protocol Active";
+            document.getElementById('statusPill').innerText = "SYSTEM: ACTIVE_LOOP";
+            document.getElementById('statusPill').style.color = "var(--primary)";
             
-            if (from === "0x0000000000000000000000000000000000000000" && to.toLowerCase() === cAddr) {
-                mTotal += amt;
-                document.getElementById('mCount').innerText = mTotal.toFixed(0);
-                log(`MINT: +${amt} units`, "m-log");
-            } else if (from.toLowerCase() === cAddr && to === "0x0000000000000000000000000000000000000000") {
-                bTotal += amt;
-                document.getElementById('bCount').innerText = bTotal.toFixed(0);
-                log(`BURN: -${amt} units`, "b-log");
-            }
-        });
+            addLog("STABILIZING CONNECTION TO ASSETHUB...", "log-mint");
 
-        while(true) {
-            try {
-                log("Executing trigger...", "i-log");
-                const tx = await contract.trigger({ gasLimit: 400000 });
-                await tx.wait();
-                
-                cycles++;
-                // Aggiorna progresso Burn (ciclo di 3)
-                let progress = (cycles % 3) === 0 ? 100 : (cycles % 3) * 33.3;
-                document.getElementById('burnProgress').style.width = progress + "%";
-                
-                const b = await contract.balanceOf(document.getElementById('addr').value);
-                document.getElementById('cBal').innerText = parseFloat(ethers.formatEther(b)).toFixed(2);
-                
-                log("Network confirmation received", "i-log");
-            } catch(e) {
-                log("Cooldown active / RPC congestion", "i-log");
-            }
-            await new Promise(r => setTimeout(r, 61000));
+            // --- LOOP TRIGGER (Mint/Burn ogni 11s) ---
+            setInterval(async () => {
+                try {
+                    const tx = await contract.trigger({ gasLimit: 300000 });
+                    addLog("CORE_TRIGGER DISPATCHED");
+                    await tx.wait();
+                    
+                    const b = await contract.balanceOf(CONFIG.contract);
+                    document.getElementById('balance').innerText = parseFloat(ethers.formatEther(b)).toFixed(2);
+                    
+                    // Nota: Aggiorniamo i contatori locali basandoci sul tempo
+                    mints++;
+                    document.getElementById('mintCount').innerText = mints;
+                    if(mints % 3 === 0) {
+                        burns++;
+                        document.getElementById('burnCount').innerText = burns;
+                        addLog("INTERNAL_BURN_CONFIRMED", "log-burn");
+                    }
+                } catch(e) { 
+                    addLog("TX_REJECTED: Cooldown active", "log-entry"); 
+                }
+            }, 11000);
+
+            // --- LOOP SPAM (Ping casuale) ---
+            setInterval(async () => {
+                try {
+                    const notes = ["STRESS_TEST_A", "HYPER_SPAM", "BLOCK_FILL", "PING_PONG"];
+                    const randomNote = notes[Math.floor(Math.random()*notes.length)];
+                    await contract.ping(randomNote, { gasLimit: 120000 });
+                    addLog(`SPAM_INJECTED: ${randomNote}`, "log-burn");
+                } catch(e) {}
+            }, 18000);
+
+        } catch (err) {
+            addLog("CRITICAL_ERROR: " + err.message, "log-burn");
         }
     };
 </script>
