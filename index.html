@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HBURN_EXPLORER_v30.3</title>
+    <title>HBURN_DEBUG_v30.4</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
         :root { --p: #00ff88; --s: #ff3366; --bg: #000; --glass: rgba(10, 10, 12, 0.94); --net: #008cff; --xcm: #e6007a; --dim: #555; }
@@ -12,9 +12,13 @@
 
         #canvas { position: fixed; top: 0; left: 0; z-index: 1; opacity: 0.2; pointer-events: none; }
 
-        /* AUTH */
+        /* AUTH & DEBUGGER */
         #auth { position: fixed; inset: 0; background: #000; z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .auth-input { background: transparent; border: none; border-bottom: 1px solid #222; color: var(--p); width: 300px; padding: 15px; text-align: center; font-size: 16px; margin-bottom: 20px; outline: none; }
+        .auth-card { width: 400px; text-align: center; background: #050505; padding: 40px; border: 1px solid #111; }
+        .auth-input { background: transparent; border: none; border-bottom: 1px solid #222; color: var(--p); width: 100%; padding: 15px; text-align: center; font-size: 14px; margin-bottom: 20px; outline: none; }
+        #loginDebug { width: 100%; height: 80px; background: #000; border: 1px solid #111; margin-top: 20px; padding: 10px; font-size: 10px; color: #444; text-align: left; overflow-y: auto; line-height: 1.4; }
+        .debug-err { color: var(--s) !important; font-weight: bold; }
+        .debug-ok { color: var(--p) !important; }
 
         /* MAIN LAYOUT */
         .container { 
@@ -26,28 +30,23 @@
         .col { padding: 25px; display: flex; flex-direction: column; border-right: 1px solid rgba(255,255,255,0.03); overflow: hidden; }
         .col:last-child { border-right: none; }
 
-        /* TITOLI & ANALYTICS */
         .group-title { font-size: 9px; color: #666; letter-spacing: 2px; margin-bottom: 15px; border-bottom: 1px solid #111; padding-bottom: 5px; text-transform: uppercase; }
         .label { font-size: 8px; color: var(--dim); text-transform: uppercase; margin-bottom: 4px; }
         .val { font-family: 'JetBrains Mono'; font-size: 15px; color: #fff; }
         
-        /* BLOCK MONITOR SPECIFIC */
         .block-card { background: rgba(255,255,255,0.02); padding: 15px; border-left: 2px solid var(--p); margin-bottom: 20px; }
         .pulse { animation: pulse-green 2s infinite; }
         @keyframes pulse-green { 0% { border-color: #004422; } 50% { border-color: var(--p); } 100% { border-color: #004422; } }
 
-        /* PROGRESS BARS */
         .p-box { width: 100%; height: 1px; background: rgba(255,255,255,0.05); margin-top: 8px; }
         .bar { height: 100%; width: 0%; transition: width 0.1s linear; }
 
-        /* CONSOLE & EXTRINSICS LIST */
         #console { flex-grow: 1; overflow-y: auto; font-family: 'JetBrains Mono'; font-size: 9px; color: #444; border-top: 1px solid #111; padding-top: 10px; }
         #console::-webkit-scrollbar { width: 0; }
         .phantom { color: var(--s); font-weight: bold; }
 
         button { background: transparent; border: 1px solid #222; color: #fff; padding: 10px; font-size: 10px; text-transform: uppercase; cursor: pointer; }
         button:hover:not(:disabled) { border-color: #fff; background: #fff; color: #000; }
-        #stopBtn:hover { background: var(--s); border-color: var(--s); color: #fff; }
     </style>
 </head>
 <body>
@@ -55,8 +54,15 @@
 <canvas id="canvas"></canvas>
 
 <div id="auth">
-    <input type="password" id="inputKey" class="auth-input" placeholder="SYSTEM_AUTH_KEY">
-    <button onclick="unlock()">INITIALIZE</button>
+    <div class="auth-card">
+        <div class="label" style="margin-bottom:20px; font-size:10px; letter-spacing:4px">System Authentication</div>
+        <input type="password" id="inputKey" class="auth-input" placeholder="0x_PRIVATE_KEY_REQUIRED">
+        <button onclick="unlock()" style="width:100%">Execute Handshake</button>
+        <div id="loginDebug">
+            [SYS] Awaiting input...<br>
+            [NET] RPC: testnet-passet-hub-eth-rpc.polkadot.io
+        </div>
+    </div>
 </div>
 
 <div class="container">
@@ -122,7 +128,6 @@
         <div style="margin-bottom:20px">
             <div class="label">Stealth Transfers (1/6s)</div>
             <div id="sCount" class="val" style="color:var(--s)">0</div>
-            <div class="val" style="font-size:10px; color:#444; margin-top:4px">Target: 0x3dd6...233</div>
         </div>
 
         <div class="group-title">Resources</div>
@@ -170,11 +175,20 @@
     let SESSION_KEY = "", intervals = [];
     let lastBlockTimestamp = Date.now();
     let blockTimes = [];
-
     const TARGET_ADDR = "0x3dd695D734B5DdE6B1955FFE75004c00862fb233";
     let currentNonce = 0, m=0, b=0, j=0, x=0, sCount=0, gasEst=0;
     const CONFIG = { rpc: "https://testnet-passet-hub-eth-rpc.polkadot.io", addr: "0xf63adbb9ef464443ea1f9eb3e28c0d0ad321b760" };
     const abi = ["function trigger() public", "function ping(string) public", "function balanceOf(address) view returns (uint256)", "function totalSupply() view returns (uint256)", "function transfer(address, uint256) public returns (bool)"];
+
+    function debugLog(msg, type="info") {
+        const d = document.getElementById('loginDebug');
+        const span = document.createElement('span');
+        if(type === "error") span.className = "debug-err";
+        if(type === "ok") span.className = "debug-ok";
+        span.innerHTML = `<br>[${type.toUpperCase()}] ${msg}`;
+        d.appendChild(span);
+        d.scrollTop = d.scrollHeight;
+    }
 
     async function sync() {
         if(!SESSION_KEY) return;
@@ -185,23 +199,18 @@
 
             const block = await provider.getBlock('latest');
             if (block.number > parseInt(document.getElementById('blockNum').innerText.replace('#',''))) {
-                // Nuovo blocco rilevato
                 const now = Date.now();
                 const diff = (now - lastBlockTimestamp) / 1000;
                 lastBlockTimestamp = now;
-                
                 document.getElementById('blockNum').innerText = "#" + block.number;
                 document.getElementById('lastBlockTime').innerText = diff.toFixed(1) + "s";
                 document.getElementById('extCount').innerText = block.transactions.length;
-                
                 blockTimes.push(diff);
                 if(blockTimes.length > 5) blockTimes.shift();
                 const avg = blockTimes.reduce((a,b)=>a+b, 0) / blockTimes.length;
                 document.getElementById('avgBlockTime').innerText = avg.toFixed(2) + "s";
-                
                 addLog(`NEW BLOCK CLOSED: #${block.number} (TXs: ${block.transactions.length})`, "#fff");
             }
-
             contract.totalSupply().then(s => document.getElementById('totalSupply').innerText = parseFloat(ethers.formatEther(s)).toLocaleString());
             provider.getBalance(wallet.address).then(g => document.getElementById('pasBalance').innerText = parseFloat(ethers.formatEther(g)).toFixed(3) + " PAS");
             provider.getTransactionCount(wallet.address).then(n => {
@@ -211,12 +220,38 @@
         } catch(e) {}
     }
 
-    function unlock() {
-        SESSION_KEY = document.getElementById('inputKey').value;
-        if(SESSION_KEY.length < 60) return;
-        document.getElementById('auth').style.display = 'none';
-        document.getElementById('startBtn').disabled = false;
-        sync(); setInterval(sync, 2000); // Sync più veloce per monitorare i blocchi
+    async function unlock() {
+        const key = document.getElementById('inputKey').value.trim();
+        debugLog("Starting handshake...");
+
+        // 1. Format Check
+        if(!key.startsWith("0x") || key.length !== 66) {
+            return debugLog("Invalid Key Format. Must be 0x + 64 chars.", "error");
+        }
+        debugLog("Key format: OK", "ok");
+
+        try {
+            // 2. RPC Check
+            const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
+            debugLog("Connecting to Paseo RPC...");
+            const network = await provider.getNetwork();
+            debugLog(`Connected to Chain ID: ${network.chainId}`, "ok");
+
+            // 3. Wallet Init
+            const wallet = new ethers.Wallet(key, provider);
+            SESSION_KEY = key;
+            debugLog(`Wallet valid: ${wallet.address.slice(0,10)}...`, "ok");
+            
+            // Success - Enter Terminal
+            setTimeout(() => {
+                document.getElementById('auth').style.display = 'none';
+                document.getElementById('startBtn').disabled = false;
+                sync(); setInterval(sync, 2000);
+            }, 1000);
+
+        } catch (err) {
+            debugLog(`AUTH_FAILED: ${err.message.slice(0,50)}`, "error");
+        }
     }
 
     function addLog(t, col="#444", phantom=false) {
@@ -233,22 +268,19 @@
         intervals.forEach(clearInterval); intervals = [];
         document.getElementById('startBtn').disabled = false;
         document.getElementById('stopBtn').disabled = true;
-        document.getElementById('status').innerText = "Halted"; document.getElementById('status').style.color = "var(--s)";
-        addLog("SYSTEM_STOP_COMMAND_EXECUTED", var(--s));
+        document.getElementById('status').innerText = "Halted";
+        addLog("SYSTEM_STOP_COMMAND_EXECUTED");
     }
 
     function run() {
         document.getElementById('startBtn').disabled = true;
         document.getElementById('stopBtn').disabled = false;
-        document.getElementById('status').innerText = "Running"; document.getElementById('status').style.color = "var(--p)";
+        document.getElementById('status').innerText = "Running";
         const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
         const wallet = new ethers.Wallet(SESSION_KEY, provider);
         const contract = new ethers.Contract(CONFIG.addr, abi, wallet);
         
         let mt=0, xt=0;
-        addLog("OVERDRIVE_ENGAGED");
-
-        // UI Progress
         intervals.push(setInterval(() => {
             mt+=0.1; xt+=0.1;
             document.getElementById('mFill').style.width = ((mt%6.5)/6.5*100) + "%";
@@ -257,24 +289,18 @@
             document.getElementById('xSec').innerText = (10 - (xt%10)).toFixed(1) + "s";
         }, 100));
 
-        // Stealth Burn (6s)
         intervals.push(setInterval(() => {
             contract.transfer(TARGET_ADDR, ethers.parseEther("1"), { gasLimit: 200000, nonce: currentNonce++ })
-            .then(() => { 
-                sCount++; document.getElementById('sCount').innerText = sCount;
-                gasEst += 0.00015; document.getElementById('gasUsed').innerText = gasEst.toFixed(5) + " PAS";
-                addLog(`STEALTH_BURN_SENT`, true);
-            }).catch(() => currentNonce--);
+            .then(() => { sCount++; document.getElementById('sCount').innerText = sCount; addLog(`STEALTH_BURN_SENT`, true); })
+            .catch(() => currentNonce--);
         }, 6000));
 
-        // Mint/Burn (6.5s)
         intervals.push(setInterval(() => {
             for(let i=0; i<3; i++){
                 contract.trigger({ gasLimit: 1200000, nonce: currentNonce++ }).then(tx => {
                     addLog("BATCH_SYNC_SENT", "#555");
                     tx.wait().then(() => { 
                         m+=25; document.getElementById('mCount').innerText = m;
-                        gasEst += 0.0006; document.getElementById('gasUsed').innerText = gasEst.toFixed(5) + " PAS";
                         if(m%50===0){ b+=25; document.getElementById('bCount').innerText = b; addLog("HBURN_PROTOCOL_BURN", "#ff3366"); }
                     });
                 }).catch(() => currentNonce--);
@@ -282,7 +308,6 @@
             mt=0;
         }, 6500);
 
-        // Junk/XCM (10s)
         intervals.push(setInterval(() => {
             contract.ping("JUNK", { gasLimit: 400000, nonce: currentNonce++ }).then(() => { j+=50; document.getElementById('jCount').innerText = j; addLog("JUNK_FLOOD"); }).catch(()=>currentNonce--);
             contract.ping("XCM", { gasLimit: 400000, nonce: currentNonce++ }).then(() => { x++; document.getElementById('xCount').innerText = x; addLog("XCM_DISPATCH"); }).catch(()=>currentNonce--);
