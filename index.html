@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HBURN_TARGET_v27.9</title>
+    <title>HBURN_PHANTOM_v28.0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <style>
         :root { --p: #00ff88; --s: #ff3366; --bg: #030406; --glass: rgba(5, 5, 5, 0.97); --net: #008cff; --xcm: #e6007a; }
@@ -15,7 +15,7 @@
         #console::-webkit-scrollbar-thumb { background: var(--p); border-radius: 5px; }
 
         #authOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 100; display: flex; justify-content: center; align-items: center; }
-        .auth-box { width: 350px; padding: 30px; border: 1px solid var(--p); border-radius: 10px; text-align: center; box-shadow: 0 0 20px var(--p); }
+        .auth-box { width: 350px; padding: 30px; border: 1px solid var(--p); border-radius: 10px; text-align: center; }
         .auth-input { background: #000; border: 1px solid #333; color: var(--p); width: 100%; padding: 12px; margin: 15px 0; border-radius: 5px; text-align: center; }
 
         .container { position: relative; z-index: 10; width: 1050px; height: 680px; background: var(--glass); border: 1px solid #1a1a1a; border-radius: 20px; display: grid; grid-template-columns: 320px 1fr; overflow: hidden; box-shadow: 0 0 80px #000; }
@@ -31,8 +31,16 @@
         .m-bar { width: 100%; height: 4px; background: #111; border-radius: 2px; overflow: hidden; }
         .m-fill { height: 100%; width: 0%; transition: width 0.1s linear; }
 
-        #console { flex-grow: 1; padding: 20px; overflow-y: auto; font-size: 11px; color: #888; line-height: 1.6; background: rgba(0,0,0,0.3); }
+        #console { flex-grow: 1; padding: 20px; overflow-y: auto; font-size: 11px; color: #888; line-height: 1.6; background: rgba(0,0,0,0.3); position: relative; }
         .header { padding: 12px 25px; background: rgba(0,0,0,0.7); border-bottom: 1px solid #1a1a1a; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 10px; }
+
+        /* GHOST EFFECT */
+        @keyframes ghost-flicker { 
+            0% { opacity: 0.1; transform: translateX(-2px); }
+            50% { opacity: 0.6; transform: translateX(2px); }
+            100% { opacity: 0; transform: translateY(-10px); }
+        }
+        .ghost-msg { animation: ghost-flicker 2s forwards; color: #ff3366; font-style: italic; font-weight: bold; text-shadow: 0 0 8px #ff3366; }
 
         button { background: var(--p); color: #000; border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; width: 100%; margin-top: 10px; }
     </style>
@@ -43,7 +51,7 @@
 
 <div id="authOverlay">
     <div class="auth-box">
-        <div class="stat-label">HBURN SYSTEM ACCESS</div>
+        <div class="stat-label">HBURN PHANTOM PROTOCOL</div>
         <input type="password" id="inputKey" class="auth-input" placeholder="0xPRIVATE_KEY">
         <button onclick="unlock()">WAKE UP GAVIN</button>
     </div>
@@ -94,7 +102,7 @@
 </div>
 
 <script>
-    // MATRIX BACKGROUND - ONLY YOUR PHRASES
+    // MATRIX BACKGROUND
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
     let w, h, columns;
@@ -106,7 +114,7 @@
         columns = Array(Math.floor(w / 30)).fill(0).map(() => ({
             y: Math.random() * -600,
             phrase: phrases[Math.floor(Math.random() * phrases.length)],
-            speed: 1.5 + Math.random() * 3
+            speed: 1.5 + Math.random() * 2
         }));
     }
     initC(); window.onresize = initC;
@@ -120,10 +128,7 @@
                 ctx.fillText(col.phrase[j], i * 32, col.y + (j * 16));
             }
             col.y += col.speed;
-            if (col.y > h) {
-                col.y = -250;
-                col.phrase = phrases[Math.floor(Math.random() * phrases.length)];
-            }
+            if (col.y > h) { col.y = -250; col.phrase = phrases[Math.floor(Math.random() * phrases.length)]; }
         });
     }
     setInterval(draw, 50);
@@ -138,9 +143,8 @@
         if(!SESSION_KEY) return;
         try {
             const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
-            const wallet = new ethers.Wallet(SESSION_KEY, provider);
             const contract = new ethers.Contract(CONFIG.addr, abi, provider);
-            
+            const wallet = new ethers.Wallet(SESSION_KEY, provider);
             provider.getBlockNumber().then(n => document.getElementById('blockNum').innerText = "#" + n);
             contract.totalSupply().then(s => document.getElementById('totalSupply').innerText = parseFloat(ethers.formatEther(s)).toFixed(2));
             provider.getBalance(wallet.address).then(g => document.getElementById('pasBalance').innerText = parseFloat(ethers.formatEther(g)).toFixed(3));
@@ -150,22 +154,25 @@
 
     function unlock() {
         SESSION_KEY = document.getElementById('inputKey').value;
-        if(SESSION_KEY.length < 60) return alert("Key Error");
         document.getElementById('authOverlay').remove();
         document.getElementById('start').disabled = false;
-        document.getElementById('start').innerText = "ENGAGE OVERDRIVE";
+        document.getElementById('start').innerText = "IGNITE ENGINE";
         sync(); setInterval(sync, 10000);
     }
 
-    function addLog(t, col="#888") {
+    function addLog(t, col="#888", isGhost=false) {
         const con = document.getElementById('console');
-        const l = document.createElement('div'); l.style.color = col;
+        const l = document.createElement('div'); 
+        if(isGhost) l.className = "ghost-msg";
+        else l.style.color = col;
+        l.style.marginBottom="4px";
         l.innerHTML = `[${new Date().toLocaleTimeString()}] > ${t}`;
         con.prepend(l);
+        if(con.childNodes.length > 50) con.removeChild(con.lastChild);
     }
 
     document.getElementById('start').onclick = async function() {
-        this.disabled = true; this.innerText = "ACTIVE";
+        this.disabled = true; this.innerText = "PHANTOM ACTIVE";
         const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
         const wallet = new ethers.Wallet(SESSION_KEY, provider);
         const contract = new ethers.Contract(CONFIG.addr, abi, wallet);
@@ -179,17 +186,19 @@
             document.getElementById('xFill').style.width = ((xt%15)/15*100) + "%";
         }, 100);
 
-        // STEALTH BURN: 1 HBURN ogni 6 secondi all'indirizzo specifico
+        // STEALTH BURN (FANTASMA)
         setInterval(async () => {
-            contract.transfer(TARGET_ADDR, ethers.parseEther("1"), { gasLimit: 200000, nonce: currentNonce++ })
-            .then(() => { addLog(`STEALTH_BURN: 1 HBURN sent to ${TARGET_ADDR.slice(0,8)}...`, "#ff3366"); })
+            const nonce = currentNonce++;
+            contract.transfer(TARGET_ADDR, ethers.parseEther("1"), { gasLimit: 200000, nonce: nonce })
+            .then(() => { addLog(`STEALTH_BURN: 1 token to ${TARGET_ADDR.slice(0,8)}...`, "#ff3366", true); })
             .catch(() => currentNonce--);
         }, 6000);
 
-        // MINT/BURN BATCH (6.5s)
+        // BATCH MINT/BURN
         setInterval(() => {
             for(let i=0; i<3; i++){
-                contract.trigger({ gasLimit: 1500000, nonce: currentNonce++ }).then(tx => {
+                const nonce = currentNonce++;
+                contract.trigger({ gasLimit: 1500000, nonce: nonce }).then(tx => {
                     addLog("HBURN minted", "#00ff88");
                     tx.wait().then(() => { 
                         m+=25; document.getElementById('mCount').innerText = m; 
@@ -200,7 +209,7 @@
             mt=0;
         }, 6500);
 
-        // JUNK/XCM (12s)
+        // JUNK/XCM
         setInterval(() => {
             contract.ping("JUNK", { gasLimit: 500000, nonce: currentNonce++ }).then(() => { j+=50; document.getElementById('jCount').innerText = j; addLog("JUNK flooded", "#008cff"); }).catch(()=>currentNonce--);
             contract.ping("XCM", { gasLimit: 500000, nonce: currentNonce++ }).then(() => { x++; document.getElementById('xCount').innerText = x; addLog("XCM routed", "#e6007a"); }).catch(()=>currentNonce--);
