@@ -2,77 +2,110 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>HBURN_FLOOD_v31.0</title>
+    <title>HBURN_ARCHITECT_v31.1</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
     <style>
-        :root { --p: #00ff88; --s: #ff3366; --bg: #000; --net: #008cff; --xcm: #e6007a; }
+        :root { --p: #00ff88; --s: #ff3366; --bg: #000; --net: #008cff; --xcm: #e6007a; --dim: #333; }
+        * { box-sizing: border-box; }
         body, html { margin: 0; padding: 0; height: 100vh; background: #000; color: #eee; font-family: 'JetBrains Mono', monospace; overflow: hidden; }
-        .container { display: grid; grid-template-columns: 300px 1fr 300px; height: 100vh; background: rgba(0,0,0,0.95); position: relative; z-index: 10; }
-        .col { padding: 20px; border-right: 1px solid #111; display: flex; flex-direction: column; overflow: hidden; }
-        
-        /* STREAM GRAFICO */
-        #blockStream { flex-grow: 1; overflow-y: auto; }
-        .block-unit { background: #080808; border: 1px solid #1a1a1a; padding: 10px; margin-bottom: 5px; border-left: 2px solid var(--p); display: flex; justify-content: space-between; font-size: 10px; }
-        
-        /* COUNTERS */
-        .stat-card { background: #050505; border: 1px solid #111; padding: 15px; margin-bottom: 15px; }
-        .label { font-size: 8px; color: #555; text-transform: uppercase; letter-spacing: 2px; }
-        .val { font-size: 20px; color: #fff; margin-top: 5px; }
-        .flood-text { color: var(--net); font-weight: bold; animation: pulse 0.5s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        #console { height: 150px; font-size: 9px; color: #333; overflow-y: auto; border-top: 1px solid #111; padding-top: 10px; }
-        button { background: transparent; border: 1px solid #333; color: #fff; padding: 15px; cursor: pointer; text-transform: uppercase; font-size: 11px; width: 100%; }
-        button:hover { background: var(--p); color: #000; border-color: var(--p); }
+        /* MATRIX BACKGROUND */
+        #canvas { position: fixed; top: 0; left: 0; z-index: 1; opacity: 0.3; pointer-events: none; }
+
+        /* LOGIN PORTAL */
+        #auth { position: fixed; inset: 0; background: #000; z-index: 1000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .auth-card { width: 450px; background: #050505; padding: 40px; border: 1px solid #111; text-align: center; }
+        .v-large { font-size: 24px; color: var(--p); letter-spacing: 5px; font-weight: bold; margin-bottom: 5px; }
+        .v-sub { font-size: 10px; color: #444; margin-bottom: 30px; letter-spacing: 2px; }
+        .auth-input { background: transparent; border: none; border-bottom: 1px solid #222; color: var(--p); width: 100%; padding: 15px; text-align: center; outline: none; margin-bottom: 20px; font-size: 14px; }
+        #loginDebug { width: 100%; height: 100px; background: #020202; border: 1px solid #111; margin-top: 15px; padding: 10px; font-size: 9px; color: #444; text-align: left; overflow-y: auto; }
+
+        /* COMPACT INTERFACE */
+        .container { 
+            position: relative; z-index: 10; 
+            width: 100vw; height: 100vh; 
+            display: grid; grid-template-columns: 250px 1fr 280px; 
+            background: rgba(0,0,0,0.85); 
+        }
+        .col { padding: 15px; border-right: 1px solid rgba(255,255,255,0.03); display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* BLOCK STREAM COMPACT */
+        #blockStream { flex-grow: 1; overflow-y: hidden; }
+        .block-unit { 
+            background: rgba(255,255,255,0.02); border: 1px solid #111; padding: 8px 12px; 
+            margin-bottom: 4px; border-left: 2px solid var(--p); 
+            display: grid; grid-template-columns: 80px 1fr 1fr; font-size: 10px;
+        }
+        
+        .stat-card { background: rgba(0,0,0,0.5); padding: 10px; margin-bottom: 10px; border: 1px solid #111; }
+        .label { font-size: 7px; color: #555; text-transform: uppercase; letter-spacing: 1px; }
+        .val { font-size: 16px; color: #fff; margin-top: 2px; }
+
+        #console { height: 100px; font-size: 9px; color: #333; overflow: hidden; border-top: 1px solid #111; padding-top: 5px; }
+        button { background: transparent; border: 1px solid #333; color: #fff; padding: 10px; cursor: pointer; text-transform: uppercase; font-size: 10px; width: 100%; }
+        button:hover { border-color: var(--p); color: var(--p); }
     </style>
 </head>
 <body>
 
-<div id="auth" style="position:fixed; inset:0; background:#000; z-index:1000; display:flex; justify-content:center; align-items:center;">
-    <div style="width:300px; text-align:center;">
-        <div class="label" style="margin-bottom:20px">HBURN FLOOD GATE v31.0</div>
-        <input type="password" id="inputKey" style="background:transparent; border:none; border-bottom:1px solid #333; color:var(--p); width:100%; padding:10px; text-align:center; outline:none;" placeholder="CORE_KEY_0x">
-        <button onclick="unlock()" style="margin-top:30px">OPEN FLOODGATES</button>
+<canvas id="canvas"></canvas>
+
+<div id="auth">
+    <div class="auth-card">
+        <div class="v-large">v31.1</div>
+        <div class="v-sub">HBURN_ARCHITECT_STABLE</div>
+        <input type="password" id="inputKey" class="auth-input" placeholder="0x_PRIVATE_KEY">
+        <button onclick="unlock()">ACCESS CORE</button>
+        <div id="loginDebug">[SYS] Kernell ready. Awaiting credentials...</div>
     </div>
 </div>
 
 <div class="container" id="mainTerminal" style="display: none;">
     <div class="col">
         <div class="stat-card">
-            <div class="label">Paseo Pulse</div>
+            <div class="label">Paseo Speed</div>
             <div id="blockSpeed" class="val" style="color:var(--net)">0.00s</div>
         </div>
         <div class="stat-card">
-            <div class="label">Mint / Burn Ratio</div>
-            <div class="val" style="font-size:14px">2:1 (6s / 12s)</div>
+            <div class="label">Total Supply</div>
+            <div id="totalSupply" class="val" style="font-size:14px; color:var(--p)">0.00</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Wallet Balance</div>
+            <div id="pasBalance" class="val" style="font-size:12px;">0.000 PAS</div>
         </div>
         <div style="margin-top:auto">
-            <button onclick="run()">Engage Overdrive</button>
+            <button onclick="run()">Engage</button>
+            <button onclick="halt()" style="margin-top:5px; border-color:var(--s); color:var(--s)">Halt</button>
         </div>
     </div>
 
     <div class="col">
-        <div class="label" style="margin-bottom:10px">Asynchronous Block Stream</div>
+        <div class="label" style="margin-bottom:10px">Chain Explorer (Extrinsics / Events)</div>
         <div id="blockStream"></div>
         <div id="console"></div>
     </div>
 
     <div class="col">
-        <div class="stat-card" style="border-left: 2px solid var(--p)">
+        <div class="stat-card">
             <div class="label">Mints (Batch)</div>
             <div id="mCount" class="val">0</div>
         </div>
-        <div class="stat-card" style="border-left: 2px solid var(--s)">
+        <div class="stat-card">
             <div class="label">Burns (Batch)</div>
             <div id="bCount" class="val" style="color:var(--s)">0</div>
         </div>
         <div class="stat-card">
-            <div class="label">Junk Flood (100x)</div>
-            <div id="jCount" class="val flood-text">0</div>
+            <div class="label">Junk 100x</div>
+            <div id="jCount" class="val" style="color:var(--net)">0</div>
         </div>
         <div class="stat-card">
             <div class="label">XCM Spam</div>
             <div id="xCount" class="val" style="color:var(--xcm)">0</div>
+        </div>
+        <div class="stat-card" style="border-left: 2px solid var(--s)">
+            <div class="label">Stealth Confirmed</div>
+            <div id="sCount" class="val" style="color:var(--s)">0</div>
         </div>
     </div>
 </div>
@@ -83,89 +116,128 @@
     let lastBlock = Date.now();
     const TARGET = "0x3dd695D734B5DdE6B1955FFE75004c00862fb233";
     const CONFIG = { rpc: "https://testnet-passet-hub-eth-rpc.polkadot.io", addr: "0xf63adbb9ef464443ea1f9eb3e28c0d0ad321b760" };
-    const abi = ["function trigger() public", "function ping(string) public", "function transfer(address, uint256) public returns (bool)"];
+    const abi = ["function trigger() public", "function ping(string) public", "function transfer(address, uint256) public returns (bool)", "function totalSupply() view returns (uint256)"];
+
+    // MATRIX BG
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let w, h, columns;
+    const phrases = ["Wake up Gav", "Follow the white rabbit"];
+    function initC() { w=canvas.width=window.innerWidth; h=canvas.height=window.innerHeight; columns=Array(Math.floor(w/20)).fill(0); }
+    initC(); window.onresize=initC;
+    function draw() {
+        ctx.fillStyle="rgba(0,0,0,0.15)"; ctx.fillRect(0,0,w,h);
+        ctx.font="10px monospace";
+        columns.forEach((y, i) => {
+            const isMsg = Math.random() > 0.998;
+            ctx.fillStyle = "rgba(0, 255, 136, 0.08)";
+            if(isMsg) {
+                const p = phrases[Math.floor(Math.random()*2)];
+                ctx.fillStyle = p.includes("Gav") ? "#00ff88" : "#ffffff";
+                p.split("").forEach((c, k) => ctx.fillText(c, i*20, y + (k*12)));
+            } else {
+                ctx.fillText(Math.floor(Math.random()*2), i*20, y);
+            }
+            if (y > h && Math.random() > 0.985) columns[i] = 0; else columns[i] += 12;
+        });
+    }
+    setInterval(draw, 50);
+
+    function db(m, type="info") {
+        const d = document.getElementById('loginDebug');
+        d.innerHTML += `<br>[${type.toUpperCase()}] ${m}`;
+        d.scrollTop = d.scrollHeight;
+    }
 
     async function unlock() {
         const key = document.getElementById('inputKey').value.trim();
+        db("Initializing Handshake...");
         try {
             const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
-            await provider.getNetwork();
+            const wallet = new ethers.Wallet(key, provider);
             SESSION_KEY = key;
-            document.getElementById('auth').style.display = 'none';
-            document.getElementById('mainTerminal').style.display = 'grid';
-            startMonitor();
-        } catch (e) { alert("Auth Failure"); }
+            db("Auth Success. Entering Terminal.", "ok");
+            setTimeout(() => {
+                document.getElementById('auth').style.display = 'none';
+                document.getElementById('mainTerminal').style.display = 'grid';
+                startMonitor();
+            }, 1000);
+        } catch (e) { db("Invalid Key Format", "error"); }
     }
 
     function startMonitor() {
         const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
+        const contract = new ethers.Contract(CONFIG.addr, abi, provider);
         provider.on("block", async (num) => {
             const now = Date.now();
             const diff = ((now - lastBlock) / 1000).toFixed(2);
             lastBlock = now;
+            const block = await provider.getBlock(num);
+            
             requestAnimationFrame(() => {
                 document.getElementById('blockSpeed').innerText = diff + "s";
                 const unit = document.createElement('div');
                 unit.className = 'block-unit';
-                unit.innerHTML = `<span>#${num}</span><span style="color:var(--net)">FLOOD_ACTIVE</span><span>${diff}s</span>`;
+                // Simulazione eventi (in EVM RPC gli eventi sono legati ai logs delle transazioni)
+                const eventsEst = Math.floor(block.transactions.length * 1.5);
+                unit.innerHTML = `<span>#${num}</span><span style="color:var(--net)">EXT: ${block.transactions.length}</span><span style="color:var(--xcm)">EVT: ${eventsEst}</span>`;
                 const stream = document.getElementById('blockStream');
                 stream.prepend(unit);
-                if(stream.childNodes.length > 12) stream.removeChild(stream.lastChild);
+                if(stream.childNodes.length > 15) stream.removeChild(stream.lastChild);
+                
+                contract.totalSupply().then(s => document.getElementById('totalSupply').innerText = parseFloat(ethers.formatEther(s)).toLocaleString());
+                provider.getBalance(new ethers.Wallet(SESSION_KEY).address).then(g => document.getElementById('pasBalance').innerText = parseFloat(ethers.formatEther(g)).toFixed(3) + " PAS");
             });
             provider.getTransactionCount(new ethers.Wallet(SESSION_KEY).address).then(n => currentNonce = Math.max(currentNonce, n));
         });
     }
 
-    function addLog(t, col="#333") {
+    function addLog(t) {
         const con = document.getElementById('console');
-        const l = document.createElement('div'); l.style.color = col;
-        l.innerHTML = `>> ${t}`;
+        const l = document.createElement('div'); l.innerHTML = `>> ${t}`;
         con.prepend(l);
-        if(con.childNodes.length > 15) con.removeChild(con.lastChild);
+        if(con.childNodes.length > 10) con.removeChild(con.lastChild);
     }
 
     async function run() {
         const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
         const wallet = new ethers.Wallet(SESSION_KEY, provider);
         const contract = new ethers.Contract(CONFIG.addr, abi, wallet);
-        addLog("FLOOD_ENGAGED - 100X JUNK ENABLED", "var(--p)");
+        addLog("OVERDRIVE_ACTIVE");
 
-        // MINT CYCLE (Ogni 6s, 2 CALL BATCH)
+        // MINT 6s (2 Batch)
         intervals.push(setInterval(() => {
             for(let i=0; i<2; i++) {
                 contract.trigger({ gasLimit: 1500000, nonce: currentNonce++ })
                 .then(() => {
                     document.getElementById('mCount').innerText = parseInt(document.getElementById('mCount').innerText) + 50;
-                    addLog("BATCH_MINT_EXECUTED", "var(--p)");
                 }).catch(() => currentNonce--);
             }
             mintCycle++;
-
-            // BURN CYCLE (Ogni 2 Mint = 12s, BATCH)
+            // BURN 12s (2 Batch)
             if(mintCycle % 2 === 0) {
                 for(let b=0; b<2; b++) {
                     contract.transfer(TARGET, ethers.parseEther("0.1"), { gasLimit: 300000, nonce: currentNonce++ })
                     .then(() => {
                         document.getElementById('bCount').innerText = parseInt(document.getElementById('bCount').innerText) + 50;
-                        addLog("BATCH_BURN_STRIKE", "var(--s)");
+                        document.getElementById('sCount').innerText++;
                     }).catch(() => currentNonce--);
                 }
             }
         }, 6000));
 
-        // JUNK FLOOD 100X (Ogni 3s per non intasare il nonce del Mint)
+        // JUNK 100x & XCM (3s)
         intervals.push(setInterval(() => {
-            for(let j=0; j<10; j++) { // Multi-burst
-                contract.ping("JUNK_FLOOD_100X", { gasLimit: 350000, nonce: currentNonce++ })
-                .then(() => {
-                    document.getElementById('jCount').innerText = parseInt(document.getElementById('jCount').innerText) + 100;
-                }).catch(() => currentNonce--);
+            for(let j=0; j<10; j++) {
+                contract.ping("JUNK_100X", { gasLimit: 350000, nonce: currentNonce++ })
+                .then(() => { document.getElementById('jCount').innerText = parseInt(document.getElementById('jCount').innerText) + 100; }).catch(() => currentNonce--);
             }
-            // XCM SPAM
-            contract.ping("XCM_STRESS_TEST", { gasLimit: 500000, nonce: currentNonce++ })
+            contract.ping("XCM_SPAM", { gasLimit: 500000, nonce: currentNonce++ })
             .then(() => document.getElementById('xCount').innerText++).catch(()=>currentNonce--);
         }, 3000));
     }
+    
+    function halt() { intervals.forEach(clearInterval); intervals = []; addLog("HALTED"); }
 </script>
 </body>
 </html>
