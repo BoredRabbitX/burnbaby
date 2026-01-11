@@ -2,40 +2,53 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>HBURN_v32.9_COLLISION</title>
+    <title>HBURN_v33.0_THE_CORE</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
     <style>
         :root { --p: #00ff88; --s: #ff3366; --n: #00d9ff; --bg: #000; }
         * { box-sizing: border-box; font-family: 'JetBrains Mono', monospace; }
-        body, html { margin: 0; padding: 0; height: 100vh; background: #000; overflow: hidden; }
+        body, html { margin: 0; padding: 0; height: 100vh; background: #000; overflow: hidden; display: flex; justify-content: center; align-items: center; }
         
-        #canvas { position: absolute; inset: 0; z-index: 0; background: radial-gradient(circle, #050505 0%, #000 100%); }
+        /* BACKGROUND COLLISION SPACE */
+        #canvas { position: absolute; inset: 0; z-index: 0; background: radial-gradient(circle, #0a0a0a 0%, #000 100%); }
 
-        .interface { 
-            position: relative; z-index: 10; width: 100vw; height: 100vh; 
-            display: grid; grid-template-columns: 280px 1fr 280px;
-            pointer-events: none; padding: 20px;
+        /* CENTRAL SQUARE UI */
+        .core-ui { 
+            position: relative; z-index: 10; 
+            width: 800px; height: 800px; 
+            background: rgba(5, 5, 5, 0.92); 
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 40px; 
+            display: grid; grid-template-rows: auto 1fr auto;
+            padding: 40px; gap: 20px;
+            box-shadow: 0 0 100px rgba(0,0,0,1), 0 0 40px rgba(0, 255, 136, 0.05);
+            backdrop-filter: blur(20px);
+            pointer-events: auto;
         }
-        .col { pointer-events: auto; display: flex; flex-direction: column; gap: 10px; }
-        
-        .stat-card { background: rgba(0,0,0,0.8); border: 1px solid #222; padding: 15px; border-radius: 20px; backdrop-filter: blur(5px); }
-        .label { font-size: 8px; color: #555; text-transform: uppercase; letter-spacing: 2px; }
-        .val { font-size: 16px; color: #fff; font-weight: bold; }
+
+        .header { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+        .stat-box { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 20px; border: 1px solid #111; }
+        .label { font-size: 9px; color: #555; text-transform: uppercase; letter-spacing: 2px; }
+        .val { font-size: 18px; color: #fff; font-weight: bold; margin-top: 5px; }
 
         #console { 
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            width: 600px; height: 80px; background: rgba(0,0,0,0.9); 
-            border: 1px solid #222; border-radius: 15px; padding: 10px;
-            font-size: 10px; color: #444; overflow: hidden; pointer-events: auto;
+            background: #000; border-radius: 25px; padding: 20px; 
+            font-size: 11px; color: #555; overflow-y: auto; 
+            border: 1px solid #111; line-height: 1.5;
+            box-shadow: inset 0 0 20px rgba(0,0,0,1);
         }
 
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         button { 
-            background: #fff; border: none; color: #000; padding: 15px; 
-            cursor: pointer; text-transform: uppercase; font-size: 10px; 
-            width: 100%; border-radius: 15px; font-weight: bold; pointer-events: auto;
+            background: #fff; border: none; color: #000; padding: 20px; 
+            cursor: pointer; text-transform: uppercase; font-size: 12px; 
+            border-radius: 20px; font-weight: bold; transition: 0.3s;
         }
-        .bar-wrap { height: 4px; background: #111; border-radius: 2px; margin-top: 5px; overflow: hidden; }
-        .bar-fill { height: 100%; width: 0%; transition: width 0.1s; }
+        button:hover { background: var(--p); box-shadow: 0 0 30px var(--p); transform: scale(1.02); }
+        .btn-stop:hover { background: var(--s); box-shadow: 0 0 30px var(--s); }
+
+        .progress-bar { height: 4px; background: #111; border-radius: 2px; margin-top: 10px; overflow: hidden; }
+        .fill { height: 100%; width: 0%; transition: width 0.1s; }
     </style>
 </head>
 <body>
@@ -43,40 +56,32 @@
 <canvas id="canvas"></canvas>
 
 <div id="auth" style="position:fixed; inset:0; background:#000; z-index:1000; display:flex; flex-direction:column; justify-content:center; align-items:center;">
-    <div style="font-size:30px; color:#fff; font-weight:bold; letter-spacing:10px;">v32.9_COLLISION</div>
-    <input type="password" id="inputKey" style="background:transparent; border:none; border-bottom:1px solid #333; color:#fff; width:300px; padding:15px; text-align:center; outline:none; margin-top:30px" placeholder="SECURE_KEY">
-    <button onclick="unlock()" style="width:300px; margin-top:30px">BOOT_ENGINE</button>
+    <div style="font-size:40px; color:#fff; font-weight:bold; letter-spacing:15px;">v33.0_THE_CORE</div>
+    <input type="password" id="inputKey" style="background:transparent; border:none; border-bottom:1px solid #333; color:#fff; width:400px; padding:20px; text-align:center; outline:none; margin-top:40px; font-size:20px" placeholder="INJECT_SECURE_KEY">
+    <button onclick="unlock()" style="width:400px; margin-top:40px">INITIALIZE_CORE</button>
 </div>
 
-<div class="interface" id="mainTerminal" style="display: none;">
-    <div class="col">
-        <div class="stat-card">
-            <div class="label">Paseo Heartbeat</div>
-            <div id="blockSpeed" class="val" style="color:var(--n)">--</div>
-        </div>
-        <div class="stat-card">
-            <div class="label">Mint Buffer</div>
-            <div class="bar-wrap"><div id="b1" class="bar-fill" style="background:var(--p)"></div></div>
-        </div>
-        <div class="stat-card">
-            <div class="label">Burn Buffer</div>
-            <div class="bar-wrap"><div id="b2" class="bar-fill" style="background:var(--s)"></div></div>
-        </div>
-        <div style="margin-top:auto">
-            <button id="injBtn" onclick="run()">INJECT_MATTER</button>
-        </div>
+<div class="core-ui" id="mainTerminal" style="display: none;">
+    <div class="header">
+        <div class="stat-box"><div class="label">Paseo Heartbeat</div><div id="blockSpeed" class="val" style="color:var(--n)">--</div></div>
+        <div class="stat-card stat-box"><div class="label">Supply</div><div id="totalSupply" class="val">0.00</div></div>
+        <div class="stat-box"><div class="label">Fuel PAS</div><div id="pasBalance" class="val" style="color:var(--n)">0.000</div></div>
     </div>
 
-    <div></div> <div class="col">
-        <div class="stat-card"><div class="label">Supply</div><div id="totalSupply" class="val">0.00</div></div>
-        <div class="stat-card"><div class="label">Fuel</div><div id="pasBalance" class="val" style="color:var(--n)">0.000</div></div>
-        <div class="stat-card"><div class="label" style="color:var(--p)">Minted</div><div id="mCount" class="val" style="color:var(--p)">0</div></div>
-        <div class="stat-card"><div class="label" style="color:var(--s)">Burned</div><div id="bCount" class="val" style="color:var(--s)">0</div></div>
-        <div class="stat-card"><div class="label" style="color:var(--n)">Junk Load</div><div id="jCount" class="val" style="color:var(--n)">0</div></div>
+    <div id="console"></div>
+
+    <div class="footer">
+        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:20px">
+            <div class="stat-box"><div class="label" style="color:var(--p)">Minted</div><div id="mCount" class="val">0</div><div class="progress-bar"><div id="f1" class="fill" style="background:var(--p)"></div></div></div>
+            <div class="stat-box"><div class="label" style="color:var(--s)">Burned</div><div id="bCount" class="val">0</div><div class="progress-bar"><div id="f2" class="fill" style="background:var(--s)"></div></div></div>
+            <div class="stat-box"><div class="label" style="color:var(--n)">Junk Load</div><div id="jCount" class="val">0</div><div class="progress-bar"><div id="f3" class="fill" style="background:var(--n)"></div></div></div>
+        </div>
+        <div class="controls">
+            <button id="injBtn" onclick="run()">ENGAGE_OBLIVION</button>
+            <button id="haltBtn" onclick="halt()" class="btn-stop">EMERGENCY_HALT</button>
+        </div>
     </div>
 </div>
-
-<div id="console"></div>
 
 <script>
     let SESSION_KEY = "", localNonce = 0, isRunning = false;
@@ -86,12 +91,10 @@
     const CONFIG = { rpc: "https://testnet-passet-hub-eth-rpc.polkadot.io", addr: ADDR };
     const abi = ["function trigger() public", "function ping(string) public", "function transfer(address, uint256) public returns (bool)", "function totalSupply() view returns (uint256)"];
 
-    // COLLISION ENGINE
+    // COLLISION ENGINE 2.0
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-    let matter = []; // Green (Mint)
-    let antiMatter = []; // Red (Burn)
-    let junk = []; // Blue
+    let matter = [], antiMatter = [], junk = [];
 
     function initC() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
     initC(); window.onresize = initC;
@@ -99,57 +102,52 @@
     class Particle {
         constructor(x, y, color, type) {
             this.x = x; this.y = y; this.color = color; this.type = type;
-            this.vx = (Math.random()-0.5)*4; this.vy = (Math.random()-0.5)*4;
-            this.life = 1; this.dead = false;
-        }
-        draw() {
-            ctx.beginPath(); ctx.arc(this.x, this.y, this.type === 'junk' ? 1 : 4, 0, Math.PI*2);
-            ctx.fillStyle = this.color; ctx.fill();
+            this.vx = (Math.random()-0.5)*5; this.vy = (Math.random()-0.5)*5;
+            this.life = 1;
         }
         update() {
             this.x += this.vx; this.y += this.vy;
-            if(this.type === 'anti') { // Inseguimento
-                if(matter.length > 0) {
-                    let target = matter[0];
-                    this.vx += (target.x - this.x) * 0.05; this.vy += (target.y - this.y) * 0.05;
-                    this.vx *= 0.95; this.vy *= 0.95; // Attrito
-                }
+            if(this.type === 'anti' && matter.length > 0) {
+                let target = matter[0];
+                this.vx += (target.x - this.x) * 0.08; this.vy += (target.y - this.y) * 0.08;
+                this.vx *= 0.94; this.vy *= 0.94;
             }
-            if(this.type === 'junk') this.life -= 0.02;
-            if(this.life <= 0) this.dead = true;
+            if(this.type === 'junk' || this.type === 'exp') this.life -= 0.02;
+            if(this.x < 0 || this.x > canvas.width) this.vx *= -1;
+            if(this.y < 0 || this.y > canvas.height) this.vy *= -1;
+        }
+        draw() {
+            ctx.globalAlpha = this.life;
+            ctx.beginPath(); 
+            ctx.arc(this.x, this.y, this.type === 'exp' ? 1 : 4, 0, Math.PI*2);
+            ctx.fillStyle = this.color; ctx.fill();
+            ctx.globalAlpha = 1;
         }
     }
 
     function animate() {
-        ctx.fillStyle = "rgba(0,0,0,0.2)"; ctx.fillRect(0,0,canvas.width,canvas.height);
-        
-        // Update & Draw
+        ctx.fillStyle = "rgba(0,0,0,0.15)"; ctx.fillRect(0,0,canvas.width,canvas.height);
         [...matter, ...antiMatter, ...junk].forEach(p => { p.update(); p.draw(); });
-
-        // Collision Check
+        
         antiMatter.forEach((red, ri) => {
             matter.forEach((green, gi) => {
-                let dist = Math.hypot(red.x - green.x, red.y - green.y);
-                if(dist < 10) {
+                if(Math.hypot(red.x - green.x, red.y - green.y) < 15) {
                     matter.splice(gi, 1); antiMatter.splice(ri, 1);
-                    createExplosion(red.x, red.y);
+                    for(let i=0; i<15; i++) junk.push(new Particle(red.x, red.y, "#fff", "exp"));
                 }
             });
         });
-
-        matter = matter.filter(p => p.x > 0 && p.x < canvas.width && p.y > 0 && p.y < canvas.height);
-        junk = junk.filter(p => !p.dead);
+        junk = junk.filter(p => p.life > 0);
         requestAnimationFrame(animate);
     }
     animate();
 
-    function createExplosion(x, y) {
-        for(let i=0; i<10; i++) junk.push(new Particle(x, y, "#fff", "junk"));
-    }
-
-    function addLog(msg) {
+    function addLog(msg, color="#555") {
         const con = document.getElementById('console');
-        con.innerHTML = `> ${msg}<br>` + con.innerHTML;
+        const d = document.createElement('div');
+        d.innerHTML = `<span style="color:${color}">> [${new Date().toLocaleTimeString().split(' ')[0]}] ${msg}</span>`;
+        con.prepend(d);
+        if(con.childNodes.length > 30) con.removeChild(con.lastChild);
     }
 
     async function unlock() {
@@ -180,47 +178,51 @@
         const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
         const wallet = new ethers.Wallet(SESSION_KEY, provider);
         const contract = new ethers.Contract(ADDR, abi, wallet);
-        addLog("SYSTEM_LIVE: Aggression Protocol Active");
+        addLog("NUCLEUS_ACTIVE: Initiating parallel saturation", "#fff");
 
-        // Loop Mint
+        // CHANNEL 1: MINTING FLOW
         (async () => {
             while(isRunning) {
-                document.getElementById('b1').style.width = '100%';
-                contract.trigger({ gasLimit: 1200000, nonce: localNonce++ }).then(() => {
+                document.getElementById('f1').style.width = '100%';
+                contract.trigger({ gasLimit: 1500000, nonce: localNonce++ }).then(() => {
                     document.getElementById('mCount').innerText++;
                     matter.push(new Particle(Math.random()*canvas.width, Math.random()*canvas.height, "#00ff88", "matter"));
-                    document.getElementById('b1').style.width = '0%';
+                    document.getElementById('f1').style.width = '0%';
+                }).catch(() => localNonce--);
+                await new Promise(r => setTimeout(r, 800));
+            }
+        })();
+
+        // CHANNEL 2: BURNING FLOW
+        (async () => {
+            while(isRunning) {
+                document.getElementById('f2').style.width = '100%';
+                contract.transfer(TARGET, ethers.parseEther("0.1"), { gasLimit: 500000, nonce: localNonce++ }).then(() => {
+                    document.getElementById('bCount').innerText++;
+                    antiMatter.push(new Particle(Math.random()*canvas.width, Math.random()*canvas.height, "#ff3366", "anti"));
+                    document.getElementById('f2').style.width = '0%';
                 }).catch(() => localNonce--);
                 await new Promise(r => setTimeout(r, 1500));
             }
         })();
 
-        // Loop Burn
+        // CHANNEL 3: MEGA JUNK FLOOD
         (async () => {
             while(isRunning) {
-                document.getElementById('b2').style.width = '100%';
-                contract.transfer(TARGET, ethers.parseEther("0.1"), { gasLimit: 400000, nonce: localNonce++ }).then(() => {
-                    document.getElementById('bCount').innerText++;
-                    antiMatter.push(new Particle(Math.random()*canvas.width, Math.random()*canvas.height, "#ff3366", "anti"));
-                    document.getElementById('b2').style.width = '0%';
-                }).catch(() => localNonce--);
-                await new Promise(r => setTimeout(r, 3000));
-            }
-        })();
-
-        // Loop Junk 1000x
-        (async () => {
-            while(isRunning) {
-                for(let i=0; i<10; i++) {
-                    contract.ping("JUNK", { gasLimit: 250000, nonce: localNonce++ }).then(() => {
-                        document.getElementById('jCount').innerText = parseInt(document.getElementById('jCount').innerText) + 100;
+                document.getElementById('f3').style.width = '100%';
+                for(let i=0; i<20; i++) {
+                    contract.ping("JUNK_OBLIVION_" + Math.random(), { gasLimit: 300000, nonce: localNonce++ }).then(() => {
+                        document.getElementById('jCount').innerText = parseInt(document.getElementById('jCount').innerText) + 1000;
                         junk.push(new Particle(Math.random()*canvas.width, Math.random()*canvas.height, "#00d9ff", "junk"));
                     }).catch(() => localNonce--);
                 }
-                await new Promise(r => setTimeout(r, 800));
+                setTimeout(() => document.getElementById('f3').style.width = '0%', 300);
+                await new Promise(r => setTimeout(r, 500));
             }
         })();
     }
+
+    function halt() { isRunning = false; location.reload(); }
 </script>
 </body>
 </html>
