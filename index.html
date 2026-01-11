@@ -2,41 +2,40 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>HBURN_v32.8_ABSOLUTE_SINGULARITY</title>
+    <title>HBURN_v32.9_COLLISION</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
     <style>
         :root { --p: #00ff88; --s: #ff3366; --n: #00d9ff; --bg: #000; }
         * { box-sizing: border-box; font-family: 'JetBrains Mono', monospace; }
-        body, html { margin: 0; padding: 0; height: 100vh; background: #000; overflow: hidden; display: flex; justify-content: center; align-items: center; }
+        body, html { margin: 0; padding: 0; height: 100vh; background: #000; overflow: hidden; }
         
-        #canvas { position: absolute; inset: 0; z-index: 0; transition: filter 0.2s ease-out; } /* Glitch filter */
+        #canvas { position: absolute; inset: 0; z-index: 0; background: radial-gradient(circle, #050505 0%, #000 100%); }
 
-        .container { 
-            position: relative; z-index: 10; 
-            width: 1300px; height: 800px; 
-            background: rgba(2, 2, 2, 0.97); 
-            border: 1px solid rgba(255,255,255,0.08);
-            display: grid; grid-template-columns: 350px 1fr 350px; 
-            border-radius: 40px; overflow: hidden;
-            box-shadow: 0 0 100px rgba(0, 217, 255, 0.1);
+        .interface { 
+            position: relative; z-index: 10; width: 100vw; height: 100vh; 
+            display: grid; grid-template-columns: 280px 1fr 280px;
+            pointer-events: none; padding: 20px;
+        }
+        .col { pointer-events: auto; display: flex; flex-direction: column; gap: 10px; }
+        
+        .stat-card { background: rgba(0,0,0,0.8); border: 1px solid #222; padding: 15px; border-radius: 20px; backdrop-filter: blur(5px); }
+        .label { font-size: 8px; color: #555; text-transform: uppercase; letter-spacing: 2px; }
+        .val { font-size: 16px; color: #fff; font-weight: bold; }
+
+        #console { 
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 600px; height: 80px; background: rgba(0,0,0,0.9); 
+            border: 1px solid #222; border-radius: 15px; padding: 10px;
+            font-size: 10px; color: #444; overflow: hidden; pointer-events: auto;
         }
 
-        .col { padding: 30px; border-right: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; overflow: hidden; }
-        .col:last-child { border-right: none; }
-        
-        /* TELEMETRY */
-        .telemetry-group { margin-bottom: 20px; }
-        .bar-wrap { height: 6px; background: #111; border-radius: 3px; margin-top: 6px; overflow: hidden; }
-        .bar-fill { height: 100%; width: 0%; transition: width 0.1s ease-out; }
-
-        .stat-card { background: rgba(255, 255, 255, 0.02); padding: 15px; margin-bottom: 10px; border-radius: 15px; border: 1px solid #151515; }
-        .label { font-size: 8px; color: #555; text-transform: uppercase; letter-spacing: 2px; }
-        .val { font-size: 16px; color: #fff; margin-top: 4px; font-weight: bold; }
-
-        #console { flex-grow: 1; background: #000; border-radius: 20px; padding: 15px; font-size: 9px; color: #444; overflow-y: auto; border: 1px solid #111; }
-
-        button { background: #fff; border: none; color: #000; padding: 15px; cursor: pointer; text-transform: uppercase; font-size: 10px; width: 100%; border-radius: 20px; font-weight: bold; }
-        button:hover { background: var(--n); box-shadow: 0 0 30px var(--n); }
+        button { 
+            background: #fff; border: none; color: #000; padding: 15px; 
+            cursor: pointer; text-transform: uppercase; font-size: 10px; 
+            width: 100%; border-radius: 15px; font-weight: bold; pointer-events: auto;
+        }
+        .bar-wrap { height: 4px; background: #111; border-radius: 2px; margin-top: 5px; overflow: hidden; }
+        .bar-fill { height: 100%; width: 0%; transition: width 0.1s; }
     </style>
 </head>
 <body>
@@ -44,115 +43,113 @@
 <canvas id="canvas"></canvas>
 
 <div id="auth" style="position:fixed; inset:0; background:#000; z-index:1000; display:flex; flex-direction:column; justify-content:center; align-items:center;">
-    <div style="font-size:40px; color:#fff; font-weight:bold; letter-spacing:15px;">v32.8_SINGULARITY</div>
-    <input type="password" id="inputKey" style="background:transparent; border:none; border-bottom:1px solid #222; color:#fff; width:350px; padding:15px; text-align:center; outline:none; margin-top:40px" placeholder="ROOT_ACCESS_KEY">
-    <button onclick="unlock()" style="width:350px; margin-top:40px">INIT_OBLIVION_PROTOCOL</button>
+    <div style="font-size:30px; color:#fff; font-weight:bold; letter-spacing:10px;">v32.9_COLLISION</div>
+    <input type="password" id="inputKey" style="background:transparent; border:none; border-bottom:1px solid #333; color:#fff; width:300px; padding:15px; text-align:center; outline:none; margin-top:30px" placeholder="SECURE_KEY">
+    <button onclick="unlock()" style="width:300px; margin-top:30px">BOOT_ENGINE</button>
 </div>
 
-<div class="container" id="mainTerminal" style="display: none;">
+<div class="interface" id="mainTerminal" style="display: none;">
     <div class="col">
         <div class="stat-card">
-            <div class="label">Paseo Pulse / Gas Price</div>
-            <div style="display:flex; justify-content:space-between">
-                <span id="blockSpeed" class="val" style="color:var(--n)">--</span>
-                <span id="gasPrice" class="val" style="color:#666">-- Gwei</span>
-            </div>
+            <div class="label">Paseo Heartbeat</div>
+            <div id="blockSpeed" class="val" style="color:var(--n)">--</div>
         </div>
-        <div class="telemetry-group">
-            <div class="label">Junk Injection Load (x5000)</div>
-            <div class="bar-wrap"><div id="b3" class="bar-fill" style="background:var(--n)"></div></div>
-        </div>
-        <div class="telemetry-group">
-            <div class="label">Minting Pressure</div>
+        <div class="stat-card">
+            <div class="label">Mint Buffer</div>
             <div class="bar-wrap"><div id="b1" class="bar-fill" style="background:var(--p)"></div></div>
         </div>
-        <div class="telemetry-group">
-            <div class="label">Burning Purge</div>
+        <div class="stat-card">
+            <div class="label">Burn Buffer</div>
             <div class="bar-wrap"><div id="b2" class="bar-fill" style="background:var(--s)"></div></div>
         </div>
         <div style="margin-top:auto">
-            <div class="label">Fuel Status</div>
-            <div id="pasBalance" class="val" style="font-size:22px; margin-bottom:20px">0.000 PAS</div>
-            <button id="injBtn" onclick="run()">ACTIVATE_SINGULARITY_CORE</button>
+            <button id="injBtn" onclick="run()">INJECT_MATTER</button>
         </div>
     </div>
 
-    <div class="col">
-        <div class="stat-card" style="display:flex; justify-content:space-between; border-color:var(--p)">
-            <div><div class="label">Total Token Supply</div><div id="totalSupply" class="val" style="color:var(--p)">0.00</div></div>
-            <div style="text-align:right"><div class="label">Smart Contract</div><div class="val" style="font-size:10px; color:#444">0xf63a...b760</div></div>
-        </div>
-        <div id="console"></div>
-    </div>
-
-    <div class="col">
-        <div class="stat-card"><div class="label" style="color:var(--p)">Tokens Minted (Total)</div><div id="mTokens" class="val" style="color:var(--p)">0</div></div>
-        <div class="stat-card"><div class="label" style="color:var(--s)">Tokens Burned (Total)</div><div id="bTokens" class="val" style="color:var(--s)">0</div></div>
-        <div class="stat-card"><div class="label" style="color:var(--n)">Junk Operations</div><div id="jCount" class="val" style="color:var(--n)">0</div></div>
-        <div class="stat-card" style="margin-top:auto; border-left:4px solid var(--s)">
-            <div class="label" style="color:var(--s)">Stealth Strikes</div>
-            <div id="sCount" class="val" style="color:var(--s); font-size:24px">0</div>
-        </div>
+    <div></div> <div class="col">
+        <div class="stat-card"><div class="label">Supply</div><div id="totalSupply" class="val">0.00</div></div>
+        <div class="stat-card"><div class="label">Fuel</div><div id="pasBalance" class="val" style="color:var(--n)">0.000</div></div>
+        <div class="stat-card"><div class="label" style="color:var(--p)">Minted</div><div id="mCount" class="val" style="color:var(--p)">0</div></div>
+        <div class="stat-card"><div class="label" style="color:var(--s)">Burned</div><div id="bCount" class="val" style="color:var(--s)">0</div></div>
+        <div class="stat-card"><div class="label" style="color:var(--n)">Junk Load</div><div id="jCount" class="val" style="color:var(--n)">0</div></div>
     </div>
 </div>
 
+<div id="console"></div>
+
 <script>
     let SESSION_KEY = "", localNonce = 0, isRunning = false;
-    let lastBlockTime = Date.now();
-    let totalMinted = 0, totalBurned = 0;
-    let particleAnimation = null; // Store animation state for clean reset
-
+    let lastBlock = Date.now();
     const ADDR = "0xf63adbb9ef464443ea1f9eb3e28c0d0ad321b760";
     const TARGET = "0x3dd695D734B5DdE6B1955FFE75004c00862fb233";
     const CONFIG = { rpc: "https://testnet-passet-hub-eth-rpc.polkadot.io", addr: ADDR };
     const abi = ["function trigger() public", "function ping(string) public", "function transfer(address, uint256) public returns (bool)", "function totalSupply() view returns (uint256)"];
 
-    // CONSTELLATION ENGINE
+    // COLLISION ENGINE
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-    let particles = [], mouse = { x: null, y: null };
-    function initC() { 
-        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-        particles = [];
-        for(let i=0; i<120; i++) particles.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, vx: (Math.random()-0.5)*1, vy: (Math.random()-0.5)*1, size: 1.5, color: "rgba(0, 217, 255, 0.4)" });
-    }
+    let matter = []; // Green (Mint)
+    let antiMatter = []; // Red (Burn)
+    let junk = []; // Blue
+
+    function initC() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
     initC(); window.onresize = initC;
-    window.onmousemove = (e) => { mouse.x = e.clientX; mouse.y = e.clientY; };
 
-    function draw() {
-        ctx.fillStyle = "rgba(0,0,0,0.15)"; ctx.fillRect(0,0,canvas.width,canvas.height);
-        
-        particles.forEach((p, i) => {
-            p.x += p.vx; p.y += p.vy;
-            if(p.x < 0 || p.x > canvas.width) p.vx *= -1; if(p.y < 0 || p.y > canvas.height) p.vy *= -1;
-            
-            ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fillStyle = p.color; ctx.fill();
-
-            // Reset particle properties after animation
-            if (p.size > 1.5) p.size -= 0.1;
-            if (p.color !== "rgba(0, 217, 255, 0.4)") {
-                // Simple color interpolation back to default
-                let c = p.color.match(/\d+/g);
-                p.color = `rgba(${parseInt(c[0]*0.95 + 0*0.05)}, ${parseInt(c[1]*0.95 + 217*0.05)}, ${parseInt(c[2]*0.95 + 255*0.05)}, 0.4)`;
+    class Particle {
+        constructor(x, y, color, type) {
+            this.x = x; this.y = y; this.color = color; this.type = type;
+            this.vx = (Math.random()-0.5)*4; this.vy = (Math.random()-0.5)*4;
+            this.life = 1; this.dead = false;
+        }
+        draw() {
+            ctx.beginPath(); ctx.arc(this.x, this.y, this.type === 'junk' ? 1 : 4, 0, Math.PI*2);
+            ctx.fillStyle = this.color; ctx.fill();
+        }
+        update() {
+            this.x += this.vx; this.y += this.vy;
+            if(this.type === 'anti') { // Inseguimento
+                if(matter.length > 0) {
+                    let target = matter[0];
+                    this.vx += (target.x - this.x) * 0.05; this.vy += (target.y - this.y) * 0.05;
+                    this.vx *= 0.95; this.vy *= 0.95; // Attrito
+                }
             }
-
-            for(let j=i+1; j<particles.length; j++) {
-                let p2 = particles[j], dist = Math.hypot(p.x-p2.x, p.y-p2.y);
-                if(dist < 120) { ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y); ctx.strokeStyle = "rgba(0, 217, 255, 0.15)"; ctx.stroke(); }
-            }
-        });
-        particleAnimation = requestAnimationFrame(draw);
+            if(this.type === 'junk') this.life -= 0.02;
+            if(this.life <= 0) this.dead = true;
+        }
     }
-    // Stop previous animation loop if any, then start new one
-    if(particleAnimation) cancelAnimationFrame(particleAnimation);
-    draw();
 
+    function animate() {
+        ctx.fillStyle = "rgba(0,0,0,0.2)"; ctx.fillRect(0,0,canvas.width,canvas.height);
+        
+        // Update & Draw
+        [...matter, ...antiMatter, ...junk].forEach(p => { p.update(); p.draw(); });
 
-    function addLog(msg, col="#444") {
+        // Collision Check
+        antiMatter.forEach((red, ri) => {
+            matter.forEach((green, gi) => {
+                let dist = Math.hypot(red.x - green.x, red.y - green.y);
+                if(dist < 10) {
+                    matter.splice(gi, 1); antiMatter.splice(ri, 1);
+                    createExplosion(red.x, red.y);
+                }
+            });
+        });
+
+        matter = matter.filter(p => p.x > 0 && p.x < canvas.width && p.y > 0 && p.y < canvas.height);
+        junk = junk.filter(p => !p.dead);
+        requestAnimationFrame(animate);
+    }
+    animate();
+
+    function createExplosion(x, y) {
+        for(let i=0; i<10; i++) junk.push(new Particle(x, y, "#fff", "junk"));
+    }
+
+    function addLog(msg) {
         const con = document.getElementById('console');
-        const d = document.createElement('div'); d.style.color = col;
-        d.innerHTML = `> [${new Date().toLocaleTimeString().split(' ')[0]}] ${msg}`;
-        con.prepend(d); if(con.childNodes.length > 50) con.removeChild(con.lastChild);
+        con.innerHTML = `> ${msg}<br>` + con.innerHTML;
     }
 
     async function unlock() {
@@ -164,19 +161,17 @@
             document.getElementById('auth').style.display = 'none';
             document.getElementById('mainTerminal').style.display = 'grid';
             startMonitor();
-        } catch (e) { alert("AUTH_ERROR"); }
+        } catch (e) { alert("KEY_ERR"); }
     }
 
     function startMonitor() {
         const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
         const contract = new ethers.Contract(ADDR, abi, provider);
-        provider.on("block", async (num) => {
-            document.getElementById('blockSpeed').innerText = ((Date.now()-lastBlockTime)/1000).toFixed(2) + "s";
-            lastBlockTime = Date.now();
+        provider.on("block", (num) => {
+            document.getElementById('blockSpeed').innerText = ((Date.now()-lastBlock)/1000).toFixed(2) + "s";
+            lastBlock = Date.now();
             contract.totalSupply().then(s => document.getElementById('totalSupply').innerText = parseFloat(ethers.formatEther(s)).toLocaleString());
-            provider.getBalance(new ethers.Wallet(SESSION_KEY).address).then(g => document.getElementById('pasBalance').innerText = parseFloat(ethers.formatEther(g)).toFixed(3) + " PAS");
-            provider.getFeeData().then(f => document.getElementById('gasPrice').innerText = Math.round(ethers.formatUnits(f.gasPrice, 'gwei')) + " Gwei");
-            addLog(`CHAIN: Block #${num} Finalized. Updating state...`, "#333");
+            provider.getBalance(new ethers.Wallet(SESSION_KEY).address).then(g => document.getElementById('pasBalance').innerText = parseFloat(ethers.formatEther(g)).toFixed(3));
         });
     }
 
@@ -185,71 +180,44 @@
         const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
         const wallet = new ethers.Wallet(SESSION_KEY, provider);
         const contract = new ethers.Contract(ADDR, abi, wallet);
-        addLog("SINGULARITY_ENGAGED: Parallelizing 5000x Junk Channels", "var(--n)");
+        addLog("SYSTEM_LIVE: Aggression Protocol Active");
 
-        // CHANNEL 1: MINTING
+        // Loop Mint
         (async () => {
             while(isRunning) {
                 document.getElementById('b1').style.width = '100%';
-                const currentNonce = localNonce++;
-                contract.trigger({ gasLimit: 1500000, nonce: currentNonce })
-                    .then(() => { 
-                        totalMinted += 1000;
-                        document.getElementById('mTokens').innerText = totalMinted.toLocaleString();
-                        document.getElementById('b1').style.width = '0%';
-                        addLog(`MINT: Cluster Emitted (N:${currentNonce})`, "var(--p)");
-                        // ANIMATION: GREEN PULSE
-                        particles.forEach(p => { p.color = "rgba(0, 255, 136, 1)"; p.size = 3; });
-                    }).catch(e => { 
-                        localNonce--;
-                        addLog(`MINT_ERROR: N:${currentNonce} - ${e.code || e.message}`, "var(--s)");
-                    });
-                await new Promise(r => setTimeout(r, 10)); // Aggressive
+                contract.trigger({ gasLimit: 1200000, nonce: localNonce++ }).then(() => {
+                    document.getElementById('mCount').innerText++;
+                    matter.push(new Particle(Math.random()*canvas.width, Math.random()*canvas.height, "#00ff88", "matter"));
+                    document.getElementById('b1').style.width = '0%';
+                }).catch(() => localNonce--);
+                await new Promise(r => setTimeout(r, 1500));
             }
         })();
 
-        // CHANNEL 2: BURNING
+        // Loop Burn
         (async () => {
             while(isRunning) {
                 document.getElementById('b2').style.width = '100%';
-                const currentNonce = localNonce++;
-                contract.transfer(TARGET, ethers.parseEther("0.1"), { gasLimit: 500000, nonce: currentNonce })
-                    .then(() => { 
-                        totalBurned += 1000;
-                        document.getElementById('bTokens').innerText = totalBurned.toLocaleString();
-                        document.getElementById('sCount').innerText++;
-                        document.getElementById('b2').style.width = '0%';
-                        addLog(`BURN: Asset Purged (N:${currentNonce})`, "var(--s)");
-                        // ANIMATION: RED SHRINK
-                        particles.forEach(p => { p.color = "rgba(255, 51, 102, 1)"; p.size = 0.5; });
-                    }).catch(e => {
-                        localNonce--;
-                        addLog(`BURN_ERROR: N:${currentNonce} - ${e.code || e.message}`, "var(--s)");
-                    });
-                await new Promise(r => setTimeout(r, 20)); // Aggressive
+                contract.transfer(TARGET, ethers.parseEther("0.1"), { gasLimit: 400000, nonce: localNonce++ }).then(() => {
+                    document.getElementById('bCount').innerText++;
+                    antiMatter.push(new Particle(Math.random()*canvas.width, Math.random()*canvas.height, "#ff3366", "anti"));
+                    document.getElementById('b2').style.width = '0%';
+                }).catch(() => localNonce--);
+                await new Promise(r => setTimeout(r, 3000));
             }
         })();
 
-        // CHANNEL 3: 5000X JUNK OVERFLOW
+        // Loop Junk 1000x
         (async () => {
             while(isRunning) {
-                document.getElementById('b3').style.width = '100%';
-                for(let i=0; i<30; i++) { // Increased burst size
-                    const currentNonce = localNonce++;
-                    const payload = "SINGULARITY_SHARD_" + Math.random().toString(36).substring(2, 10); // Longer random string
-                    contract.ping(payload, { gasLimit: 300000, nonce: currentNonce })
-                        .then(() => {
-                            document.getElementById('jCount').innerText = (parseInt(document.getElementById('jCount').innerText) + 5000).toLocaleString();
-                            // ANIMATION: CHAOS GLITCH (quick filter)
-                            canvas.style.filter = `hue-rotate(${Math.random()*360}deg) saturate(200%) brightness(150%) blur(${Math.random()*1}px)`;
-                            setTimeout(() => canvas.style.filter = 'none', 100);
-                        }).catch(e => {
-                            localNonce--;
-                            //addLog(`JUNK_ERROR: N:${currentNonce} - ${e.code || e.message}`, "var(--s)"); // Too verbose for junk
-                        });
+                for(let i=0; i<10; i++) {
+                    contract.ping("JUNK", { gasLimit: 250000, nonce: localNonce++ }).then(() => {
+                        document.getElementById('jCount').innerText = parseInt(document.getElementById('jCount').innerText) + 100;
+                        junk.push(new Particle(Math.random()*canvas.width, Math.random()*canvas.height, "#00d9ff", "junk"));
+                    }).catch(() => localNonce--);
                 }
-                setTimeout(() => document.getElementById('b3').style.width = '0%', 200); // Faster bar reset
-                await new Promise(r => setTimeout(r, 10)); // Hyper-aggressive loop
+                await new Promise(r => setTimeout(r, 800));
             }
         })();
     }
