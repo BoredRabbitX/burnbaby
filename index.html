@@ -2,152 +2,105 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>HBURN_v33.0_THE_CORE</title>
+    <title>HBURN_v33.1_INDUSTRIAL</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
     <style>
-        :root { --p: #00ff88; --s: #ff3366; --n: #00d9ff; --bg: #000; }
-        * { box-sizing: border-box; font-family: 'JetBrains Mono', monospace; }
-        body, html { margin: 0; padding: 0; height: 100vh; background: #000; overflow: hidden; display: flex; justify-content: center; align-items: center; }
-        
-        /* BACKGROUND COLLISION SPACE */
-        #canvas { position: absolute; inset: 0; z-index: 0; background: radial-gradient(circle, #0a0a0a 0%, #000 100%); }
+        :root { --p: #00ff88; --s: #ff3366; --n: #00d9ff; --bg: #050505; --card: #0c0c0e; }
+        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body, html { margin: 0; padding: 0; height: 100vh; background: var(--bg); color: #fff; overflow: hidden; display: flex; justify-content: center; align-items: center; }
 
-        /* CENTRAL SQUARE UI */
-        .core-ui { 
-            position: relative; z-index: 10; 
-            width: 800px; height: 800px; 
-            background: rgba(5, 5, 5, 0.92); 
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 40px; 
-            display: grid; grid-template-rows: auto 1fr auto;
-            padding: 40px; gap: 20px;
-            box-shadow: 0 0 100px rgba(0,0,0,1), 0 0 40px rgba(0, 255, 136, 0.05);
-            backdrop-filter: blur(20px);
-            pointer-events: auto;
+        /* INDUSTRIAL GRID UI */
+        .app-container { 
+            width: 900px; height: 600px; 
+            background: var(--card); 
+            border: 1px solid #1a1a1c;
+            border-radius: 38px; /* iOS style squircle */
+            display: grid; grid-template-rows: 80px 1fr 180px;
+            padding: 30px; gap: 20px;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.8);
         }
 
-        .header { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-        .stat-box { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 20px; border: 1px solid #111; }
-        .label { font-size: 9px; color: #555; text-transform: uppercase; letter-spacing: 2px; }
-        .val { font-size: 18px; color: #fff; font-weight: bold; margin-top: 5px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1a1a1c; padding-bottom: 15px; }
+        .app-title { font-weight: 800; letter-spacing: -0.5px; font-size: 20px; }
+        .version-tag { background: #1a1a1c; padding: 4px 12px; border-radius: 10px; font-size: 10px; color: #666; font-weight: 700; }
+
+        .main-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        .stat-card { background: #111113; border: 1px solid #1a1a1c; border-radius: 24px; padding: 20px; position: relative; overflow: hidden; }
+        .label { font-size: 10px; color: #555; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+        .val { font-size: 28px; font-weight: 800; margin-top: 8px; font-variant-numeric: tabular-nums; }
+        
+        .activity-light { position: absolute; top: 15px; right: 15px; width: 6px; height: 6px; border-radius: 50%; background: #222; }
+        .active-p { background: var(--p); box-shadow: 0 0 10px var(--p); }
+        .active-s { background: var(--s); box-shadow: 0 0 10px var(--s); }
 
         #console { 
-            background: #000; border-radius: 25px; padding: 20px; 
-            font-size: 11px; color: #555; overflow-y: auto; 
-            border: 1px solid #111; line-height: 1.5;
-            box-shadow: inset 0 0 20px rgba(0,0,0,1);
+            background: #080809; border-radius: 24px; border: 1px solid #1a1a1c; 
+            padding: 20px; font-family: "JetBrains Mono", monospace; font-size: 11px; 
+            color: #333; overflow-y: auto; line-height: 1.4;
         }
 
-        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .controls { display: grid; grid-template-columns: 2fr 1fr; gap: 15px; }
         button { 
             background: #fff; border: none; color: #000; padding: 20px; 
             cursor: pointer; text-transform: uppercase; font-size: 12px; 
-            border-radius: 20px; font-weight: bold; transition: 0.3s;
+            border-radius: 20px; font-weight: 800; transition: 0.2s;
         }
-        button:hover { background: var(--p); box-shadow: 0 0 30px var(--p); transform: scale(1.02); }
-        .btn-stop:hover { background: var(--s); box-shadow: 0 0 30px var(--s); }
-
-        .progress-bar { height: 4px; background: #111; border-radius: 2px; margin-top: 10px; overflow: hidden; }
-        .fill { height: 100%; width: 0%; transition: width 0.1s; }
+        button:hover { transform: scale(0.98); opacity: 0.9; }
+        .btn-stop { background: #1a1a1c; color: #fff; }
     </style>
 </head>
 <body>
 
-<canvas id="canvas"></canvas>
-
-<div id="auth" style="position:fixed; inset:0; background:#000; z-index:1000; display:flex; flex-direction:column; justify-content:center; align-items:center;">
-    <div style="font-size:40px; color:#fff; font-weight:bold; letter-spacing:15px;">v33.0_THE_CORE</div>
-    <input type="password" id="inputKey" style="background:transparent; border:none; border-bottom:1px solid #333; color:#fff; width:400px; padding:20px; text-align:center; outline:none; margin-top:40px; font-size:20px" placeholder="INJECT_SECURE_KEY">
-    <button onclick="unlock()" style="width:400px; margin-top:40px">INITIALIZE_CORE</button>
+<div id="auth" style="position:fixed; inset:0; background:#050505; z-index:1000; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+    <div style="font-size:32px; font-weight:800; letter-spacing:-1px;">HBURN INDUSTRIAL</div>
+    <input type="password" id="inputKey" style="background:#111; border:1px solid #1a1a1c; border-radius:20px; color:#fff; width:320px; padding:20px; text-align:center; outline:none; margin-top:30px; font-size:16px" placeholder="Private Key 0x...">
+    <button onclick="unlock()" style="width:320px; margin-top:20px">Authenticate</button>
 </div>
 
-<div class="core-ui" id="mainTerminal" style="display: none;">
+<div class="app-container" id="mainTerminal" style="display: none;">
     <div class="header">
-        <div class="stat-box"><div class="label">Paseo Heartbeat</div><div id="blockSpeed" class="val" style="color:var(--n)">--</div></div>
-        <div class="stat-card stat-box"><div class="label">Supply</div><div id="totalSupply" class="val">0.00</div></div>
-        <div class="stat-box"><div class="label">Fuel PAS</div><div id="pasBalance" class="val" style="color:var(--n)">0.000</div></div>
+        <div class="app-title">System Overview</div>
+        <div class="version-tag">STABLE v33.1</div>
+    </div>
+
+    <div class="main-grid">
+        <div class="stat-card">
+            <div class="activity-light" id="light1"></div>
+            <div class="label">Supply Injection</div>
+            <div id="mCount" class="val" style="color:var(--p)">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="activity-light" id="light2"></div>
+            <div class="label">Asset Purge</div>
+            <div id="bCount" class="val" style="color:var(--s)">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="label">Logic Overflow</div>
+            <div id="jCount" class="val" style="color:var(--n)">0</div>
+        </div>
     </div>
 
     <div id="console"></div>
 
-    <div class="footer">
-        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:20px">
-            <div class="stat-box"><div class="label" style="color:var(--p)">Minted</div><div id="mCount" class="val">0</div><div class="progress-bar"><div id="f1" class="fill" style="background:var(--p)"></div></div></div>
-            <div class="stat-box"><div class="label" style="color:var(--s)">Burned</div><div id="bCount" class="val">0</div><div class="progress-bar"><div id="f2" class="fill" style="background:var(--s)"></div></div></div>
-            <div class="stat-box"><div class="label" style="color:var(--n)">Junk Load</div><div id="jCount" class="val">0</div><div class="progress-bar"><div id="f3" class="fill" style="background:var(--n)"></div></div></div>
-        </div>
-        <div class="controls">
-            <button id="injBtn" onclick="run()">ENGAGE_OBLIVION</button>
-            <button id="haltBtn" onclick="halt()" class="btn-stop">EMERGENCY_HALT</button>
-        </div>
+    <div class="controls">
+        <button id="injBtn" onclick="run()">Initiate Attack Sequence</button>
+        <button id="haltBtn" onclick="location.reload()" class="btn-stop">Abort</button>
     </div>
 </div>
 
 <script>
     let SESSION_KEY = "", localNonce = 0, isRunning = false;
-    let lastBlock = Date.now();
     const ADDR = "0xf63adbb9ef464443ea1f9eb3e28c0d0ad321b760";
     const TARGET = "0x3dd695D734B5DdE6B1955FFE75004c00862fb233";
     const CONFIG = { rpc: "https://testnet-passet-hub-eth-rpc.polkadot.io", addr: ADDR };
-    const abi = ["function trigger() public", "function ping(string) public", "function transfer(address, uint256) public returns (bool)", "function totalSupply() view returns (uint256)"];
+    const abi = ["function trigger() public", "function ping(string) public", "function transfer(address, uint256) public returns (bool)"];
 
-    // COLLISION ENGINE 2.0
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    let matter = [], antiMatter = [], junk = [];
-
-    function initC() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-    initC(); window.onresize = initC;
-
-    class Particle {
-        constructor(x, y, color, type) {
-            this.x = x; this.y = y; this.color = color; this.type = type;
-            this.vx = (Math.random()-0.5)*5; this.vy = (Math.random()-0.5)*5;
-            this.life = 1;
-        }
-        update() {
-            this.x += this.vx; this.y += this.vy;
-            if(this.type === 'anti' && matter.length > 0) {
-                let target = matter[0];
-                this.vx += (target.x - this.x) * 0.08; this.vy += (target.y - this.y) * 0.08;
-                this.vx *= 0.94; this.vy *= 0.94;
-            }
-            if(this.type === 'junk' || this.type === 'exp') this.life -= 0.02;
-            if(this.x < 0 || this.x > canvas.width) this.vx *= -1;
-            if(this.y < 0 || this.y > canvas.height) this.vy *= -1;
-        }
-        draw() {
-            ctx.globalAlpha = this.life;
-            ctx.beginPath(); 
-            ctx.arc(this.x, this.y, this.type === 'exp' ? 1 : 4, 0, Math.PI*2);
-            ctx.fillStyle = this.color; ctx.fill();
-            ctx.globalAlpha = 1;
-        }
-    }
-
-    function animate() {
-        ctx.fillStyle = "rgba(0,0,0,0.15)"; ctx.fillRect(0,0,canvas.width,canvas.height);
-        [...matter, ...antiMatter, ...junk].forEach(p => { p.update(); p.draw(); });
-        
-        antiMatter.forEach((red, ri) => {
-            matter.forEach((green, gi) => {
-                if(Math.hypot(red.x - green.x, red.y - green.y) < 15) {
-                    matter.splice(gi, 1); antiMatter.splice(ri, 1);
-                    for(let i=0; i<15; i++) junk.push(new Particle(red.x, red.y, "#fff", "exp"));
-                }
-            });
-        });
-        junk = junk.filter(p => p.life > 0);
-        requestAnimationFrame(animate);
-    }
-    animate();
-
-    function addLog(msg, color="#555") {
+    function addLog(msg, color="#333") {
         const con = document.getElementById('console');
         const d = document.createElement('div');
-        d.innerHTML = `<span style="color:${color}">> [${new Date().toLocaleTimeString().split(' ')[0]}] ${msg}</span>`;
+        d.innerHTML = `<span style="color:${color}">[${new Date().toLocaleTimeString()}] ${msg}</span>`;
         con.prepend(d);
-        if(con.childNodes.length > 30) con.removeChild(con.lastChild);
+        if(con.childNodes.length > 25) con.removeChild(con.lastChild);
     }
 
     async function unlock() {
@@ -158,71 +111,69 @@
             SESSION_KEY = key;
             document.getElementById('auth').style.display = 'none';
             document.getElementById('mainTerminal').style.display = 'grid';
-            startMonitor();
-        } catch (e) { alert("KEY_ERR"); }
+            addLog("Core synchronized. Handshake valid.");
+        } catch (e) { alert("Invalid Credentials."); }
     }
 
-    function startMonitor() {
-        const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
-        const contract = new ethers.Contract(ADDR, abi, provider);
-        provider.on("block", (num) => {
-            document.getElementById('blockSpeed').innerText = ((Date.now()-lastBlock)/1000).toFixed(2) + "s";
-            lastBlock = Date.now();
-            contract.totalSupply().then(s => document.getElementById('totalSupply').innerText = parseFloat(ethers.formatEther(s)).toLocaleString());
-            provider.getBalance(new ethers.Wallet(SESSION_KEY).address).then(g => document.getElementById('pasBalance').innerText = parseFloat(ethers.formatEther(g)).toFixed(3));
-        });
+    function blink(id, colorClass) {
+        const el = document.getElementById(id);
+        el.classList.add(colorClass);
+        setTimeout(() => el.classList.remove(colorClass), 100);
     }
 
     async function run() {
         isRunning = true;
+        document.getElementById('injBtn').disabled = true;
+        document.getElementById('injBtn').innerText = "Attacking...";
+        
         const provider = new ethers.JsonRpcProvider(CONFIG.rpc);
         const wallet = new ethers.Wallet(SESSION_KEY, provider);
         const contract = new ethers.Contract(ADDR, abi, wallet);
-        addLog("NUCLEUS_ACTIVE: Initiating parallel saturation", "#fff");
 
-        // CHANNEL 1: MINTING FLOW
+        // CHANNEL 1: BATCH MINT (Rapid Fire)
         (async () => {
             while(isRunning) {
-                document.getElementById('f1').style.width = '100%';
-                contract.trigger({ gasLimit: 1500000, nonce: localNonce++ }).then(() => {
-                    document.getElementById('mCount').innerText++;
-                    matter.push(new Particle(Math.random()*canvas.width, Math.random()*canvas.height, "#00ff88", "matter"));
-                    document.getElementById('f1').style.width = '0%';
-                }).catch(() => localNonce--);
+                for(let i=0; i<3; i++) {
+                    contract.trigger({ gasLimit: 1200000, nonce: localNonce++ })
+                        .then(() => { 
+                            document.getElementById('mCount').innerText = parseInt(document.getElementById('mCount').innerText) + 150;
+                            blink('light1', 'active-p');
+                        }).catch(() => localNonce--);
+                }
                 await new Promise(r => setTimeout(r, 800));
             }
         })();
 
-        // CHANNEL 2: BURNING FLOW
+        // CHANNEL 2: BATCH BURN (Targeted)
         (async () => {
             while(isRunning) {
-                document.getElementById('f2').style.width = '100%';
-                contract.transfer(TARGET, ethers.parseEther("0.1"), { gasLimit: 500000, nonce: localNonce++ }).then(() => {
-                    document.getElementById('bCount').innerText++;
-                    antiMatter.push(new Particle(Math.random()*canvas.width, Math.random()*canvas.height, "#ff3366", "anti"));
-                    document.getElementById('f2').style.width = '0%';
-                }).catch(() => localNonce--);
-                await new Promise(r => setTimeout(r, 1500));
-            }
-        })();
-
-        // CHANNEL 3: MEGA JUNK FLOOD
-        (async () => {
-            while(isRunning) {
-                document.getElementById('f3').style.width = '100%';
-                for(let i=0; i<20; i++) {
-                    contract.ping("JUNK_OBLIVION_" + Math.random(), { gasLimit: 300000, nonce: localNonce++ }).then(() => {
-                        document.getElementById('jCount').innerText = parseInt(document.getElementById('jCount').innerText) + 1000;
-                        junk.push(new Particle(Math.random()*canvas.width, Math.random()*canvas.height, "#00d9ff", "junk"));
+                contract.transfer(TARGET, ethers.parseEther("0.1"), { gasLimit: 400000, nonce: localNonce++ })
+                    .then(() => { 
+                        document.getElementById('bCount').innerText = parseInt(document.getElementById('bCount').innerText) + 150;
+                        blink('light2', 'active-s');
+                        addLog("Asset Purge Finalized.", "var(--s)");
                     }).catch(() => localNonce--);
-                }
-                setTimeout(() => document.getElementById('f3').style.width = '0%', 300);
-                await new Promise(r => setTimeout(r, 500));
+                await new Promise(r => setTimeout(r, 1200));
             }
         })();
-    }
 
-    function halt() { isRunning = false; location.reload(); }
+        // CHANNEL 3-7: MASS JUNK SHARDING (5 Threads)
+        for(let thread=0; thread<5; thread++) {
+            (async () => {
+                while(isRunning) {
+                    for(let j=0; j<50; j++) {
+                        const payload = "LOAD_" + Math.random().toString(16);
+                        contract.ping(payload, { gasLimit: 250000, nonce: localNonce++ })
+                            .then(() => {
+                                document.getElementById('jCount').innerText = (parseInt(document.getElementById('jCount').innerText) + 10000).toLocaleString();
+                            }).catch(() => localNonce--);
+                    }
+                    await new Promise(r => setTimeout(r, 500));
+                }
+            })();
+        }
+        addLog("Overflow Sharding engaged across 5 threads.", "var(--n)");
+    }
 </script>
 </body>
 </html>
