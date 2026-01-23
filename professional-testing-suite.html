@@ -182,7 +182,7 @@
 <div id="auth">
     <div class="auth-card">
         <h1 style="font-size:48px; margin:0 0 10px 0;">Paseo Suite</h1>
-        <p style="color:var(--text-s); letter-spacing:3px; text-transform:uppercase; font-size:11px; margin-bottom:40px; font-weight:700;">Professional Testing v1.1</p>
+        <p style="color:var(--text-s); letter-spacing:3px; text-transform:uppercase; font-size:11px; margin-bottom:40px; font-weight:700;">Professional Testing v1.0</p>
         <input type="password" id="inputKey" placeholder="Private Key (0x...)">
         <button onclick="unlock()" class="btn-primary" style="width:100%;">Authenticate</button>
     </div>
@@ -225,10 +225,29 @@
             </div>
 
             <!-- Turbo Controls -->
-            <div class="control-group">
-                <button id="turboBtn" class="btn-danger" onclick="toggleTurboMode()">🚀 TURBO STRESS</button>
-                <button class="btn-warning" onclick="batchOperations()">Batch Operations</button>
+            <!-- Turbo Controls -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                <button id="turboBtn" class="btn-danger" onclick="toggleTurboMode()" style="grid-column: span 2;">🚀 TURBO STRESS</button>
+                <button class="btn-warning" onclick="batchOperations()">Batch Ops</button>
+                <button class="btn-secondary" onclick="refreshStats()">Refresh</button>
             </div>
+
+            <!-- Quick Actions Grid -->
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px;">
+                <button class="btn-primary" onclick="createContracts()">Create Contracts</button>
+                <button class="btn-warning" onclick="createTokens()">Create Tokens</button>
+                <button class="btn-secondary" onclick="loadTest()">Load Test</button>
+                <button class="btn-secondary" onclick="distributedTest()">Distributed</button>
+            </div>
+
+            <!-- Settings -->
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label>Batch Size: <span id="batchSizeValue">10</span></label>
+                <input type="range" id="batchSize" min="5" max="50" value="10" oninput="updateBatchSize(this.value)" style="width: 100%;">
+            </div>
+
+            <!-- System Controls -->
+            <button class="btn-secondary" onclick="location.reload()" style="width: 100%;">Terminate Session</button>
 
             <!-- Batch Settings -->
             <div class="form-group" style="margin-bottom: 15px;">
@@ -320,7 +339,7 @@
     };
 
     // Global state
-    let SESSION_KEY = "", localNonce = 0, isRunning = false, testStartTime = null;
+    let SESSION_KEY = "", isRunning = false, testStartTime = null;
     let turboMode = false, batchSize = 10, turboInterval = null, consecutiveErrors = 0;
     let testingSuite, tokenFactory, provider, wallet;
 
@@ -368,12 +387,14 @@
         try {
             provider = new ethers.JsonRpcProvider(CONFIG.rpc);
             wallet = new ethers.Wallet(key);
-            localNonce = await provider.getTransactionCount(wallet.address);
             SESSION_KEY = key;
 
-            // Initialize contracts
-            testingSuite = new ethers.Contract(CONFIG.testingSuite, testingSuiteABI, wallet.connect(provider));
-            tokenFactory = new ethers.Contract(CONFIG.tokenFactory, tokenFactoryABI, wallet.connect(provider));
+                // Initialize contracts with connected wallet
+            // Initialize contracts with connected wallet
+            // Initialize contracts with connected wallet
+            const connectedWallet = wallet.connect(provider);
+            testingSuite = new ethers.Contract(CONFIG.testingSuite, testingSuiteABI, connectedWallet);
+            tokenFactory = new ethers.Contract(CONFIG.tokenFactory, tokenFactoryABI, connectedWallet);
 
             document.getElementById('auth').style.display = 'none';
             document.getElementById('mainTerminal').style.display = 'grid';
@@ -383,8 +404,9 @@
 
             startMonitor();
             addLog("Professional Testing Suite activated.", true);
-            addLog("⚠️  Turbo mode uses conservative single operations every 5 seconds.", true);
-            addLog("Ready for controlled stress testing operations.", true);
+            addLog("🔧 Fixed transaction encoding issues.", true);
+            addLog("⚠️  Turbo mode: single operations every 5 seconds.", true);
+            addLog("Ready for stable stress testing operations.", true);
         } catch (e) {
             alert("Invalid Credentials.");
             addLog("Authentication failed: " + e.message);
@@ -412,12 +434,7 @@
                     document.getElementById('gasPrice').innerText = "-- gwei";
                 }
 
-                try {
-                    const nonce = await provider.getTransactionCount(wallet.address);
-                    if(nonce > localNonce) localNonce = nonce;
-                } catch (nonceError) {
-                    console.log("Nonce error:", nonceError);
-                }
+
 
                 await refreshStats();
 
@@ -451,8 +468,7 @@
             await testContractConnection();
 
             const tx = await testingSuite.createChildren(10, {
-                gasLimit: 5000000, // Aumentato il gas limit
-                nonce: localNonce++
+                gasLimit: 5000000
             });
             addLog("TX: " + tx.hash);
             await tx.wait();
@@ -464,8 +480,7 @@
             addLog("Retrying with fewer contracts...", true);
             try {
                 const tx = await testingSuite.createChildren(5, {
-                    gasLimit: 3000000,
-                    nonce: localNonce++
+                    gasLimit: 3000000
                 });
                 addLog("TX retry: " + tx.hash);
                 await tx.wait();
@@ -481,8 +496,7 @@
         try {
             addLog("Creating test tokens...", true);
             const tx = await tokenFactory.createTestTokens(5, {
-                gasLimit: 8000000, // Aumentato per token creation
-                nonce: localNonce++
+                gasLimit: 8000000
             });
             addLog("TX: " + tx.hash);
             await tx.wait();
@@ -494,8 +508,7 @@
             addLog("Retrying with fewer tokens...", true);
             try {
                 const tx = await tokenFactory.createTestTokens(2, {
-                    gasLimit: 4000000,
-                    nonce: localNonce++
+                    gasLimit: 4000000
                 });
                 addLog("TX retry: " + tx.hash);
                 await tx.wait();
@@ -512,8 +525,7 @@
         try {
             addLog(`Starting stress test at ${intensity}% intensity...`, true);
             const tx = await testingSuite.startTest(intensity, {
-                gasLimit: 2000000,
-                nonce: localNonce++
+                gasLimit: 2000000
             });
             addLog("TX: " + tx.hash);
             await tx.wait();
@@ -532,8 +544,7 @@
         try {
             addLog("Stopping stress test...", true);
             const tx = await testingSuite.stopTest({
-                gasLimit: 1000000,
-                nonce: localNonce++
+                gasLimit: 1000000
             });
             await tx.wait();
 
@@ -552,8 +563,7 @@
         try {
             addLog("Executing load test (100 transactions)...", true);
             const tx = await testingSuite.executeLoadTest(100, {
-                gasLimit: 3000000,
-                nonce: localNonce++
+                gasLimit: 3000000
             });
             addLog("TX: " + tx.hash);
             await tx.wait();
@@ -570,8 +580,7 @@
             try {
                 addLog("Executing distributed test...", true);
                 const tx = await testingSuite.executeDistributedTest({
-                    gasLimit: 2000000,
-                    nonce: localNonce++
+                    gasLimit: 2000000
                 });
                 await tx.wait();
 
@@ -654,8 +663,7 @@
             try {
                 addLog(`🔥 Turbo: Creating 1 contract`, true);
                 const tx = await testingSuite.createChildren(1, {
-                    gasLimit: 2000000,
-                    nonce: localNonce++
+                    gasLimit: 2000000
                 });
 
                 // Wait for confirmation
@@ -673,8 +681,7 @@
             try {
                 const count = Math.min(3, 5); // Very small batch for manual use
                 const tx = await testingSuite.createChildren(count, {
-                    gasLimit: 4000000,
-                    nonce: localNonce++
+                    gasLimit: 4000000
                 });
                 addLog(`🔥 Manual: Created ${count} contracts`, true);
                 await tx.wait();
@@ -689,8 +696,7 @@
             try {
                 addLog(`💰 Turbo: Creating 1 token type`, true);
                 const tx = await tokenFactory.createTestTokens(1, {
-                    gasLimit: 3000000,
-                    nonce: localNonce++
+                    gasLimit: 3000000
                 });
 
                 await tx.wait();
@@ -706,8 +712,7 @@
             try {
                 const count = Math.min(2, 3); // Very small batch for manual use
                 const tx = await tokenFactory.createTestTokens(count, {
-                    gasLimit: 6000000,
-                    nonce: localNonce++
+                    gasLimit: 6000000
                 });
                 addLog(`💰 Manual: Created ${count} token types`, true);
                 await tx.wait();
@@ -722,8 +727,7 @@
             try {
                 addLog(`⚡ Turbo: Executing 50 load transactions`, true);
                 const tx = await testingSuite.executeLoadTest(50, {
-                    gasLimit: 2000000,
-                    nonce: localNonce++
+                    gasLimit: 2000000
                 });
 
                 await tx.wait();
@@ -740,8 +744,7 @@
             try {
                 const txCount = Math.min(100, 200); // Smaller batch for manual use
                 const tx = await testingSuite.executeLoadTest(txCount, {
-                    gasLimit: 3000000,
-                    nonce: localNonce++
+                    gasLimit: 3000000
                 });
                 addLog(`⚡ Manual: ${txCount} load transactions`, true);
                 document.getElementById('loadOperations').innerText = parseInt(document.getElementById('loadOperations').innerText) + 1;
@@ -757,8 +760,7 @@
             try {
                 addLog(`🌐 Turbo: Executing distributed test`, true);
                 const tx = await testingSuite.executeDistributedTest({
-                    gasLimit: 2000000,
-                    nonce: localNonce++
+                    gasLimit: 2000000
                 });
 
                 await tx.wait();
@@ -774,8 +776,7 @@
         async function distributedTestBatch() {
             try {
                 const tx = await testingSuite.executeDistributedTest({
-                    gasLimit: 2000000,
-                    nonce: localNonce++
+                    gasLimit: 2000000
                 });
                 addLog(`🌐 Manual: Distributed operations`, true);
                 document.getElementById('distributedOps').innerText = parseInt(document.getElementById('distributedOps').innerText) + 1;
