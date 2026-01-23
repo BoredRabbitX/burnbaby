@@ -3,129 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HBURN - SECOND AGE v35.3 BATCH-MODE</title>
+    <title>HBURN - SECOND AGE v36.0 ALL-OUT ATTACK</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
     <style>
         :root { --pink: #FF2867; --green: #00ff88; --bg: #0F0F0F; --surface: #1C1917; --border: #292524; }
         * { box-sizing: border-box; }
         body { margin: 0; background: var(--bg); color: #FAFAF9; font-family: 'DM Sans', sans-serif; overflow: hidden; height: 100vh; }
-        
-        .app-shell { 
-            display: grid; grid-template-columns: 280px 1fr 280px; 
-            height: 100%; width: 100%; max-width: 1600px; margin: 0 auto; padding: 10px; gap: 10px;
-        }
-
-        .column { display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
-        .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
-        
-        #console { 
-            flex-grow: 1; background: #050505; border: 1px solid var(--border); border-radius: 4px;
-            padding: 10px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--green);
-            overflow-y: auto; line-height: 1.3;
-        }
-
-        .label { font-size: 9px; color: #A8A29E; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
-        .val { font-size: 22px; font-weight: 700; color: #fff; }
-        
-        .btn { padding: 10px; border-radius: 4px; border: none; font-weight: 700; cursor: pointer; font-size: 10px; text-transform: uppercase; width: 100%; transition: 0.2s; }
-        .btn-primary { background: var(--pink); color: white; }
-        .btn-action { background: var(--green); color: black; }
-        .btn-outline { background: transparent; border: 1px solid var(--border); color: #A8A29E; }
-        .btn:hover:not(:disabled) { filter: brightness(1.2); }
-        
-        input, select { background: #000; border: 1px solid var(--border); color: #fff; padding: 6px; width: 100%; font-size: 11px; margin-top: 4px; border-radius: 4px; }
-        
-        .batch-indicator { font-size: 10px; color: var(--pink); font-weight: bold; }
+        .app-shell { display: grid; grid-template-columns: 320px 1fr; height: 100%; max-width: 1400px; margin: 0 auto; padding: 15px; gap: 15px; }
+        .column { display: flex; flex-direction: column; gap: 15px; overflow: hidden; }
+        .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+        #console { flex-grow: 1; background: #050505; border: 1px solid var(--border); border-radius: 8px; padding: 15px; font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--green); overflow-y: auto; box-shadow: inset 0 0 20px rgba(0,255,136,0.05); }
+        .label { font-size: 10px; color: #A8A29E; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; }
+        .val { font-size: 28px; font-weight: 700; color: #fff; }
+        .btn-massive { padding: 25px; border-radius: 50px; border: none; font-weight: 800; cursor: pointer; font-size: 14px; text-transform: uppercase; width: 100%; transition: 0.3s; box-shadow: 0 0 20px rgba(255, 40, 103, 0.2); }
+        .btn-off { background: var(--pink); color: white; }
+        .btn-on { background: var(--green); color: black; box-shadow: 0 0 30px rgba(0, 255, 136, 0.4); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+        .status-dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+        .active-dot { background: var(--green); box-shadow: 0 0 10px var(--green); }
         #auth { position:fixed; inset:0; background:var(--bg); z-index:1000; display:flex; justify-content:center; align-items:center; }
     </style>
 </head>
 <body>
 
 <div id="auth">
-    <div style="text-align:center; width:300px;">
-        <h2 style="margin-bottom:20px;">INDUSTRIAL ACCESS</h2>
-        <input type="password" id="inputKey" placeholder="Private Key (0x...)" style="padding:12px;">
-        <button onclick="unlock()" class="btn-primary" style="margin-top:10px; padding:12px;">Connect Suite</button>
+    <div style="text-align:center; width:350px;">
+        <h1 style="font-family:'JetBrains Mono'; color:var(--pink); font-size:24px;">HBURN v36.0</h1>
+        <p style="color:var(--text-s); font-size:10px; letter-spacing:2px; margin-bottom:30px;">SYNCHRONIZED ATTACK SUITE</p>
+        <input type="password" id="inputKey" placeholder="Private Key (0x...)" style="background:#000; border:1px solid var(--border); color:#fff; padding:15px; width:100%; border-radius:8px; margin-bottom:15px; font-family:'JetBrains Mono';">
+        <button onclick="unlock()" class="btn-massive btn-off">Connect & Initialize</button>
     </div>
 </div>
 
 <div class="app-shell" id="mainTerminal" style="display: none;">
     <div class="column">
         <div class="panel">
-            <div class="label">Network Status</div>
+            <div class="label">System Pulse</div>
             <div id="blockSpeed" class="val" style="color:var(--pink)">0.00s</div>
-            <div id="blockHeight" style="font-size:10px; color:#A8A29E;">Block #--</div>
+            <div id="blockHeight" style="font-size:12px; color:#A8A29E;">Block #--</div>
         </div>
 
         <div class="panel">
-            <div class="label">Batch Attack Engine</div>
-            <div style="margin-top:8px; display:flex; flex-direction:column; gap:6px;">
-                <button id="strikeBtn" class="btn btn-primary" onclick="toggleStrike()">Start Batch Strike</button>
-                <div class="label" style="margin-top:5px;">Batch Size (TX/Burst)</div>
-                <select id="batchSize">
-                    <option value="5">5 TX / burst</option>
-                    <option value="10" selected>10 TX / burst</option>
-                    <option value="25">25 TX / burst (Aggressive)</option>
-                </select>
-            </div>
+            <div class="label">Main Command</div>
+            <button id="mainBtn" class="btn-massive btn-off" style="margin-top:15px;" onclick="toggleAllOutAttack()">Initiate All-Out Attack</button>
+            <div id="processStatus" style="font-size:11px; color:var(--pink); font-family:'JetBrains Mono'; margin-top:15px; text-align:center;">SYSTEM_READY</div>
         </div>
 
         <div class="panel" style="margin-top:auto;">
-            <div class="label">Fuel (PAS)</div>
+            <div class="label">Wallet PAS</div>
             <div id="pasBalance" class="val">0.0000</div>
-            <button class="btn btn-outline" style="margin-top:8px;" onclick="location.reload()">Kill Session</button>
+            <div class="label" style="margin-top:15px;">Target Suite</div>
+            <div style="font-size:9px; color:var(--pink); font-family:'JetBrains Mono'; word-break:break-all;">0x7a637dc8cbfb49edc55fbe97fab0b0824c163605</div>
         </div>
     </div>
 
     <div class="column">
         <div class="panel" style="flex-grow:1; display:flex; flex-direction:column;">
-            <div class="label">Execution Log</div>
+            <div class="label"><span class="status-dot active-dot"></span> Orchestrated Execution Stream</div>
             <div id="console"></div>
         </div>
+        
         <div class="panel">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:20px;">
                 <div>
-                    <div class="label">Test Intensity</div>
-                    <input type="range" id="intensity" min="1" max="100" value="50">
+                    <div class="label">Total TXs</div>
+                    <div id="totalCount" class="val">0</div>
                 </div>
                 <div>
-                    <div class="label">Manual Batch Inject</div>
-                    <button class="btn btn-action" onclick="callContract('suite', 'executeLoadTest', [20])">Pulse 20 Load TX</button>
+                    <div class="label">Bursts Completed</div>
+                    <div id="burstCount" class="val">0</div>
+                </div>
+                <div>
+                    <div class="label">Children</div>
+                    <div id="childCount" class="val">0</div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <div class="column">
-        <div class="panel">
-            <div class="label">Aggregated Stats</div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin-top:5px;">
-                <div style="background:#000; padding:8px;"><div class="label">Burst</div><div id="bCount" class="val" style="font-size:18px;">0</div></div>
-                <div style="background:#000; padding:8px;"><div class="label">Total TX</div><div id="sCount" class="val" style="font-size:18px; color:var(--pink)">0</div></div>
-            </div>
-        </div>
-
-        <div class="panel">
-            <div class="label">Minimal Suite</div>
-            <div id="statChildren" class="val">0</div>
-            <div class="label" style="font-size:8px;">Children Deployed</div>
-            <button class="btn btn-outline" style="margin-top:5px;" onclick="callContract('suite', 'createChildren', [5])">Deploy +5</button>
-            <button class="btn btn-outline" style="margin-top:5px;" onclick="callContract('suite', 'executeDistributedTest')">Run Distributed</button>
-        </div>
-
-        <div class="panel">
-            <div class="label">Token Factory</div>
-            <button class="btn btn-action" onclick="callContract('factory', 'createTestTokens', [2])">Mint 2 Tokens</button>
-            <input type="text" id="targetToken" placeholder="Token Addr for Fleet" style="margin-bottom:5px;">
-            <button class="btn btn-outline" onclick="distributeTokens()">Distribute Fleet</button>
         </div>
     </div>
 </div>
 
 <script>
-    let provider, wallet, suite, factory, isStrikeActive = false;
-    let nextNonce = null;
+    let provider, wallet, suite, factory, isAttackActive = false;
+    let attackStep = 0;
 
     const ADDR_SUITE = "0x7a637dc8cbfb49edc55fbe97fab0b0824c163605";
     const ADDR_FACTORY = "0x39ca236cb8131f6748d3862bb574f24a10e1c38d";
@@ -134,13 +94,13 @@
     const ABI_SUITE = ["function createChildren(uint256 count)", "function startTest(uint256 intensity)", "function executeLoadTest(uint256 txCount)", "function executeDistributedTest()", "function getStats() view returns (uint256 children, uint256 txs, uint256 currentBlock, uint256 blocksElapsed, bool active)"];
     const ABI_FACTORY = ["function createTestTokens(uint256 count)", "function distributeTokens(address token, address[] memory recipients)"];
 
-    function addLog(msg, accent = false) {
+    function addLog(msg, color = null) {
         const c = document.getElementById('console');
         const d = document.createElement('div');
-        if(accent) d.style.color = 'var(--pink)';
-        d.innerHTML = `> ${msg}`;
+        if(color) d.style.color = color;
+        d.innerHTML = `> [${new Date().toLocaleTimeString()}] ${msg}`;
         c.prepend(d);
-        if(c.childNodes.length > 40) c.removeChild(c.lastChild);
+        if(c.childNodes.length > 60) c.removeChild(c.lastChild);
     }
 
     async function unlock() {
@@ -149,89 +109,89 @@
             wallet = new ethers.Wallet(document.getElementById('inputKey').value.trim(), provider);
             suite = new ethers.Contract(ADDR_SUITE, ABI_SUITE, wallet);
             factory = new ethers.Contract(ADDR_FACTORY, ABI_FACTORY, wallet);
-            
             document.getElementById('auth').style.display = 'none';
             document.getElementById('mainTerminal').style.display = 'grid';
-            
-            nextNonce = await provider.getTransactionCount(wallet.address, "pending");
             startMonitor();
-            addLog("SYSTEM_READY: BATCH_ENGINE_LOADED", true);
+            addLog("INDUSTRIAL_ORCHESTRATOR_ONLINE", "var(--pink)");
         } catch(e) { alert("Key Error"); }
     }
 
     function startMonitor() {
         let lastB = Date.now();
-        provider.on("block", async (n) => {
+        provider.on("block", (n) => {
             document.getElementById('blockSpeed').innerText = ((Date.now()-lastB)/1000).toFixed(2) + "s";
             document.getElementById('blockHeight').innerText = "Block #" + n;
             lastB = Date.now();
-            
-            provider.getBalance(wallet.address).then(b => {
-                document.getElementById('pasBalance').innerText = parseFloat(ethers.formatEther(b)).toFixed(4);
-            });
-            
-            suite.getStats().then(s => {
-                document.getElementById('statChildren').innerText = s.children;
-            });
+            provider.getBalance(wallet.address).then(b => document.getElementById('pasBalance').innerText = parseFloat(ethers.formatEther(b)).toFixed(4));
+            suite.getStats().then(s => document.getElementById('childCount').innerText = s.children);
         });
     }
 
-    async function toggleStrike() {
-        isStrikeActive = !isStrikeActive;
-        const btn = document.getElementById('strikeBtn');
-        btn.innerText = isStrikeActive ? "ACTIVE: SENDING BATCHES" : "Start Batch Strike";
-        if(isStrikeActive) runBatchLoop();
-    }
-
-    async function runBatchLoop() {
-        while(isStrikeActive) {
-            const size = parseInt(document.getElementById('batchSize').value);
-            addLog(`INJECTING_BATCH: ${size} Transactions...`, true);
-            
-            // Sincronizza il nonce prima di ogni burst per evitare sfasamenti
-            nextNonce = await provider.getTransactionCount(wallet.address, "pending");
-
-            const promises = [];
-            for(let i=0; i<size; i++) {
-                // Alternanza intelligente tra Burn e Test
-                if(i % 2 === 0) {
-                    promises.push(wallet.sendTransaction({ 
-                        to: HBURN_TARGET, 
-                        value: 100n, 
-                        nonce: nextNonce++,
-                        gasLimit: 21000
-                    }).catch(e => {}));
-                } else {
-                    promises.push(suite.startTest(document.getElementById('intensity').value, { 
-                        nonce: nextNonce++,
-                        gasLimit: 150000 
-                    }).catch(e => {}));
-                }
-            }
-            
-            await Promise.all(promises);
-            document.getElementById('bCount').innerText++;
-            document.getElementById('sCount').innerText = parseInt(document.getElementById('sCount').innerText) + size;
-            
-            // Pausa tattica per permettere al mempool di Paseo di processare
-            await new Promise(r => setTimeout(r, 5000));
+    async function toggleAllOutAttack() {
+        isAttackActive = !isAttackActive;
+        const btn = document.getElementById('mainBtn');
+        if(isAttackActive) {
+            btn.innerText = "CEASE FIRE";
+            btn.className = "btn-massive btn-on";
+            addLog("ALL-OUT ATTACK COMMENCED", "var(--green)");
+            orchestrateAttack();
+        } else {
+            btn.innerText = "Initiate All-Out Attack";
+            btn.className = "btn-massive btn-off";
+            addLog("ATTACK SUSPENDED", "var(--pink)");
+            document.getElementById('processStatus').innerText = "SYSTEM_READY";
         }
     }
 
-    async function callContract(t, m, a = []) {
-        const c = t === 'suite' ? suite : factory;
-        try {
-            nextNonce = await provider.getTransactionCount(wallet.address, "pending");
-            addLog(`MANUAL_EXEC: ${m}`);
-            const tx = await c[m](...a, { nonce: nextNonce++, gasLimit: 500000 });
-            await tx.wait();
-            addLog(`SUCCESS: ${m}`, true);
-        } catch(e) { addLog(`ERR: ${m} - Check Gas/Nonce`, true); }
-    }
+    async function orchestrateAttack() {
+        while(isAttackActive) {
+            try {
+                const nonce = await provider.getTransactionCount(wallet.address, "pending");
+                
+                // CICLO DI SINCRONIZZAZIONE (STEP-BY-STEP)
+                switch(attackStep % 4) {
+                    case 0: // HBURN CORE
+                        document.getElementById('processStatus').innerText = "HBURN_BURN_INJECTION";
+                        const tx0 = await wallet.sendTransaction({ to: HBURN_TARGET, value: 50n, nonce, gasLimit: 21000 });
+                        addLog(`HBURN: Burn Tx Sent -> ${tx0.hash.substring(0,10)}...`);
+                        await tx0.wait();
+                        break;
+                        
+                    case 1: // SUITE DEPLOYMENT/TEST
+                        document.getElementById('processStatus').innerText = "SUITE_DISTRIBUTED_STRESS";
+                        const tx1 = await suite.executeDistributedTest({ nonce, gasLimit: 800000 });
+                        addLog(`SUITE: Distributed Test Executed`);
+                        await tx1.wait();
+                        break;
+                        
+                    case 2: // LOAD TESTING
+                        document.getElementById('processStatus').innerText = "BLOCK_LOAD_INJECTION";
+                        const tx2 = await suite.executeLoadTest(15, { nonce, gasLimit: 500000 });
+                        addLog(`LOAD: Heavy Transaction Batch Confirmed`);
+                        await tx2.wait();
+                        break;
+                        
+                    case 3: // TOKEN FACTORY
+                        document.getElementById('processStatus').innerText = "FACTORY_ASSET_CREATION";
+                        const tx3 = await factory.createTestTokens(1, { nonce, gasLimit: 400000 });
+                        addLog(`FACTORY: New Test Token Minted`);
+                        await tx3.wait();
+                        document.getElementById('burstCount').innerText++;
+                        break;
+                }
+                
+                attackStep++;
+                document.getElementById('totalCount').innerText = attackStep;
+                addLog("SYNCHRONIZED_BLOCK_COMPLETE", "var(--green)");
 
-    async function distributeTokens() {
-        const t = document.getElementById('targetToken').value;
-        if(ethers.isAddress(t)) callContract('factory', 'distributeTokens', [t, [wallet.address]]);
+            } catch (e) {
+                addLog("SYNC_ERROR: Rescheduling next pulse...", "var(--pink)");
+                await new Promise(r => setTimeout(r, 4000)); // Pausa di sicurezza in caso di congestione
+            }
+            
+            // Pausa breve tra un processo e l'altro per stabilità
+            await new Promise(r => setTimeout(r, 1000));
+        }
     }
 </script>
 </body>
