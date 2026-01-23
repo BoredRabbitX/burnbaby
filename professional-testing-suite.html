@@ -182,7 +182,7 @@
 <div id="auth">
     <div class="auth-card">
         <h1 style="font-size:48px; margin:0 0 10px 0;">Paseo Suite</h1>
-        <p style="color:var(--text-s); letter-spacing:3px; text-transform:uppercase; font-size:11px; margin-bottom:40px; font-weight:700;">Professional Testing v1.2</p>
+        <p style="color:var(--text-s); letter-spacing:3px; text-transform:uppercase; font-size:11px; margin-bottom:40px; font-weight:700;">Professional Testing v1.3</p>
         <input type="password" id="inputKey" placeholder="Private Key (0x...)">
         <button onclick="unlock()" class="btn-primary" style="width:100%;">Authenticate</button>
     </div>
@@ -278,6 +278,9 @@
 
     <div class="column">
         <div class="label" style="margin-bottom: 5px;">System Console</div>
+        <div style="background: #ff4444; color: white; padding: 8px; margin-bottom: 10px; border-radius: 4px; font-size: 11px;">
+            ⚠️ WARNING: High transaction frequency may trigger network spam protection.
+        </div>
         <div id="console"></div>
     </div>
 
@@ -341,6 +344,7 @@
     // Global state
     let SESSION_KEY = "", isRunning = false, testStartTime = null;
     let turboMode = false, batchSize = 10, turboInterval = null, consecutiveErrors = 0;
+    let operationInProgress = false;
     let testingSuite, tokenFactory, provider, wallet;
 
     // ABIs
@@ -405,7 +409,9 @@
             startMonitor();
             addLog("Professional Testing Suite activated.", true);
             addLog("🔧 Fixed transaction encoding issues.", true);
-            addLog("⚠️  Turbo mode: single operations every 5 seconds.", true);
+            addLog("⚠️  Turbo mode: single operations every 10 seconds.", true);
+            addLog("🚨 Network protection active - avoid spam detection.", true);
+            addLog("🛡️ Anti-spam protection: Operations limited to prevent network bans.", true);
             addLog("Ready for stable stress testing operations.", true);
         } catch (e) {
             alert("Invalid Credentials.");
@@ -462,134 +468,200 @@
 
         // Contract operations
         async function createContracts() {
-        try {
-            addLog("Creating child contracts...", true);
-            // Prima testiamo se il contratto risponde
-            await testContractConnection();
+            if (operationInProgress) {
+                addLog("⚠️ Operation already in progress, please wait...", true);
+                return;
+            }
 
-            const tx = await testingSuite.createChildren(10, {
-                gasLimit: 5000000
-            });
-            addLog("TX: " + tx.hash);
-            await tx.wait();
-            addLog("Child contracts deployed successfully", true);
-            await refreshStats();
-        } catch (error) {
-            addLog("Contract creation failed: " + error.message);
-            // Proviamo con meno contratti
-            addLog("Retrying with fewer contracts...", true);
+            operationInProgress = true;
+            const btn = document.querySelector('button[onclick*="createContracts"]');
+            if (btn) btn.disabled = true;
+
             try {
-                const tx = await testingSuite.createChildren(5, {
-                    gasLimit: 3000000
+                addLog("Creating child contracts...", true);
+                await testContractConnection();
+
+                const tx = await testingSuite.createChildren(3, { // Reduced from 10 to 3
+                    gasLimit: 3000000,
+                    gasPrice: ethers.parseUnits('1000', 'gwei') // Lower priority
                 });
-                addLog("TX retry: " + tx.hash);
+                addLog("TX: " + tx.hash);
                 await tx.wait();
-                addLog("5 Child contracts deployed successfully", true);
+                addLog("Child contracts deployed successfully", true);
                 await refreshStats();
-            } catch (retryError) {
-                addLog("Retry also failed: " + retryError.message);
+            } catch (error) {
+                addLog("Contract creation failed: " + error.message);
+                // Retry with 1 contract only
+                try {
+                    const tx = await testingSuite.createChildren(1, {
+                        gasLimit: 2000000,
+                        gasPrice: ethers.parseUnits('500', 'gwei')
+                    });
+                    addLog("TX retry: " + tx.hash);
+                    await tx.wait();
+                    addLog("1 Child contract deployed successfully", true);
+                    await refreshStats();
+                } catch (retryError) {
+                    addLog("Retry also failed: " + retryError.message);
+                }
+            } finally {
+                operationInProgress = false;
+                if (btn) btn.disabled = false;
             }
         }
-    }
 
-    async function createTokens() {
-        try {
-            addLog("Creating test tokens...", true);
-            const tx = await tokenFactory.createTestTokens(5, {
-                gasLimit: 8000000
-            });
-            addLog("TX: " + tx.hash);
-            await tx.wait();
-            addLog("Test tokens created successfully", true);
-            await refreshStats();
-        } catch (error) {
-            addLog("Token creation failed: " + error.message);
-            // Retry with fewer tokens
-            addLog("Retrying with fewer tokens...", true);
+        async function createTokens() {
+            if (operationInProgress) {
+                addLog("⚠️ Operation already in progress, please wait...", true);
+                return;
+            }
+
+            operationInProgress = true;
+            const btn = document.querySelector('button[onclick*="createTokens"]');
+            if (btn) btn.disabled = true;
+
             try {
-                const tx = await tokenFactory.createTestTokens(2, {
-                    gasLimit: 4000000
+                addLog("Creating test tokens...", true);
+                const tx = await tokenFactory.createTestTokens(1, { // Reduced from 5 to 1
+                    gasLimit: 3000000,
+                    gasPrice: ethers.parseUnits('1000', 'gwei')
                 });
-                addLog("TX retry: " + tx.hash);
+                addLog("TX: " + tx.hash);
                 await tx.wait();
-                addLog("2 Test tokens created successfully", true);
+                addLog("Test token created successfully", true);
                 await refreshStats();
-            } catch (retryError) {
-                addLog("Retry also failed: " + retryError.message);
+            } catch (error) {
+                addLog("Token creation failed: " + error.message);
+            } finally {
+                operationInProgress = false;
+                if (btn) btn.disabled = false;
             }
         }
-    }
 
-    async function startStressTest() {
-        const intensity = document.getElementById('intensity').value;
-        try {
-            addLog(`Starting stress test at ${intensity}% intensity...`, true);
-            const tx = await testingSuite.startTest(intensity, {
-                gasLimit: 2000000
-            });
-            addLog("TX: " + tx.hash);
-            await tx.wait();
+        async function startStressTest() {
+            if (operationInProgress) {
+                addLog("⚠️ Operation already in progress, please wait...", true);
+                return;
+            }
 
-            isRunning = true;
-            testStartTime = Date.now();
-            document.getElementById('testStatus').innerText = "Active";
-            document.getElementById('testStatusIndicator').className = "status-indicator status-active";
-            addLog("Stress test initiated", true);
-        } catch (error) {
-            addLog("Stress test failed: " + error.message);
+            operationInProgress = true;
+            const btn = document.getElementById('startTestBtn');
+            if (btn) btn.disabled = true;
+
+            const intensity = document.getElementById('intensity').value;
+            try {
+                addLog(`Starting stress test at ${intensity}% intensity...`, true);
+                const tx = await testingSuite.startTest(intensity, {
+                    gasLimit: 2000000,
+                    gasPrice: ethers.parseUnits('1000', 'gwei')
+                });
+                addLog("TX: " + tx.hash);
+                await tx.wait();
+
+                isRunning = true;
+                testStartTime = Date.now();
+                document.getElementById('testStatus').innerText = "Active";
+                document.getElementById('testStatusIndicator').className = "status-indicator status-active";
+                addLog("Stress test initiated", true);
+            } catch (error) {
+                addLog("Stress test failed: " + error.message);
+            } finally {
+                operationInProgress = false;
+                if (btn) btn.disabled = false;
+            }
         }
-    }
 
-    async function stopStressTest() {
-        try {
-            addLog("Stopping stress test...", true);
-            const tx = await testingSuite.stopTest({
-                gasLimit: 1000000
-            });
-            await tx.wait();
+        async function stopStressTest() {
+            if (operationInProgress) {
+                addLog("⚠️ Operation already in progress, please wait...", true);
+                return;
+            }
 
-            isRunning = false;
-            testStartTime = null;
-            document.getElementById('testStatus').innerText = "Stopped";
-            document.getElementById('testStatusIndicator').className = "status-indicator status-inactive";
-            document.getElementById('testDuration').innerText = "Duration: 0:00";
-            addLog("Stress test terminated", true);
-        } catch (error) {
-            addLog("Stop test failed: " + error.message);
+            operationInProgress = true;
+            const btn = document.getElementById('stopTestBtn');
+            if (btn) btn.disabled = true;
+
+            try {
+                addLog("Stopping stress test...", true);
+                const tx = await testingSuite.stopTest({
+                    gasLimit: 1000000,
+                    gasPrice: ethers.parseUnits('1000', 'gwei')
+                });
+                await tx.wait();
+
+                isRunning = false;
+                testStartTime = null;
+                document.getElementById('testStatus').innerText = "Stopped";
+                document.getElementById('testStatusIndicator').className = "status-indicator status-inactive";
+                document.getElementById('testDuration').innerText = "Duration: 0:00";
+                addLog("Stress test terminated", true);
+            } catch (error) {
+                addLog("Stop test failed: " + error.message);
+            } finally {
+                operationInProgress = false;
+                if (btn) btn.disabled = false;
+            }
         }
-    }
 
-    async function loadTest() {
-        try {
-            addLog("Executing load test (100 transactions)...", true);
-            const tx = await testingSuite.executeLoadTest(100, {
-                gasLimit: 3000000
-            });
-            addLog("TX: " + tx.hash);
-            await tx.wait();
+        async function loadTest() {
+            if (operationInProgress) {
+                addLog("⚠️ Operation already in progress, please wait...", true);
+                return;
+            }
 
-            document.getElementById('loadOperations').innerText = parseInt(document.getElementById('loadOperations').innerText) + 1;
-            addLog("Load test completed successfully!", true);
-            await refreshStats();
-        } catch (error) {
-            addLog("Load test failed: " + error.message);
+            operationInProgress = true;
+            const btn = document.querySelector('button[onclick*="loadTest"]');
+            if (btn) btn.disabled = true;
+
+            try {
+                addLog("Executing load test (50 transactions)...", true);
+                const tx = await testingSuite.executeLoadTest(50, { // Reduced from 100 to 50
+                    gasLimit: 2500000,
+                    gasPrice: ethers.parseUnits('1000', 'gwei')
+                });
+                addLog("TX: " + tx.hash);
+                await tx.wait();
+
+                document.getElementById('loadOperations').innerText = parseInt(document.getElementById('loadOperations').innerText) + 1;
+                addLog("Load test completed successfully", true);
+                await refreshStats();
+            } catch (error) {
+                addLog("Load test failed: " + error.message);
+            } finally {
+                operationInProgress = false;
+                if (btn) btn.disabled = false;
+            }
         }
     }
 
         async function distributedTest() {
+            if (operationInProgress) {
+                addLog("⚠️ Operation already in progress, please wait...", true);
+                return;
+            }
+
+            operationInProgress = true;
+            const btn = document.querySelector('button[onclick*="distributedTest"]');
+            if (btn) btn.disabled = true;
+
             try {
                 addLog("Executing distributed test...", true);
                 const tx = await testingSuite.executeDistributedTest({
-                    gasLimit: 2000000
+                    gasLimit: 2000000,
+                    gasPrice: ethers.parseUnits('1000', 'gwei')
                 });
                 await tx.wait();
 
                 document.getElementById('distributedOps').innerText = parseInt(document.getElementById('distributedOps').innerText) + 1;
-                addLog("Distributed test completed successfully!", true);
+                addLog("Distributed test completed successfully", true);
                 await refreshStats();
             } catch (error) {
                 addLog("Distributed test failed: " + error.message);
+            } finally {
+                operationInProgress = false;
+                if (btn) btn.disabled = false;
             }
+        }
         }
 
         // Turbo Mode Functions
@@ -631,7 +703,7 @@
                             toggleTurboMode();
                         }
                     }
-                }, 5000); // Every 5 seconds (reduced frequency)
+                }, 10000); // Every 10 seconds - More conservative (reduced frequency)
             }
         }
 
@@ -788,28 +860,43 @@
             }
         }
 
-        // Manual Batch Operations (Conservative)
+        // Manual Batch Operations (Ultra Conservative)
         async function batchOperations() {
-            addLog("🚀 INITIATING CONSERVATIVE BATCH - Controlled intensity!", true);
+            if (operationInProgress) {
+                addLog("⚠️ Operation already in progress, please wait...", true);
+                return;
+            }
+
+            operationInProgress = true;
+            const btn = document.querySelector('button[onclick*="batchOperations"]');
+            if (btn) btn.disabled = true;
+
+            addLog("🚀 INITIATING ULTRA CONSERVATIVE BATCH - Minimal intensity!", true);
 
             try {
-                // Execute operations sequentially with delays
+                // Execute operations sequentially with LONG delays
                 await createContractsBatch();
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                addLog("Waiting 5 seconds...", true);
+                await new Promise(resolve => setTimeout(resolve, 5000));
 
                 await createTokensBatch();
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                addLog("Waiting 5 seconds...", true);
+                await new Promise(resolve => setTimeout(resolve, 5000));
 
                 await loadTestBatch();
-                await new Promise(resolve => setTimeout(resolve, 2000));
+                addLog("Waiting 5 seconds...", true);
+                await new Promise(resolve => setTimeout(resolve, 5000));
 
                 await distributedTestBatch();
 
-                addLog("✅ CONSERVATIVE BATCH COMPLETED!", true);
+                addLog("✅ ULTRA CONSERVATIVE BATCH COMPLETED!", true);
                 await refreshStats();
 
             } catch (error) {
-                addLog("Conservative batch failed: " + error.message);
+                addLog("Ultra conservative batch failed: " + error.message);
+            } finally {
+                operationInProgress = false;
+                if (btn) btn.disabled = false;
             }
         }
 
