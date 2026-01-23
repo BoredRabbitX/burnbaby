@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Paseo Professional Testing Suite</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
+    <style>
+        :root {
+            --pink: #FF2867;
+            --grey-50: #FAFAF9;
+            --grey-200: #E7E5E4;
+            --grey-400: #A8A29E;
+            --grey-800: #292524;
+            --grey-900: #1C1917;
+            --grey-950: #0F0F0F;
+            --bg: #FAFAF9;
+            --surface: #FFFFFF;
+            --text-p: #1C1917;
+            --text-s: #57534E;
+            --border: #E7E5E4;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #0F0F0F;
+                --surface: #1C1917;
+                --text-p: #FAFAF9;
+                --text-s: #A8A29E;
+                --border: #292524;
+            }
+        }
+
+        * { box-sizing: border-box; }
+        body, html {
+            margin: 0; padding: 0; height: 100vh;
+            background: var(--bg); color: var(--text-p);
+            font-family: 'DM Sans', sans-serif; overflow: hidden;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        h1, .display-text { font-family: 'DM Serif Display', serif; font-weight: 400; }
+
+        .app-shell {
+            width: 1400px; height: 900px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            display: grid; grid-template-columns: 360px 1fr 360px;
+            padding: 40px; gap: 30px;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.15);
+        }
+
+        .column { display: flex; flex-direction: column; gap: 20px; overflow: hidden; }
+
+        .widget {
+            background: transparent;
+            border-bottom: 1px solid var(--border);
+            padding: 0 0 20px 0;
+            position: relative;
+        }
+        .label {
+            font-size: 11px; color: var(--text-s);
+            text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700;
+        }
+        .val {
+            font-family: 'DM Serif Display', serif;
+            font-size: 32px; margin-top: 8px;
+            color: var(--text-p);
+        }
+        .sub-val { font-size: 13px; color: var(--text-s); margin-top: 4px; }
+
+        #console {
+            flex-grow: 1; background: var(--bg); border-radius: 8px;
+            border: 1px solid var(--border);
+            padding: 24px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+            color: var(--text-s); overflow-y: auto; line-height: 1.7;
+        }
+        .log-accent { color: var(--pink); font-weight: 600; }
+
+        .btn-primary {
+            background: var(--pink); border: none; color: #fff; padding: 20px;
+            cursor: pointer; font-size: 14px;
+            border-radius: 50px; font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        .btn-primary:hover { transform: translateY(-2px); filter: brightness(1.1); box-shadow: 0 10px 20px rgba(255, 40, 103, 0.2); }
+        .btn-primary:disabled { background: var(--grey-400); cursor: not-allowed; transform: none; box-shadow: none; }
+
+        .btn-secondary {
+            background: transparent; color: var(--text-s);
+            border: 1px solid var(--border); padding: 15px;
+            border-radius: 50px; cursor: pointer; font-size: 12px; font-weight: 500;
+        }
+        .btn-secondary:hover { border-color: var(--text-p); color: var(--text-p); }
+
+        #auth {
+            position:fixed; inset:0; background:var(--bg); z-index:1000;
+            display:flex; flex-direction:column; justify-content:center; align-items:center;
+        }
+        .auth-card {
+            text-align: center; max-width: 400px; width: 100%;
+        }
+        input[type="password"] {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 8px; color: var(--text-p);
+            width: 100%; padding: 20px; text-align: center;
+            outline: none; font-size: 16px; margin-bottom: 20px;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-active { background: var(--pink); }
+        .status-inactive { background: var(--grey-400); }
+
+        .control-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .intensity-slider {
+            width: 100%;
+            margin: 15px 0;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--border);
+            height: 6px;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--pink);
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--pink);
+            cursor: pointer;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+
+<div id="auth">
+    <div class="auth-card">
+        <h1 style="font-size:48px; margin:0 0 10px 0;">Paseo Suite</h1>
+        <p style="color:var(--text-s); letter-spacing:3px; text-transform:uppercase; font-size:11px; margin-bottom:40px; font-weight:700;">Professional Testing v1.0</p>
+        <input type="password" id="inputKey" placeholder="Private Key (0x...)">
+        <button onclick="unlock()" class="btn-primary" style="width:100%;">Authenticate</button>
+    </div>
+</div>
+
+<div class="app-shell" id="mainTerminal" style="display: none;">
+    <div class="column">
+        <div class="widget">
+            <div class="label">Network Pulse</div>
+            <div id="blockSpeed" class="val" style="color:var(--pink)">0.00s</div>
+            <div class="sub-val" id="blockHeight">Block #--</div>
+        </div>
+
+        <div class="widget">
+            <div class="label">Fuel Reserve</div>
+            <div id="pasBalance" class="val">0.0000 PAS</div>
+            <div class="sub-val">Status: <span id="walletStatus" style="color:var(--pink)">Nominal</span></div>
+        </div>
+
+        <div class="widget">
+            <div class="label">Testing Suite</div>
+            <div class="sub-val" style="word-break: break-all; font-family: 'JetBrains Mono'; margin-top:10px;">0x7a637dc8cbfb49edc55fbe97fab0b0824c163605</div>
+        </div>
+
+        <div class="widget">
+            <div class="label">Token Factory</div>
+            <div class="sub-val" style="word-break: break-all; font-family: 'JetBrains Mono'; margin-top:10px;">0x39ca236cb8131f6748d3862bb574f24a10e1c38d</div>
+        </div>
+
+        <div style="margin-top:auto; display:flex; flex-direction:column; gap:12px">
+            <div class="widget" style="border: none; padding: 0;">
+                <div class="label">Test Intensity</div>
+                <div id="intensityValue" class="val" style="font-size: 24px;">50%</div>
+                <input type="range" class="intensity-slider" id="intensity" min="1" max="100" value="50">
+            </div>
+
+            <div class="control-group">
+                <button id="startTestBtn" class="btn-primary" onclick="startStressTest()">Start Test</button>
+                <button id="stopTestBtn" class="btn-secondary" onclick="stopStressTest()">Stop Test</button>
+            </div>
+
+            <div class="control-group">
+                <button class="btn-secondary" onclick="createContracts()">Create Contracts</button>
+                <button class="btn-secondary" onclick="createTokens()">Create Tokens</button>
+            </div>
+
+            <div class="control-group">
+                <button class="btn-secondary" onclick="loadTest()">Load Test</button>
+                <button class="btn-secondary" onclick="distributedTest()">Distributed Test</button>
+            </div>
+
+            <button class="btn-secondary" onclick="refreshStats()" style="margin-top: 10px;">Refresh Stats</button>
+            <button class="btn-secondary" onclick="location.reload()">Terminate Session</button>
+        </div>
+    </div>
+
+    <div class="column">
+        <div class="label" style="margin-bottom: 5px;">System Console</div>
+        <div id="console"></div>
+    </div>
+
+    <div class="column">
+        <div class="widget">
+            <div class="label">Child Contracts</div>
+            <div id="childContracts" class="val">0</div>
+            <div class="sub-val">Active Testing Contracts</div>
+        </div>
+
+        <div class="widget">
+            <div class="label">Total Transactions</div>
+            <div id="totalTransactions" class="val">0</div>
+            <div class="sub-val">Executed Operations</div>
+        </div>
+
+        <div class="widget">
+            <div class="label">Gas Price</div>
+            <div id="gasPrice" class="val">-- gwei</div>
+            <div class="sub-val">Network Fee Rate</div>
+        </div>
+
+        <div class="widget">
+            <div class="label">Test Status</div>
+            <div class="val">
+                <span class="status-indicator" id="testStatusIndicator"></span>
+                <span id="testStatus">Ready</span>
+            </div>
+            <div class="sub-val" id="testDuration">Duration: 0:00</div>
+        </div>
+
+        <div class="widget">
+            <div class="label">Load Operations</div>
+            <div id="loadOperations" class="val">0</div>
+            <div class="sub-val">Executed Load Tests</div>
+        </div>
+
+        <div class="widget">
+            <div class="label">Distributed Ops</div>
+            <div id="distributedOps" class="val">0</div>
+            <div class="sub-val">Multi-Contract Tests</div>
+        </div>
+
+        <div class="widget" style="margin-top:auto; border: none; background: var(--grey-50); padding: 20px; border-radius: 8px;">
+            <div class="label" style="color:var(--pink)">Token Economy</div>
+            <div id="tokenCount" class="val" style="font-size: 40px;">0</div>
+            <div class="sub-val">Created Test Tokens</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Configuration
+    const CONFIG = {
+        rpc: "https://testnet-passet-hub-eth-rpc.polkadot.io",
+        testingSuite: "0x7a637dc8cbfb49edc55fbe97fab0b0824c163605",
+        tokenFactory: "0x39ca236cb8131f6748d3862bb574f24a10e1c38d",
+        chainId: 420420422
+    };
+
+    // Global state
+    let SESSION_KEY = "", localNonce = 0, isRunning = false, testStartTime = null;
+    let testingSuite, tokenFactory, provider, wallet;
+
+    // ABIs
+    const testingSuiteABI = [
+        "function createChildren(uint256 count)",
+        "function startTest(uint256 intensity)",
+        "function executeLoadTest(uint256 txCount)",
+        "function executeDistributedTest()",
+        "function stopTest()",
+        "function getStats() view returns (uint256 children, uint256 txs, uint256 currentBlock, uint256 blocksElapsed, bool active)",
+        "function childContractCount() view returns (uint256)",
+        "function totalTransactions() view returns (uint256)"
+    ];
+
+    const tokenFactoryABI = [
+        "function createTestTokens(uint256 count)",
+        "function distributeTokens(address token, address[] memory recipients)",
+        "function getTokenCount() view returns (uint256)"
+    ];
+
+    // Logging function
+    function addLog(msg, isAccent = false) {
+        const con = document.getElementById('console');
+        const d = document.createElement('div');
+        const colorClass = isAccent ? 'class="log-accent"' : '';
+        d.innerHTML = `<span style="color:var(--grey-400)">[${new Date().toLocaleTimeString()}]</span> <span ${colorClass}>${msg}</span>`;
+        con.prepend(d);
+        if(con.childNodes.length > 50) con.removeChild(con.lastChild);
+    }
+
+    // Update intensity display
+    document.getElementById('intensity').oninput = function() {
+        document.getElementById('intensityValue').textContent = this.value + '%';
+    };
+
+    // Authentication
+    async function unlock() {
+        const key = document.getElementById('inputKey').value.trim();
+        try {
+            provider = new ethers.JsonRpcProvider(CONFIG.rpc);
+            wallet = new ethers.Wallet(key);
+            localNonce = await provider.getTransactionCount(wallet.address);
+            SESSION_KEY = key;
+
+            // Initialize contracts
+            testingSuite = new ethers.Contract(CONFIG.testingSuite, testingSuiteABI, wallet.connect(provider));
+            tokenFactory = new ethers.Contract(CONFIG.tokenFactory, tokenFactoryABI, wallet.connect(provider));
+
+            document.getElementById('auth').style.display = 'none';
+            document.getElementById('mainTerminal').style.display = 'grid';
+            startMonitor();
+            addLog("Professional Testing Suite activated.", true);
+        } catch (e) {
+            alert("Invalid Credentials.");
+            addLog("Authentication failed: " + e.message);
+        }
+    }
+
+    // Network monitoring
+    function startMonitor() {
+        let lastB = Date.now();
+
+        provider.on("block", async (num) => {
+            document.getElementById('blockSpeed').innerText = ((Date.now()-lastB)/1000).toFixed(2) + "s";
+            document.getElementById('blockHeight').innerText = "Block #" + num;
+            lastB = Date.now();
+
+            try {
+                const balance = await provider.getBalance(wallet.address);
+                document.getElementById('pasBalance').innerText = parseFloat(ethers.formatEther(balance)).toFixed(4) + " PAS";
+                document.getElementById('walletStatus').innerText = "Nominal";
+
+                const gasPrice = await provider.getGasPrice();
+                document.getElementById('gasPrice').innerText = ethers.formatUnits(gasPrice, 'gwei') + " gwei";
+
+                const nonce = await provider.getTransactionCount(wallet.address);
+                if(nonce > localNonce) localNonce = nonce;
+
+                await refreshStats();
+
+            } catch (error) {
+                document.getElementById('walletStatus').innerText = "Error";
+                addLog("Monitor error: " + error.message);
+            }
+        });
+    }
+
+    // Contract operations
+    async function createContracts() {
+        try {
+            addLog("Creating child contracts...", true);
+            const tx = await testingSuite.createChildren(10);
+            addLog("TX: " + tx.hash);
+            await tx.wait();
+            addLog("Child contracts deployed successfully", true);
+            await refreshStats();
+        } catch (error) {
+            addLog("Contract creation failed: " + error.message);
+        }
+    }
+
+    async function createTokens() {
+        try {
+            addLog("Creating test tokens...", true);
+            const tx = await tokenFactory.createTestTokens(5);
+            addLog("TX: " + tx.hash);
+            await tx.wait();
+            addLog("Test tokens created successfully", true);
+            await refreshStats();
+        } catch (error) {
+            addLog("Token creation failed: " + error.message);
+        }
+    }
+
+    async function startStressTest() {
+        const intensity = document.getElementById('intensity').value;
+        try {
+            addLog(`Starting stress test at ${intensity}% intensity...`, true);
+            const tx = await testingSuite.startTest(intensity);
+            addLog("TX: " + tx.hash);
+            await tx.wait();
+
+            isRunning = true;
+            testStartTime = Date.now();
+            document.getElementById('testStatus').innerText = "Active";
+            document.getElementById('testStatusIndicator').className = "status-indicator status-active";
+            addLog("Stress test initiated", true);
+        } catch (error) {
+            addLog("Stress test failed: " + error.message);
+        }
+    }
+
+    async function stopStressTest() {
+        try {
+            addLog("Stopping stress test...", true);
+            const tx = await testingSuite.stopTest();
+            await tx.wait();
+
+            isRunning = false;
+            testStartTime = null;
+            document.getElementById('testStatus').innerText = "Stopped";
+            document.getElementById('testStatusIndicator').className = "status-indicator status-inactive";
+            document.getElementById('testDuration').innerText = "Duration: 0:00";
+            addLog("Stress test terminated", true);
+        } catch (error) {
+            addLog("Stop test failed: " + error.message);
+        }
+    }
+
+    async function loadTest() {
+        try {
+            addLog("Executing load test (100 transactions)...", true);
+            const tx = await testingSuite.executeLoadTest(100);
+            addLog("TX: " + tx.hash);
+            await tx.wait();
+
+            document.getElementById('loadOperations').innerText = parseInt(document.getElementById('loadOperations').innerText) + 1;
+            addLog("Load test completed", true);
+            await refreshStats();
+        } catch (error) {
+            addLog("Load test failed: " + error.message);
+        }
+    }
+
+    async function distributedTest() {
+        try {
+            addLog("Executing distributed test...", true);
+            const tx = await testingSuite.executeDistributedTest();
+            await tx.wait();
+
+            document.getElementById('distributedOps').innerText = parseInt(document.getElementById('distributedOps').innerText) + 1;
+            addLog("Distributed test completed", true);
+            await refreshStats();
+        } catch (error) {
+            addLog("Distributed test failed: " + error.message);
+        }
+    }
+
+    async function refreshStats() {
+        try {
+            const stats = await testingSuite.getStats();
+            const childCount = await testingSuite.childContractCount();
+            const totalTx = await testingSuite.totalTransactions();
+            const tokenCount = await tokenFactory.getTokenCount();
+
+            document.getElementById('childContracts').innerText = childCount.toString();
+            document.getElementById('totalTransactions').innerText = totalTx.toString();
+            document.getElementById('tokenCount').innerText = tokenCount.toString();
+
+            if (isRunning && testStartTime) {
+                const duration = Math.floor((Date.now() - testStartTime) / 1000);
+                const minutes = Math.floor(duration / 60);
+                const seconds = duration % 60;
+                document.getElementById('testDuration').innerText = `Duration: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            addLog("Statistics refreshed");
+        } catch (error) {
+            addLog("Stats refresh failed: " + error.message);
+        }
+    }
+
+    // Auto-refresh stats
+    setInterval(() => {
+        if (wallet && testingSuite) {
+            refreshStats();
+        }
+    }, 10000);
+
+    addLog("Paseo Professional Testing Suite initialized");
+</script>
+</body>
+</html>
