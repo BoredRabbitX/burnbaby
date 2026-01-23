@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paseo Testing Suite</title>
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #00ff88;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .panel {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00ff88, #00cc6a);
+            color: #000;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff4444, #cc0000);
+            color: #fff;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #ff8800, #ff6600);
+            color: #fff;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 255, 136, 0.3);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #00ff88;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #00ff88;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #00ff88;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #888;
+            font-size: 0.9em;
+            text-transform: uppercase;
+        }
+
+        .log {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ Paseo Testing Suite</h1>
+            <p>Professional Blockchain Stress Testing</p>
+        </div>
+
+        <!-- Login Panel -->
+        <div id="loginPanel" class="panel">
+            <div class="form-group">
+                <label for="privateKey">Private Key</label>
+                <input type="password" id="privateKey" placeholder="0x...">
+            </div>
+
+            <div class="form-group">
+                <label for="rpcUrl">RPC URL</label>
+                <input type="text" id="rpcUrl" value="https://testnet-passet-hub-eth-rpc.polkadot.io">
+            </div>
+
+            <div style="text-align: center;">
+                <button class="btn btn-primary" id="connectBtn">
+                    <i class="fas fa-plug"></i> Connect
+                </button>
+                <button class="btn btn-warning" id="testRPCBtn">
+                    <i class="fas fa-wifi"></i> Test RPC
+                </button>
+            </div>
+
+            <div id="connectionStatus" style="text-align: center; margin-top: 20px;"></div>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboard" class="hidden">
+            <div class="panel">
+                <h3>📊 Stats</h3>
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-value" id="childContracts">0</div>
+                        <div class="stat-label">Child Contracts</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="totalTx">0</div>
+                        <div class="stat-label">Total TX</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="currentBlock">0</div>
+                        <div class="stat-label">Block</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="gasPrice">--</div>
+                        <div class="stat-label">Gas (gwei)</div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <button class="btn btn-primary" id="createContractsBtn">Create Contracts</button>
+                    <button class="btn btn-warning" id="createTokensBtn">Create Tokens</button>
+                    <button class="btn btn-danger" id="startTestBtn">Start Test</button>
+                    <button class="btn btn-danger" id="stopTestBtn">Stop Test</button>
+                    <button class="btn btn-primary" id="loadTestBtn">Load Test</button>
+                    <button class="btn btn-warning" id="refreshBtn">Refresh</button>
+                </div>
+
+                <div class="form-group">
+                    <label>Test Intensity: <span id="intensityValue">50</span>%</label>
+                    <input type="range" id="intensity" min="1" max="100" value="50" style="width: 100%;">
+                </div>
+            </div>
+
+            <div class="panel">
+                <h3>📝 Console</h3>
+                <div class="log" id="logArea">
+                    <div>System ready</div>
+                </div>
+                <div style="margin-top: 10px;">
+                    <button class="btn btn-primary" id="clearLogBtn">Clear</button>
+                    <button class="btn btn-warning" id="exportLogBtn">Export</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log('Script loaded');
+
+        // Global variables
+        let provider = null;
+        let wallet = null;
+        let testingSuite = null;
+        let tokenFactory = null;
+
+        const TESTING_SUITE_ADDRESS = "0x7a637dc8cbfb49edc55fbe97fab0b0824c163605";
+        const TOKEN_FACTORY_ADDRESS = "0x39ca236cb8131f6748d3862bb574f24a10e1c38d";
+
+        // ABIs
+        const testingSuiteABI = [
+            "function createChildren(uint256 count)",
+            "function startTest(uint256 intensity)",
+            "function executeLoadTest(uint256 txCount)",
+            "function executeDistributedTest()",
+            "function stopTest()",
+            "function getStats() view returns (uint256 children, uint256 txs, uint256 currentBlock, uint256 blocksElapsed, bool active)",
+            "function childContractCount() view returns (uint256)",
+            "function totalTransactions() view returns (uint256)"
+        ];
+
+        const tokenFactoryABI = [
+            "function createTestTokens(uint256 count)",
+            "function distributeTokens(address token, address[] memory recipients)",
+            "function getTokenCount() view returns (uint256)"
+        ];
+
+        // Logging function
+        function log(message) {
+            console.log(message);
+            const logArea = document.getElementById('logArea');
+            if (logArea) {
+                logArea.innerHTML += '<div>' + new Date().toLocaleTimeString() + ' - ' + message + '</div>';
+                logArea.scrollTop = logArea.scrollHeight;
+            }
+        }
+
+        // Test RPC function
+        function testRPC() {
+            console.log('Test RPC clicked');
+            const rpcUrl = document.getElementById('rpcUrl').value;
+
+            if (!rpcUrl) {
+                log('❌ Enter RPC URL first');
+                return;
+            }
+
+            log('🌐 Testing RPC...');
+
+            try {
+                const testProvider = new ethers.providers.JsonRpcProvider(rpcUrl);
+
+                testProvider.getBlockNumber().then(block => {
+                    log('✅ RPC OK - Block ' + block);
+                }).catch(error => {
+                    log('❌ RPC Failed: ' + error.message);
+                });
+
+            } catch (error) {
+                log('❌ RPC Error: ' + error.message);
+            }
+        }
+
+        // Connect function
+        function connect() {
+            console.log('Connect clicked');
+            const privateKey = document.getElementById('privateKey').value;
+            const rpcUrl = document.getElementById('rpcUrl').value;
+
+            if (!privateKey || !rpcUrl) {
+                log('❌ Fill all fields');
+                return;
+            }
+
+            log('🔌 Connecting...');
+
+            try {
+                // Format private key
+                let key = privateKey;
+                if (!key.startsWith('0x')) {
+                    key = '0x' + key;
+                }
+
+                console.log('Creating provider...');
+                provider = new ethers.providers.JsonRpcProvider(rpcUrl, {
+                    chainId: 420420422,
+                    name: 'paseo-testnet'
+                });
+
+                console.log('Creating wallet...');
+                wallet = new ethers.Wallet(key, provider);
+
+                console.log('Testing connection...');
+                Promise.all([
+                    wallet.getBalance(),
+                    provider.getBlockNumber()
+                ]).then(([balance, blockNumber]) => {
+                    log('✅ Connected!');
+                    log('Address: ' + wallet.address);
+                    log('Balance: ' + ethers.utils.formatEther(balance) + ' PAS');
+                    log('Block: ' + blockNumber);
+
+                    // Initialize contracts
+                    console.log('Initializing contracts...');
+                    testingSuite = new ethers.Contract(TESTING_SUITE_ADDRESS, testingSuiteABI, wallet);
+                    tokenFactory = new ethers.Contract(TOKEN_FACTORY_ADDRESS, tokenFactoryABI, wallet);
+
+                    // Update UI
+                    document.getElementById('loginPanel').classList.add('hidden');
+                    document.getElementById('dashboard').classList.remove('hidden');
+
+                    // Initial refresh
+                    refreshStats();
+
+                }).catch(error => {
+                    log('❌ Connection failed: ' + error.message);
+                });
+
+            } catch (error) {
+                log('❌ Connection error: ' + error.message);
+            }
+        }
+
+        // Contract functions
+        function createContracts() {
+            console.log('Create contracts clicked');
+            if (!testingSuite) {
+                log('❌ Not connected');
+                return;
+            }
+
+            log('🏗️ Creating contracts...');
+
+            testingSuite.createChildren(10).then(tx => {
+                log('📤 TX: ' + tx.hash);
+                return tx.wait();
+            }).then(receipt => {
+                log('✅ Contracts created in block ' + receipt.blockNumber);
+                refreshStats();
+            }).catch(error => {
+                log('❌ Failed: ' + error.message);
+            });
+        }
+
+        function createTokens() {
+            console.log('Create tokens clicked');
+            if (!tokenFactory) {
+                log('❌ Not connected');
+                return;
+            }
+
+            log('🪙 Creating tokens...');
+
+            tokenFactory.createTestTokens(5).then(tx => {
+                log('📤 TX: ' + tx.hash);
+                return tx.wait();
+            }).then(receipt => {
+                log('✅ Tokens created in block ' + receipt.blockNumber);
+            }).catch(error => {
+                log('❌ Failed: ' + error.message);
+            });
+        }
+
+        function startTest() {
+            console.log('Start test clicked');
+            if (!testingSuite) {
+                log('❌ Not connected');
+                return;
+            }
+
+            const intensity = document.getElementById('intensity').value;
+            log('⚡ Starting test at ' + intensity + '%');
+
+            testingSuite.startTest(intensity).then(tx => {
+                return tx.wait();
+            }).then(() => {
+                log('✅ Test started');
+            }).catch(error => {
+                log('❌ Failed: ' + error.message);
+            });
+        }
+
+        function stopTest() {
+            console.log('Stop test clicked');
+            if (!testingSuite) {
+                log('❌ Not connected');
+                return;
+            }
+
+            log('🛑 Stopping test...');
+
+            testingSuite.stopTest().then(tx => {
+                return tx.wait();
+            }).then(() => {
+                log('✅ Test stopped');
+            }).catch(error => {
+                log('❌ Failed: ' + error.message);
+            });
+        }
+
+        function loadTest() {
+            console.log('Load test clicked');
+            if (!testingSuite) {
+                log('❌ Not connected');
+                return;
+            }
+
+            log('🚀 Running load test...');
+
+            testingSuite.executeLoadTest(100).then(tx => {
+                log('📤 TX: ' + tx.hash);
+                return tx.wait();
+            }).then(receipt => {
+                log('✅ Load test completed - Gas: ' + receipt.gasUsed);
+                refreshStats();
+            }).catch(error => {
+                log('❌ Failed: ' + error.message);
+            });
+        }
+
+        function refreshStats() {
+            console.log('Refresh stats called');
+            if (!testingSuite) return;
+
+            Promise.all([
+                testingSuite.getStats(),
+                testingSuite.childContractCount(),
+                testingSuite.totalTransactions(),
+                provider.getGasPrice()
+            ]).then(([stats, childCount, totalTx, gasPrice]) => {
+                console.log('Stats received:', stats);
+
+                document.getElementById('childContracts').textContent = childCount.toString();
+                document.getElementById('totalTx').textContent = totalTx.toString();
+                document.getElementById('currentBlock').textContent = stats.currentBlock.toString();
+
+                const gasInGwei = ethers.utils.formatUnits(gasPrice, 'gwei');
+                document.getElementById('gasPrice').textContent = gasInGwei;
+
+            }).catch(error => {
+                console.log('Stats error:', error);
+                log('❌ Stats failed: ' + error.message);
+            });
+        }
+
+        function clearLog() {
+            document.getElementById('logArea').innerHTML = '<div>' + new Date().toLocaleTimeString() + ' - Console cleared</div>';
+        }
+
+        function exportLog() {
+            const logContent = document.getElementById('logArea').innerText;
+            const blob = new Blob([logContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'paseo-log-' + Date.now() + '.txt';
+            a.click();
+            log('📄 Log exported');
+        }
+
+        // Update intensity display
+        document.getElementById('intensity').oninput = function() {
+            document.getElementById('intensityValue').textContent = this.value;
+        };
+
+        // Event listeners
+        document.getElementById('connectBtn').onclick = connect;
+        document.getElementById('testRPCBtn').onclick = testRPC;
+        document.getElementById('createContractsBtn').onclick = createContracts;
+        document.getElementById('createTokensBtn').onclick = createTokens;
+        document.getElementById('startTestBtn').onclick = startTest;
+        document.getElementById('stopTestBtn').onclick = stopTest;
+        document.getElementById('loadTestBtn').onclick = loadTest;
+        document.getElementById('refreshBtn').onclick = refreshStats;
+        document.getElementById('clearLogBtn').onclick = clearLog;
+        document.getElementById('exportLogBtn').onclick = exportLog;
+
+        console.log('Event listeners attached');
+
+        // Auto-refresh
+        setInterval(() => {
+            if (wallet && testingSuite) {
+                refreshStats();
+            }
+        }, 5000);
+
+        log('System initialized');
+    </script>
+</body>
+</html>
