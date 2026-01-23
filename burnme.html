@@ -2,226 +2,209 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>HBURN_SECOND_AGE_v36.5_OVERDRIVE</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <title>HBURN_v37_HYPER_PIPELINE</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
     <style>
-        :root { --pink: #FF2867; --green: #00ff88; --bg: #0F0F0F; --surface: #1C1917; --border: #292524; }
-        * { box-sizing: border-box; }
-        body { margin: 0; background: var(--bg); color: #FAFAF9; font-family: 'DM Sans', sans-serif; overflow: hidden; height: 100vh; }
+        :root { --pink: #FF2867; --green: #00ff88; --bg: #050505; --panel: #111; --border: #222; }
+        * { box-sizing: border-box; outline: none; }
+        body { 
+            margin: 0; background: var(--bg); color: #eee; 
+            font-family: 'JetBrains Mono', monospace; font-size: 11px;
+            height: 100vh; overflow: hidden;
+        }
         
-        .app-shell { 
-            display: grid; grid-template-columns: 260px 1fr 260px; 
-            height: 100%; width: 100%; max-width: 1400px; margin: 0 auto; padding: 10px; gap: 10px;
+        .shell { 
+            display: grid; grid-template-columns: 220px 1fr 220px; 
+            height: 100vh; padding: 10px; gap: 10px;
         }
 
-        .column { display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
-        .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 10px; }
+        .col { display: flex; flex-direction: column; gap: 10px; height: 100%; }
+        .box { background: var(--panel); border: 1px solid var(--border); padding: 10px; border-radius: 4px; }
         
         #console { 
-            flex-grow: 1; background: #050505; border: 1px solid var(--border); border-radius: 4px;
-            padding: 10px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--green);
-            overflow-y: auto; line-height: 1.3;
+            flex-grow: 1; background: #000; border: 1px solid var(--border);
+            padding: 10px; color: var(--green); overflow-y: auto; font-size: 10px;
         }
 
-        .label { font-size: 8px; color: #A8A29E; text-transform: uppercase; letter-spacing: 1px; }
-        .val { font-size: 20px; font-weight: 700; color: #fff; font-family: 'JetBrains Mono'; }
+        .label { color: #666; font-size: 9px; text-transform: uppercase; margin-bottom: 4px; }
+        .val { font-size: 18px; font-weight: 700; color: #fff; }
         
-        .btn { padding: 8px; border-radius: 4px; border: none; font-weight: 700; cursor: pointer; font-size: 10px; text-transform: uppercase; width: 100%; transition: 0.2s; }
-        .btn-massive { background: var(--pink); color: white; padding: 15px; font-size: 12px; }
-        .btn-active { background: var(--green); color: black; animation: pulse 1s infinite; }
-        
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+        .btn-mega { 
+            background: var(--pink); color: #fff; border: none; padding: 20px; 
+            width: 100%; cursor: pointer; font-weight: 800; font-size: 14px;
+            box-shadow: 0 0 15px rgba(255, 40, 103, 0.3);
+        }
+        .btn-mega.active { background: var(--green); color: #000; box-shadow: 0 0 20px var(--green); }
 
-        #safetyOverlay {
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9);
-            z-index: 2000; flex-direction: column; justify-content: center; align-items: center;
-            backdrop-filter: blur(8px); border: 2px solid var(--pink);
+        #safety {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95);
+            z-index: 9999; flex-direction: column; justify-content: center; align-items: center;
+            border: 5px solid var(--pink);
         }
 
-        #auth { position:fixed; inset:0; background:var(--bg); z-index:1000; display:flex; justify-content:center; align-items:center; }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+        .mini-box { background: #000; padding: 5px; border: 1px solid #222; }
     </style>
 </head>
 <body>
 
-<div id="auth">
-    <div style="text-align:center; width:300px;">
-        <h2 style="color:var(--pink); font-family:'JetBrains Mono';">HBURN OVERDRIVE</h2>
-        <input type="password" id="inputKey" placeholder="Private Key" style="background:#000; border:1px solid var(--border); color:#fff; padding:12px; width:100%; margin-bottom:10px;">
-        <button onclick="unlock()" class="btn btn-massive">Initiate Fleet</button>
-    </div>
+<div id="safety">
+    <div style="font-size: 80px; color: var(--pink);">PAUSE</div>
+    <div id="cdTimer" style="font-size: 40px;">60s</div>
+    <div style="letter-spacing: 5px;">THROTTLING_PREVENTION_ACTIVE</div>
 </div>
 
-<div id="safetyOverlay">
-    <h1 style="color:var(--pink); font-size: 40px; margin:0;">SAFETY_COOLDOWN</h1>
-    <div id="cooldownClock" style="font-size: 60px; font-family:'JetBrains Mono';">60s</div>
-    <p style="color:#A8A29E;">10 BLOCKS DETECTED - COOLING SYSTEM...</p>
-</div>
-
-<div class="app-shell" id="mainTerminal" style="display: none;">
-    <div class="column">
-        <div class="panel">
-            <div class="label">Paseo Pulse</div>
-            <div id="blockSpeed" class="val" style="color:var(--pink)">0.00s</div>
-            <div id="blockHeight" style="font-size:10px; color:#A8A29E;">Block #--</div>
+<div class="shell" id="ui" style="display: none;">
+    <div class="col">
+        <div class="box">
+            <div class="label">Paseo Heartbeat</div>
+            <div id="blockHeight" class="val" style="color:var(--pink)">#0</div>
+            <div id="blockTime" style="font-size:10px;">0.00s latency</div>
         </div>
 
-        <div class="panel">
-            <div class="label">Block Counter</div>
-            <div id="blockCycle" class="val">0 / 10</div>
-            <div class="label" style="font-size:7px; margin-top:5px;">Pause every 10 blocks</div>
-        </div>
-
-        <div class="panel">
-            <div class="label">Main Command</div>
-            <button id="mainBtn" class="btn btn-massive" onclick="toggleOverdrive()">Engage Overdrive</button>
-        </div>
-
-        <div class="panel" style="margin-top:auto;">
-            <div class="label">PAS Balance</div>
-            <div id="pasBalance" class="val">0.0000</div>
-            <button class="btn" style="background:transparent; border:1px solid var(--border); color:#A8A29E; margin-top:10px;" onclick="location.reload()">Kill Session</button>
-        </div>
-    </div>
-
-    <div class="column">
-        <div class="panel" style="flex-grow:1; display:flex; flex-direction:column;">
-            <div id="console"></div>
-        </div>
-    </div>
-
-    <div class="column">
-        <div class="panel">
-            <div class="label">Strike Metrics</div>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin-top:5px;">
-                <div style="background:#000; padding:5px;"><div class="label">Mints</div><div id="mCount" class="val" style="font-size:16px;">0</div></div>
-                <div style="background:#000; padding:5px;"><div class="label">Burns</div><div id="bCount" class="val" style="font-size:16px; color:var(--pink)">0</div></div>
+        <div class="box">
+            <div class="label">Safety Cycle</div>
+            <div id="cycleVal" class="val">0 / 10</div>
+            <div style="height:4px; background:#222; margin-top:5px;">
+                <div id="cycleBar" style="height:100%; background:var(--pink); width:0%;"></div>
             </div>
         </div>
 
-        <div class="panel">
-            <div class="label">Suite Stats</div>
-            <div id="suiteTx" class="val" style="font-size:18px;">0</div>
-            <div class="label">Total Distributed TX</div>
-        </div>
+        <button id="gateBtn" class="btn-mega" onclick="toggleHyper()">ENGAGE HYPER</button>
 
-        <div class="panel" style="margin-top:auto; background:var(--pink); border:none;">
-            <div class="label" style="color:white">Global Score</div>
-            <div id="sCount" class="val" style="color:white; font-size:32px;">0</div>
+        <div class="box" style="margin-top:auto">
+            <div class="label">Balance</div>
+            <div id="bal" class="val">0.000</div>
         </div>
+    </div>
+
+    <div class="col">
+        <div id="console"></div>
+        <div class="box" style="display:flex; justify-content: space-between; align-items:center;">
+            <div class="label">Pipeline Status: <span id="pStatus" style="color:var(--pink)">IDLE</span></div>
+            <div class="label">Intensity: <input type="range" id="rate" min="5" max="25" value="15"></div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="box">
+            <div class="label">Telemetry</div>
+            <div class="stat-grid">
+                <div class="mini-box"><div class="label">Mints</div><div id="mC" class="val">0</div></div>
+                <div class="mini-box"><div class="label">Burns</div><div id="bC" class="val">0</div></div>
+            </div>
+        </div>
+        <div class="box">
+            <div class="label">Network Load</div>
+            <div id="loadVal" class="val" style="color:var(--green)">0%</div>
+        </div>
+        <div class="box" style="margin-top:auto; background:var(--pink); border:none; padding:20px;">
+            <div class="label" style="color:#000; font-weight:800;">Global Impact</div>
+            <div id="impact" class="val" style="font-size:35px; color:#000;">0</div>
+        </div>
+    </div>
+</div>
+
+<div id="login" style="position:fixed; inset:0; background:#000; display:flex; justify-content:center; align-items:center;">
+    <div style="width:300px; text-align:center;">
+        <h1 style="color:var(--pink)">HYPER_PIPELINE</h1>
+        <input type="password" id="pk" placeholder="KEY_0x..." style="width:100%; padding:10px; background:#111; border:1px solid #333; color:#fff; margin-bottom:10px;">
+        <button onclick="auth()" class="btn-mega" style="padding:10px;">ACCESS</button>
     </div>
 </div>
 
 <script>
-    let provider, wallet, suite, isAttackActive = false, isCooldown = false;
-    let blocksInSession = 0;
+    let provider, wallet, suite, active = false, cooling = false;
+    let bCount = 0, nonce = 0;
+    const SUITE = "0x7a637dc8cbfb49edc55fbe97fab0b0824c163605";
+    const TARGET = "0x3dd695D734B5DdE6B1955FFE75004c00862fb233";
 
-    const ADDR_SUITE = "0x7a637dc8cbfb49edc55fbe97fab0b0824c163605";
-    const HBURN_TARGET = "0x3dd695D734B5DdE6B1955FFE75004c00862fb233";
-
-    const ABI = [
-        "function executeLoadTest(uint256 txCount)",
-        "function getStats() view returns (uint256 children, uint256 txs, uint256 currentBlock, uint256 blocksElapsed, bool active)"
-    ];
-
-    function addLog(msg, color = null) {
-        const c = document.getElementById('console');
-        const d = document.createElement('div');
-        if(color) d.style.color = color;
-        d.innerHTML = `> [${new Date().toLocaleTimeString()}] ${msg}`;
-        c.prepend(d);
-        if(c.childNodes.length > 50) c.removeChild(c.lastChild);
+    function log(m, c=null) {
+        const o = document.getElementById('console');
+        const e = document.createElement('div');
+        if(c) e.style.color = c;
+        e.innerHTML = `> ${m}`;
+        o.prepend(e);
+        if(o.childNodes.length > 50) o.removeChild(o.lastChild);
     }
 
-    async function unlock() {
+    async function auth() {
         try {
             provider = new ethers.JsonRpcProvider("https://testnet-passet-hub-eth-rpc.polkadot.io");
-            wallet = new ethers.Wallet(document.getElementById('inputKey').value.trim(), provider);
-            suite = new ethers.Contract(ADDR_SUITE, ABI, wallet);
-            document.getElementById('auth').style.display = 'none';
-            document.getElementById('mainTerminal').style.display = 'grid';
-            startMonitor();
-        } catch(e) { alert("Access Denied"); }
+            wallet = new ethers.Wallet(document.getElementById('pk').value.trim(), provider);
+            suite = new ethers.Contract(SUITE, ["function executeLoadTest(uint256 txCount)"], wallet);
+            nonce = await provider.getTransactionCount(wallet.address, "pending");
+            document.getElementById('login').style.display='none';
+            document.getElementById('ui').style.display='grid';
+            monitor();
+        } catch(e) { alert("ERROR"); }
     }
 
-    function startMonitor() {
-        let lastB = Date.now();
-        provider.on("block", (n) => {
-            document.getElementById('blockSpeed').innerText = ((Date.now()-lastB)/1000).toFixed(2) + "s";
-            document.getElementById('blockHeight').innerText = "Block #" + n;
-            lastB = Date.now();
-            
-            provider.getBalance(wallet.address).then(b => document.getElementById('pasBalance').innerText = parseFloat(ethers.formatEther(b)).toFixed(4));
-            suite.getStats().then(s => document.getElementById('suiteTx').innerText = s.txs);
-
-            if(isAttackActive && !isCooldown) {
-                blocksInSession++;
-                document.getElementById('blockCycle').innerText = `${blocksInSession} / 10`;
-                if(blocksInSession >= 10) triggerSafetyPause();
+    function monitor() {
+        let lb = Date.now();
+        provider.on("block", n => {
+            document.getElementById('blockTime').innerText = ((Date.now()-lb)/1000).toFixed(2) + "s latency";
+            document.getElementById('blockHeight').innerText = "#" + n;
+            lb = Date.now();
+            if(active && !cooling) {
+                bCount++;
+                document.getElementById('cycleVal').innerText = `${bCount} / 10`;
+                document.getElementById('cycleBar').style.width = (bCount*10) + "%";
+                if(bCount >= 10) triggerCooldown();
             }
+            provider.getBalance(wallet.address).then(b => document.getElementById('bal').innerText = parseFloat(ethers.formatEther(b)).toFixed(3));
         });
     }
 
-    async function triggerSafetyPause() {
-        isCooldown = true;
-        blocksInSession = 0;
-        document.getElementById('safetyOverlay').style.display = 'flex';
-        addLog("CRITICAL: SAFETY_COOLDOWN_ACTIVE (60s)", "var(--pink)");
-        
-        let countdown = 60;
-        const timer = setInterval(() => {
-            countdown--;
-            document.getElementById('cooldownClock').innerText = countdown + "s";
-            if(countdown <= 0) {
-                clearInterval(timer);
-                isCooldown = false;
-                document.getElementById('safetyOverlay').style.display = 'none';
-                addLog("SYSTEM_READY: RESUMING_OVERDRIVE", "var(--green)");
-            }
+    async function triggerCooldown() {
+        cooling = true; bCount = 0;
+        document.getElementById('safety').style.display = 'flex';
+        let s = 60;
+        const i = setInterval(() => {
+            s--; document.getElementById('cdTimer').innerText = s + "s";
+            if(s<=0) { clearInterval(i); cooling = false; document.getElementById('safety').style.display = 'none'; log("PIPELINE_RESTORED", "var(--green)"); }
         }, 1000);
     }
 
-    async function toggleOverdrive() {
-        isAttackActive = !isAttackActive;
-        const btn = document.getElementById('mainBtn');
-        btn.innerText = isAttackActive ? "STOP_OVERDRIVE" : "Engage Overdrive";
-        btn.classList.toggle('btn-active');
-        if(isAttackActive) runOverdriveLoop();
+    function toggleHyper() {
+        active = !active;
+        const b = document.getElementById('gateBtn');
+        b.innerText = active ? "SHUTDOWN" : "ENGAGE HYPER";
+        b.classList.toggle('active');
+        if(active) pipeline();
     }
 
-    async function runOverdriveLoop() {
-        while(isAttackActive) {
-            if(!isCooldown) {
-                try {
-                    const nonce = await provider.getTransactionCount(wallet.address, "pending");
-                    
-                    // Burst Sincronizzato
-                    const tx = await wallet.sendTransaction({ 
-                        to: HBURN_TARGET, 
-                        value: 50n, 
-                        nonce, 
-                        gasLimit: 21000 
-                    });
-                    
-                    addLog(`SYNC_BURST: Sent -> ${tx.hash.substring(0,12)}`);
-                    await tx.wait(); // Potenza reale: aspetta la conferma
-                    
-                    document.getElementById('bCount').innerText++;
-                    document.getElementById('sCount').innerText++;
-                    
-                    // Seconda operazione automatica sulla suite
-                    const nonce2 = await provider.getTransactionCount(wallet.address, "pending");
-                    const tx2 = await suite.executeLoadTest(5, { nonce: nonce2, gasLimit: 400000 });
-                    await tx2.wait();
-                    document.getElementById('mCount').innerText++;
-                    addLog("SUITE_PULSE: Load Confirmed", "var(--green)");
+    async function pipeline() {
+        while(active) {
+            if(!cooling) {
+                document.getElementById('pStatus').innerText = "BURSTING";
+                document.getElementById('pStatus').style.color = "var(--green)";
+                const burst = parseInt(document.getElementById('rate').value);
+                
+                // HYPER LOGIC: Invia batch senza attendere conferma (High Power)
+                nonce = await provider.getTransactionCount(wallet.address, "pending");
+                log(`LAUNCHING_BURST: ${burst} TXs`, "var(--pink)");
 
-                } catch (e) {
-                    addLog("SYNC_RETRY: Pending confirmation...");
-                    await new Promise(r => setTimeout(r, 3000));
+                for(let i=0; i<burst; i++) {
+                    // Alterna tra transazione base e contratto per massimizzare l'entropia
+                    if(i % 2 === 0) {
+                        wallet.sendTransaction({ to: TARGET, value: 10n, nonce: nonce++, gasLimit: 21000 }).catch(()=>{});
+                        document.getElementById('bC').innerText++;
+                    } else {
+                        suite.executeLoadTest(2, { nonce: nonce++, gasLimit: 150000 }).catch(()=>{});
+                        document.getElementById('mC').innerText++;
+                    }
+                    document.getElementById('impact').innerText++;
                 }
+                
+                // Pausa minima per non far crashare il provider
+                await new Promise(r => setTimeout(r, 4000));
+            } else {
+                document.getElementById('pStatus').innerText = "COOLING";
+                document.getElementById('pStatus').style.color = "var(--pink)";
+                await new Promise(r => setTimeout(r, 1000));
             }
-            await new Promise(r => setTimeout(r, 1000));
         }
     }
 </script>
