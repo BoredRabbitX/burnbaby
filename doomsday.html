@@ -3,237 +3,236 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HBURN - SECOND AGE v35.2</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700&family=DM+Serif+Display&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <title>HBURN - SECOND AGE v35.3 BATCH-MODE</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
     <style>
-        :root { 
-            --pink: #FF2867; --green: #00ff88; --bg: #0F0F0F; 
-            --surface: #1C1917; --text-p: #FAFAF9; --text-s: #A8A29E; --border: #292524;
-        }
-
+        :root { --pink: #FF2867; --green: #00ff88; --bg: #0F0F0F; --surface: #1C1917; --border: #292524; }
         * { box-sizing: border-box; }
-        body, html { 
-            margin: 0; padding: 0; height: 100vh; width: 100vw;
-            background: var(--bg); color: var(--text-p); 
-            font-family: 'DM Sans', sans-serif; overflow: hidden;
-        }
-
+        body { margin: 0; background: var(--bg); color: #FAFAF9; font-family: 'DM Sans', sans-serif; overflow: hidden; height: 100vh; }
+        
         .app-shell { 
-            width: 100%; height: 100%; max-width: 1400px; margin: 0 auto;
-            background: var(--surface); border: 1px solid var(--border);
-            display: grid; grid-template-columns: 300px 1fr 300px;
-            padding: 15px; gap: 15px;
+            display: grid; grid-template-columns: 280px 1fr 280px; 
+            height: 100%; width: 100%; max-width: 1600px; margin: 0 auto; padding: 10px; gap: 10px;
         }
 
-        .column { display: flex; flex-direction: column; gap: 12px; height: 100%; overflow: hidden; }
-        .widget { border-bottom: 1px solid var(--border); padding-bottom: 10px; }
-        .label { font-size: 9px; color: var(--text-s); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
-        .val { font-family: 'DM Serif Display', serif; font-size: 24px; color: var(--text-p); line-height: 1.2; }
-        .sub-val { font-size: 10px; color: var(--text-s); font-family: 'JetBrains Mono'; }
-
+        .column { display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+        .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+        
         #console { 
-            flex-grow: 1; background: #070707; border-radius: 6px; border: 1px solid var(--border); 
-            padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 10px; 
-            color: #00ff88; overflow-y: auto; line-height: 1.4;
+            flex-grow: 1; background: #050505; border: 1px solid var(--border); border-radius: 4px;
+            padding: 10px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--green);
+            overflow-y: auto; line-height: 1.3;
         }
-        .log-accent { color: var(--pink); }
 
-        .btn { padding: 10px; border-radius: 4px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; width: 100%; }
+        .label { font-size: 9px; color: #A8A29E; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .val { font-size: 22px; font-weight: 700; color: #fff; }
+        
+        .btn { padding: 10px; border-radius: 4px; border: none; font-weight: 700; cursor: pointer; font-size: 10px; text-transform: uppercase; width: 100%; transition: 0.2s; }
         .btn-primary { background: var(--pink); color: white; }
         .btn-action { background: var(--green); color: black; }
-        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-s); }
-        .btn:hover:not(:disabled) { filter: brightness(1.2); transform: translateY(-1px); }
-        .btn:disabled { opacity: 0.3; cursor: not-allowed; }
-
-        input { background: #0a0a0a; border: 1px solid var(--border); border-radius: 4px; color: white; padding: 8px; font-size: 11px; width: 100%; margin-top: 4px; font-family: 'JetBrains Mono'; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: #A8A29E; }
+        .btn:hover:not(:disabled) { filter: brightness(1.2); }
         
-        #auth { position:fixed; inset:0; background:var(--bg); z-index:1000; display:flex; justify-content:center; align-items:center; padding: 20px; }
-        .strike-active { animation: pulse-border 1s infinite; box-shadow: 0 0 15px var(--pink); }
-        @keyframes pulse-border { 0% { border: 2px solid var(--pink); } 50% { border: 2px solid #fff; } 100% { border: 2px solid var(--pink); } }
+        input, select { background: #000; border: 1px solid var(--border); color: #fff; padding: 6px; width: 100%; font-size: 11px; margin-top: 4px; border-radius: 4px; }
+        
+        .batch-indicator { font-size: 10px; color: var(--pink); font-weight: bold; }
+        #auth { position:fixed; inset:0; background:var(--bg); z-index:1000; display:flex; justify-content:center; align-items:center; }
     </style>
 </head>
 <body>
 
 <div id="auth">
-    <div style="text-align:center; max-width: 350px; width: 100%;">
-        <h1 style="font-family:'DM Serif Display'; font-size:42px; margin:0;">Second Age</h1>
-        <p style="color:var(--text-s); font-size:10px; letter-spacing:3px; margin-bottom:30px;">HBURN v35.2 INDUSTRIAL</p>
-        <input type="password" id="inputKey" placeholder="Private Key (0x...)" style="padding:14px;">
-        <button onclick="unlock()" class="btn-primary" style="margin-top:15px; padding:15px;">Authenticate</button>
+    <div style="text-align:center; width:300px;">
+        <h2 style="margin-bottom:20px;">INDUSTRIAL ACCESS</h2>
+        <input type="password" id="inputKey" placeholder="Private Key (0x...)" style="padding:12px;">
+        <button onclick="unlock()" class="btn-primary" style="margin-top:10px; padding:12px;">Connect Suite</button>
     </div>
 </div>
 
 <div class="app-shell" id="mainTerminal" style="display: none;">
     <div class="column">
-        <div class="widget">
-            <div class="label">Paseo Pulse</div>
+        <div class="panel">
+            <div class="label">Network Status</div>
             <div id="blockSpeed" class="val" style="color:var(--pink)">0.00s</div>
-            <div id="blockHeight" class="sub-val">Block #--</div>
+            <div id="blockHeight" style="font-size:10px; color:#A8A29E;">Block #--</div>
         </div>
 
-        <div class="widget">
-            <div class="label">Strike Dashboard</div>
-            <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
-                <button id="strikeBtn" class="btn btn-primary" onclick="toggleStrike()">Start Strike</button>
-                <button class="btn btn-outline" onclick="callContract('suite', 'executeDistributedTest')">Distribute Load</button>
-                <button class="btn btn-outline" onclick="callContract('suite', 'stopTest')">Kill All Processes</button>
+        <div class="panel">
+            <div class="label">Batch Attack Engine</div>
+            <div style="margin-top:8px; display:flex; flex-direction:column; gap:6px;">
+                <button id="strikeBtn" class="btn btn-primary" onclick="toggleStrike()">Start Batch Strike</button>
+                <div class="label" style="margin-top:5px;">Batch Size (TX/Burst)</div>
+                <select id="batchSize">
+                    <option value="5">5 TX / burst</option>
+                    <option value="10" selected>10 TX / burst</option>
+                    <option value="25">25 TX / burst (Aggressive)</option>
+                </select>
             </div>
         </div>
 
-        <div class="widget" style="margin-top:auto;">
-            <div class="label">Wallet Balance</div>
-            <div id="pasBalance" class="val" style="font-size:20px;">0.0000 PAS</div>
-            <div class="label" style="margin-top:10px;">Load Injection</div>
-            <div style="display:flex; gap:4px;">
-                <input type="number" id="loadCount" value="20" style="width:60px;">
-                <button class="btn btn-action" style="flex-grow:1;" onclick="callContract('suite', 'executeLoadTest', [document.getElementById('loadCount').value])">TX Batch</button>
+        <div class="panel" style="margin-top:auto;">
+            <div class="label">Fuel (PAS)</div>
+            <div id="pasBalance" class="val">0.0000</div>
+            <button class="btn btn-outline" style="margin-top:8px;" onclick="location.reload()">Kill Session</button>
+        </div>
+    </div>
+
+    <div class="column">
+        <div class="panel" style="flex-grow:1; display:flex; flex-direction:column;">
+            <div class="label">Execution Log</div>
+            <div id="console"></div>
+        </div>
+        <div class="panel">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div>
+                    <div class="label">Test Intensity</div>
+                    <input type="range" id="intensity" min="1" max="100" value="50">
+                </div>
+                <div>
+                    <div class="label">Manual Batch Inject</div>
+                    <button class="btn btn-action" onclick="callContract('suite', 'executeLoadTest', [20])">Pulse 20 Load TX</button>
+                </div>
             </div>
         </div>
     </div>
 
     <div class="column">
-        <div class="label">Decryption Stream</div>
-        <div id="console"></div>
-        <div style="background: #0a0a0a; padding:10px; border-radius:4px; border:1px solid var(--border);">
-            <div class="label">Test Intensity: <span id="intVal">50%</span></div>
-            <input type="range" id="intensity" min="1" max="100" value="50">
-        </div>
-    </div>
-
-    <div class="column">
-        <div class="widget">
-            <div class="label">HBURN Metrics</div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;">
-                <div style="background:#0a0a0a; padding:8px;"><div class="label">Mints</div><div id="mCount" class="val" style="font-size:18px;">0</div></div>
-                <div style="background:#0a0a0a; padding:8px;"><div class="label">Burns</div><div id="bCount" class="val" style="font-size:18px; color:var(--pink)">0</div></div>
+        <div class="panel">
+            <div class="label">Aggregated Stats</div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin-top:5px;">
+                <div style="background:#000; padding:8px;"><div class="label">Burst</div><div id="bCount" class="val" style="font-size:18px;">0</div></div>
+                <div style="background:#000; padding:8px;"><div class="label">Total TX</div><div id="sCount" class="val" style="font-size:18px; color:var(--pink)">0</div></div>
             </div>
         </div>
 
-        <div class="widget">
-            <div class="label">Testing Suite</div>
+        <div class="panel">
+            <div class="label">Minimal Suite</div>
             <div id="statChildren" class="val">0</div>
-            <div class="sub-val">Child Contracts Active</div>
-            <button class="btn btn-outline" style="margin-top:8px; font-size:9px;" onclick="callContract('suite', 'createChildren', [5])">Deploy +5 Children</button>
+            <div class="label" style="font-size:8px;">Children Deployed</div>
+            <button class="btn btn-outline" style="margin-top:5px;" onclick="callContract('suite', 'createChildren', [5])">Deploy +5</button>
+            <button class="btn btn-outline" style="margin-top:5px;" onclick="callContract('suite', 'executeDistributedTest')">Run Distributed</button>
         </div>
 
-        <div class="widget">
+        <div class="panel">
             <div class="label">Token Factory</div>
-            <button class="btn btn-action" style="margin-top:8px;" onclick="callContract('factory', 'createTestTokens', [2])">Mint 2 Tokens</button>
-            <input type="text" id="targetToken" placeholder="Token Address">
-            <button class="btn btn-outline" style="margin-top:5px; font-size:9px;" onclick="distributeTokens()">Sync Fleet</button>
-        </div>
-
-        <div class="widget" style="margin-top:auto; background: var(--border); padding: 12px; border-radius: 4px;">
-            <div class="label">Stealth Strikes</div>
-            <div id="sCount" class="val" style="font-size: 32px;">0</div>
+            <button class="btn btn-action" onclick="callContract('factory', 'createTestTokens', [2])">Mint 2 Tokens</button>
+            <input type="text" id="targetToken" placeholder="Token Addr for Fleet" style="margin-bottom:5px;">
+            <button class="btn btn-outline" onclick="distributeTokens()">Distribute Fleet</button>
         </div>
     </div>
 </div>
 
 <script>
     let provider, wallet, suite, factory, isStrikeActive = false;
-    let pendingNonce = null;
+    let nextNonce = null;
 
     const ADDR_SUITE = "0x7a637dc8cbfb49edc55fbe97fab0b0824c163605";
     const ADDR_FACTORY = "0x39ca236cb8131f6748d3862bb574f24a10e1c38d";
     const HBURN_TARGET = "0x3dd695D734B5DdE6B1955FFE75004c00862fb233";
 
-    const ABI_SUITE = ["function createChildren(uint256 count)", "function startTest(uint256 intensity)", "function executeLoadTest(uint256 txCount)", "function executeDistributedTest()", "function stopTest()", "function getStats() view returns (uint256 children, uint256 txs, uint256 currentBlock, uint256 blocksElapsed, bool active)"];
-    const ABI_FACTORY = ["function createTestTokens(uint256 count)", "function distributeTokens(address token, address[] memory recipients)", "function isTestToken(address) view returns (bool)"];
+    const ABI_SUITE = ["function createChildren(uint256 count)", "function startTest(uint256 intensity)", "function executeLoadTest(uint256 txCount)", "function executeDistributedTest()", "function getStats() view returns (uint256 children, uint256 txs, uint256 currentBlock, uint256 blocksElapsed, bool active)"];
+    const ABI_FACTORY = ["function createTestTokens(uint256 count)", "function distributeTokens(address token, address[] memory recipients)"];
 
-    function addLog(msg, isAccent = false) {
-        const con = document.getElementById('console');
+    function addLog(msg, accent = false) {
+        const c = document.getElementById('console');
         const d = document.createElement('div');
-        if(isAccent) d.className = 'log-accent';
-        d.innerHTML = `<span style="color:#444">[${new Date().toLocaleTimeString()}]</span> ${msg}`;
-        con.prepend(d);
-        if(con.childNodes.length > 50) con.removeChild(con.lastChild);
-    }
-
-    async function getSafeNonce() {
-        const current = await provider.getTransactionCount(wallet.address, "pending");
-        if (pendingNonce === null || current > pendingNonce) {
-            pendingNonce = current;
-        } else {
-            pendingNonce++;
-        }
-        return pendingNonce;
+        if(accent) d.style.color = 'var(--pink)';
+        d.innerHTML = `> ${msg}`;
+        c.prepend(d);
+        if(c.childNodes.length > 40) c.removeChild(c.lastChild);
     }
 
     async function unlock() {
-        const key = document.getElementById('inputKey').value.trim();
         try {
             provider = new ethers.JsonRpcProvider("https://testnet-passet-hub-eth-rpc.polkadot.io");
-            wallet = new ethers.Wallet(key, provider);
+            wallet = new ethers.Wallet(document.getElementById('inputKey').value.trim(), provider);
             suite = new ethers.Contract(ADDR_SUITE, ABI_SUITE, wallet);
             factory = new ethers.Contract(ADDR_FACTORY, ABI_FACTORY, wallet);
+            
             document.getElementById('auth').style.display = 'none';
             document.getElementById('mainTerminal').style.display = 'grid';
-            startNetworkMonitor();
-            addLog("SYSTEM_ONLINE", true);
-        } catch (e) { alert("Key Error"); }
+            
+            nextNonce = await provider.getTransactionCount(wallet.address, "pending");
+            startMonitor();
+            addLog("SYSTEM_READY: BATCH_ENGINE_LOADED", true);
+        } catch(e) { alert("Key Error"); }
     }
 
-    function startNetworkMonitor() {
+    function startMonitor() {
         let lastB = Date.now();
-        provider.on("block", async (num) => {
+        provider.on("block", async (n) => {
             document.getElementById('blockSpeed').innerText = ((Date.now()-lastB)/1000).toFixed(2) + "s";
-            document.getElementById('blockHeight').innerText = "Block #" + num;
+            document.getElementById('blockHeight').innerText = "Block #" + n;
             lastB = Date.now();
-            const bal = await provider.getBalance(wallet.address);
-            document.getElementById('pasBalance').innerText = parseFloat(ethers.formatEther(bal)).toFixed(4) + " PAS";
-            const stats = await suite.getStats();
-            document.getElementById('statChildren').innerText = stats.children;
+            
+            provider.getBalance(wallet.address).then(b => {
+                document.getElementById('pasBalance').innerText = parseFloat(ethers.formatEther(b)).toFixed(4);
+            });
+            
+            suite.getStats().then(s => {
+                document.getElementById('statChildren').innerText = s.children;
+            });
         });
     }
 
     async function toggleStrike() {
         isStrikeActive = !isStrikeActive;
         const btn = document.getElementById('strikeBtn');
-        btn.innerText = isStrikeActive ? "Strike Active" : "Start Strike";
-        btn.classList.toggle('strike-active');
-        if(isStrikeActive) runStrike();
+        btn.innerText = isStrikeActive ? "ACTIVE: SENDING BATCHES" : "Start Batch Strike";
+        if(isStrikeActive) runBatchLoop();
     }
 
-    async function runStrike() {
+    async function runBatchLoop() {
         while(isStrikeActive) {
-            try {
-                const nonce = await getSafeNonce();
-                // Alterna tra Burn e Ping/Test
-                if(Math.random() > 0.5) {
-                    await wallet.sendTransaction({ to: HBURN_TARGET, value: 1000n, nonce });
-                    document.getElementById('bCount').innerText++;
-                    document.getElementById('sCount').innerText++;
-                    addLog("STRIKE: Burn Sent");
+            const size = parseInt(document.getElementById('batchSize').value);
+            addLog(`INJECTING_BATCH: ${size} Transactions...`, true);
+            
+            // Sincronizza il nonce prima di ogni burst per evitare sfasamenti
+            nextNonce = await provider.getTransactionCount(wallet.address, "pending");
+
+            const promises = [];
+            for(let i=0; i<size; i++) {
+                // Alternanza intelligente tra Burn e Test
+                if(i % 2 === 0) {
+                    promises.push(wallet.sendTransaction({ 
+                        to: HBURN_TARGET, 
+                        value: 100n, 
+                        nonce: nextNonce++,
+                        gasLimit: 21000
+                    }).catch(e => {}));
                 } else {
-                    await suite.startTest(document.getElementById('intensity').value, { nonce, gasLimit: 200000 });
-                    document.getElementById('mCount').innerText++;
-                    addLog("STRIKE: Intensity Sync");
+                    promises.push(suite.startTest(document.getElementById('intensity').value, { 
+                        nonce: nextNonce++,
+                        gasLimit: 150000 
+                    }).catch(e => {}));
                 }
-            } catch (e) { addLog("STRIKE_SKIP: Nonce conflict", true); }
-            await new Promise(r => setTimeout(r, 3000));
+            }
+            
+            await Promise.all(promises);
+            document.getElementById('bCount').innerText++;
+            document.getElementById('sCount').innerText = parseInt(document.getElementById('sCount').innerText) + size;
+            
+            // Pausa tattica per permettere al mempool di Paseo di processare
+            await new Promise(r => setTimeout(r, 5000));
         }
     }
 
-    async function callContract(target, method, args = []) {
-        const contract = target === 'suite' ? suite : factory;
+    async function callContract(t, m, a = []) {
+        const c = t === 'suite' ? suite : factory;
         try {
-            const nonce = await getSafeNonce();
-            addLog(`REQ: ${method}`);
-            const tx = await contract[method](...args, { nonce });
-            addLog(`SENT: ${tx.hash.substring(0,12)}...`);
+            nextNonce = await provider.getTransactionCount(wallet.address, "pending");
+            addLog(`MANUAL_EXEC: ${m}`);
+            const tx = await c[m](...a, { nonce: nextNonce++, gasLimit: 500000 });
             await tx.wait();
-            addLog(`DONE: ${method}`, true);
-        } catch (e) { addLog(`ERR: ${method}`, true); }
+            addLog(`SUCCESS: ${m}`, true);
+        } catch(e) { addLog(`ERR: ${m} - Check Gas/Nonce`, true); }
     }
 
     async function distributeTokens() {
-        const token = document.getElementById('targetToken').value;
-        if(ethers.isAddress(token)) callContract('factory', 'distributeTokens', [token, [wallet.address]]);
+        const t = document.getElementById('targetToken').value;
+        if(ethers.isAddress(t)) callContract('factory', 'distributeTokens', [t, [wallet.address]]);
     }
-
-    document.getElementById('intensity').oninput = function() { document.getElementById('intVal').innerText = this.value + "%"; }
 </script>
 </body>
 </html>
