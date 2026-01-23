@@ -94,6 +94,24 @@
         }
         .btn-secondary:hover { border-color: var(--text-p); color: var(--text-p); }
 
+        .btn-danger {
+            background: linear-gradient(135deg, #ff4444, #cc0000);
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #ff6666, #ee2222);
+        }
+
+        .turbo-mode {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+
         #auth {
             position:fixed; inset:0; background:var(--bg); z-index:1000;
             display:flex; flex-direction:column; justify-content:center; align-items:center;
@@ -206,9 +224,27 @@
                 <button id="stopTestBtn" class="btn-secondary" onclick="stopStressTest()">Stop Test</button>
             </div>
 
+            <!-- Turbo Controls -->
             <div class="control-group">
-                <button class="btn-secondary" onclick="createContracts()">Create Contracts</button>
-                <button class="btn-secondary" onclick="createTokens()">Create Tokens</button>
+                <button id="turboBtn" class="btn-danger" onclick="toggleTurboMode()">🚀 TURBO STRESS</button>
+                <button class="btn-warning" onclick="batchOperations()">Batch Operations</button>
+            </div>
+
+            <!-- Batch Settings -->
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label>Batch Size: <span id="batchSizeValue">10</span></label>
+                <input type="range" id="batchSize" min="5" max="50" value="10" oninput="updateBatchSize(this.value)">
+            </div>
+
+            <!-- Standard Controls -->
+            <div class="control-group">
+                <button class="btn-primary" onclick="createContracts()">Create Contracts</button>
+                <button class="btn-warning" onclick="createTokens()">Create Tokens</button>
+            </div>
+
+            <div class="control-group">
+                <button class="btn-secondary" onclick="loadTest()">Load Test</button>
+                <button class="btn-secondary" onclick="distributedTest()">Distributed Test</button>
             </div>
 
             <div class="control-group">
@@ -285,6 +321,7 @@
 
     // Global state
     let SESSION_KEY = "", localNonce = 0, isRunning = false, testStartTime = null;
+    let turboMode = false, batchSize = 10, turboInterval = null, consecutiveErrors = 0;
     let testingSuite, tokenFactory, provider, wallet;
 
     // ABIs
@@ -315,10 +352,15 @@
         if(con.childNodes.length > 50) con.removeChild(con.lastChild);
     }
 
-    // Update intensity display
-    document.getElementById('intensity').oninput = function() {
-        document.getElementById('intensityValue').textContent = this.value + '%';
-    };
+        // Update intensity and batch size display
+        document.getElementById('intensity').oninput = function() {
+            document.getElementById('intensityValue').textContent = this.value + '%';
+        };
+
+        document.getElementById('batchSize').oninput = function() {
+            batchSize = parseInt(this.value);
+            document.getElementById('batchSizeValue').textContent = this.value;
+        };
 
     // Authentication
     async function unlock() {
@@ -341,7 +383,8 @@
 
             startMonitor();
             addLog("Professional Testing Suite activated.", true);
-            addLog("Ready for intensive stress testing operations.", true);
+            addLog("⚠️  Turbo mode uses conservative single operations every 5 seconds.", true);
+            addLog("Ready for controlled stress testing operations.", true);
         } catch (e) {
             alert("Invalid Credentials.");
             addLog("Authentication failed: " + e.message);
@@ -523,22 +566,257 @@
         }
     }
 
-    async function distributedTest() {
-        try {
-            addLog("Executing distributed test...", true);
-            const tx = await testingSuite.executeDistributedTest({
-                gasLimit: 2000000,
-                nonce: localNonce++
-            });
-            await tx.wait();
+        async function distributedTest() {
+            try {
+                addLog("Executing distributed test...", true);
+                const tx = await testingSuite.executeDistributedTest({
+                    gasLimit: 2000000,
+                    nonce: localNonce++
+                });
+                await tx.wait();
 
-            document.getElementById('distributedOps').innerText = parseInt(document.getElementById('distributedOps').innerText) + 1;
-            addLog("Distributed test completed successfully!", true);
-            await refreshStats();
-        } catch (error) {
-            addLog("Distributed test failed: " + error.message);
+                document.getElementById('distributedOps').innerText = parseInt(document.getElementById('distributedOps').innerText) + 1;
+                addLog("Distributed test completed successfully!", true);
+                await refreshStats();
+            } catch (error) {
+                addLog("Distributed test failed: " + error.message);
+            }
         }
-    }
+
+        // Turbo Mode Functions
+        async function toggleTurboMode() {
+            const btn = document.getElementById('turboBtn');
+
+            if (turboMode) {
+                // Stop turbo mode
+                turboMode = false;
+                if (turboInterval) {
+                    clearInterval(turboInterval);
+                    turboInterval = null;
+                }
+                btn.innerText = '🚀 TURBO STRESS';
+                btn.classList.remove('turbo-mode');
+                addLog("TURBO MODE DEACTIVATED", true);
+            } else {
+                // Start turbo mode
+                turboMode = true;
+                btn.innerText = '🛑 STOP TURBO';
+                btn.classList.add('turbo-mode');
+                addLog("TURBO MODE ACTIVATED - Maximum stress testing!", true);
+
+                // Start automatic batch operations with longer intervals
+                turboInterval = setInterval(async () => {
+                    if (!turboMode) return;
+
+                    try {
+                        // Execute ONE operation at a time with longer delays
+                        await executeSingleTurboOperation();
+                        consecutiveErrors = 0; // Reset error counter on success
+                    } catch (error) {
+                        consecutiveErrors++;
+                        addLog("Turbo operation error: " + error.message);
+
+                        // Auto-stop after 3 consecutive errors
+                        if (consecutiveErrors >= 3) {
+                            addLog("🚨 Too many consecutive errors! Auto-stopping turbo mode.", true);
+                            toggleTurboMode();
+                        }
+                    }
+                }, 5000); // Every 5 seconds (reduced frequency)
+            }
+        }
+
+        async function executeSingleTurboOperation() {
+            const operationType = Math.floor(Math.random() * 4);
+
+            try {
+                switch (operationType) {
+                    case 0:
+                        await createSingleContract();
+                        break;
+                    case 1:
+                        await createSingleToken();
+                        break;
+                    case 2:
+                        await singleLoadTest();
+                        break;
+                    case 3:
+                        await singleDistributedTest();
+                        break;
+                }
+            } catch (error) {
+                console.log("Single turbo operation error:", error);
+                throw error; // Re-throw to be caught by caller
+            }
+        }
+
+        async function createSingleContract() {
+            try {
+                addLog(`🔥 Turbo: Creating 1 contract`, true);
+                const tx = await testingSuite.createChildren(1, {
+                    gasLimit: 2000000,
+                    nonce: localNonce++
+                });
+
+                // Wait for confirmation
+                await tx.wait();
+                addLog(`✅ Turbo contract created`, true);
+                refreshStats();
+            } catch (error) {
+                addLog(`❌ Turbo contract failed: ${error.message}`, true);
+                throw error;
+            }
+        }
+
+        async function createContractsBatch() {
+            // Keep original batch function for manual use
+            try {
+                const count = Math.min(3, 5); // Very small batch for manual use
+                const tx = await testingSuite.createChildren(count, {
+                    gasLimit: 4000000,
+                    nonce: localNonce++
+                });
+                addLog(`🔥 Manual: Created ${count} contracts`, true);
+                await tx.wait();
+                addLog(`✅ Manual contracts confirmed`, true);
+                refreshStats();
+            } catch (error) {
+                addLog(`❌ Manual contracts failed: ${error.message}`, true);
+            }
+        }
+
+        async function createSingleToken() {
+            try {
+                addLog(`💰 Turbo: Creating 1 token type`, true);
+                const tx = await tokenFactory.createTestTokens(1, {
+                    gasLimit: 3000000,
+                    nonce: localNonce++
+                });
+
+                await tx.wait();
+                addLog(`✅ Turbo token created`, true);
+                refreshStats();
+            } catch (error) {
+                addLog(`❌ Turbo token failed: ${error.message}`, true);
+                throw error;
+            }
+        }
+
+        async function createTokensBatch() {
+            try {
+                const count = Math.min(2, 3); // Very small batch for manual use
+                const tx = await tokenFactory.createTestTokens(count, {
+                    gasLimit: 6000000,
+                    nonce: localNonce++
+                });
+                addLog(`💰 Manual: Created ${count} token types`, true);
+                await tx.wait();
+                addLog(`✅ Manual tokens confirmed`, true);
+                refreshStats();
+            } catch (error) {
+                addLog(`❌ Manual tokens failed: ${error.message}`, true);
+            }
+        }
+
+        async function singleLoadTest() {
+            try {
+                addLog(`⚡ Turbo: Executing 50 load transactions`, true);
+                const tx = await testingSuite.executeLoadTest(50, {
+                    gasLimit: 2000000,
+                    nonce: localNonce++
+                });
+
+                await tx.wait();
+                document.getElementById('loadOperations').innerText = parseInt(document.getElementById('loadOperations').innerText) + 1;
+                addLog(`✅ Turbo load test completed`, true);
+                refreshStats();
+            } catch (error) {
+                addLog(`❌ Turbo load test failed: ${error.message}`, true);
+                throw error;
+            }
+        }
+
+        async function loadTestBatch() {
+            try {
+                const txCount = Math.min(100, 200); // Smaller batch for manual use
+                const tx = await testingSuite.executeLoadTest(txCount, {
+                    gasLimit: 3000000,
+                    nonce: localNonce++
+                });
+                addLog(`⚡ Manual: ${txCount} load transactions`, true);
+                document.getElementById('loadOperations').innerText = parseInt(document.getElementById('loadOperations').innerText) + 1;
+                await tx.wait();
+                addLog(`✅ Manual load test confirmed`, true);
+                refreshStats();
+            } catch (error) {
+                addLog(`❌ Manual load test failed: ${error.message}`, true);
+            }
+        }
+
+        async function singleDistributedTest() {
+            try {
+                addLog(`🌐 Turbo: Executing distributed test`, true);
+                const tx = await testingSuite.executeDistributedTest({
+                    gasLimit: 2000000,
+                    nonce: localNonce++
+                });
+
+                await tx.wait();
+                document.getElementById('distributedOps').innerText = parseInt(document.getElementById('distributedOps').innerText) + 1;
+                addLog(`✅ Turbo distributed test completed`, true);
+                refreshStats();
+            } catch (error) {
+                addLog(`❌ Turbo distributed test failed: ${error.message}`, true);
+                throw error;
+            }
+        }
+
+        async function distributedTestBatch() {
+            try {
+                const tx = await testingSuite.executeDistributedTest({
+                    gasLimit: 2000000,
+                    nonce: localNonce++
+                });
+                addLog(`🌐 Manual: Distributed operations`, true);
+                document.getElementById('distributedOps').innerText = parseInt(document.getElementById('distributedOps').innerText) + 1;
+                await tx.wait();
+                addLog(`✅ Manual distributed confirmed`, true);
+                refreshStats();
+            } catch (error) {
+                addLog(`❌ Manual distributed failed: ${error.message}`, true);
+            }
+        }
+
+        // Manual Batch Operations (Conservative)
+        async function batchOperations() {
+            addLog("🚀 INITIATING CONSERVATIVE BATCH - Controlled intensity!", true);
+
+            try {
+                // Execute operations sequentially with delays
+                await createContractsBatch();
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                await createTokensBatch();
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                await loadTestBatch();
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                await distributedTestBatch();
+
+                addLog("✅ CONSERVATIVE BATCH COMPLETED!", true);
+                await refreshStats();
+
+            } catch (error) {
+                addLog("Conservative batch failed: " + error.message);
+            }
+        }
+
+        function updateBatchSize(value) {
+            batchSize = parseInt(value);
+            document.getElementById('batchSizeValue').textContent = value;
+            addLog(`Batch size updated to ${value}`, true);
+        }
 
     async function refreshStats() {
         try {
