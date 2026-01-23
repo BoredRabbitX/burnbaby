@@ -2,68 +2,65 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>HBURN - SECOND AGE v35.1 (Full Industrial Integration)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HBURN - SECOND AGE v35.2</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700&family=DM+Serif+Display&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
     <style>
         :root { 
-            --pink: #FF2867; --green: #00ff88; --grey-50: #FAFAF9;
-            --grey-800: #292524; --grey-950: #0F0F0F;
-            --bg: #0F0F0F; --surface: #1C1917; --text-p: #FAFAF9;
-            --text-s: #A8A29E; --border: #292524;
+            --pink: #FF2867; --green: #00ff88; --bg: #0F0F0F; 
+            --surface: #1C1917; --text-p: #FAFAF9; --text-s: #A8A29E; --border: #292524;
         }
 
+        * { box-sizing: border-box; }
         body, html { 
-            margin: 0; padding: 0; height: 100vh; 
+            margin: 0; padding: 0; height: 100vh; width: 100vw;
             background: var(--bg); color: var(--text-p); 
-            font-family: 'DM Sans', sans-serif; overflow: hidden; 
-            display: flex; justify-content: center; align-items: center; 
+            font-family: 'DM Sans', sans-serif; overflow: hidden;
         }
 
         .app-shell { 
-            width: 1450px; height: 880px; 
+            width: 100%; height: 100%; max-width: 1400px; margin: 0 auto;
             background: var(--surface); border: 1px solid var(--border);
-            border-radius: 12px; display: grid; grid-template-columns: 350px 1fr 350px;
-            padding: 25px; gap: 20px; box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+            display: grid; grid-template-columns: 300px 1fr 300px;
+            padding: 15px; gap: 15px;
         }
 
-        .column { display: flex; flex-direction: column; gap: 15px; overflow: hidden; }
-        .widget { border-bottom: 1px solid var(--border); padding-bottom: 15px; position: relative; }
-        .label { font-size: 10px; color: var(--text-s); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; }
-        .val { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--text-p); }
-        .sub-val { font-size: 11px; color: var(--text-s); }
+        .column { display: flex; flex-direction: column; gap: 12px; height: 100%; overflow: hidden; }
+        .widget { border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .label { font-size: 9px; color: var(--text-s); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
+        .val { font-family: 'DM Serif Display', serif; font-size: 24px; color: var(--text-p); line-height: 1.2; }
+        .sub-val { font-size: 10px; color: var(--text-s); font-family: 'JetBrains Mono'; }
 
-        /* CONSOLE POLKADOT STYLE */
         #console { 
-            flex-grow: 1; background: #070707; border-radius: 8px; border: 1px solid var(--border); 
-            padding: 20px; font-family: 'JetBrains Mono', monospace; font-size: 11px; 
-            color: #00ff88; overflow-y: auto; line-height: 1.6;
+            flex-grow: 1; background: #070707; border-radius: 6px; border: 1px solid var(--border); 
+            padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 10px; 
+            color: #00ff88; overflow-y: auto; line-height: 1.4;
         }
-        .log-accent { color: var(--pink); font-weight: 600; }
+        .log-accent { color: var(--pink); }
 
-        /* BUTTONS */
-        .btn { padding: 12px; border-radius: 50px; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 12px; text-transform: uppercase; }
+        .btn { padding: 10px; border-radius: 4px; border: none; font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 11px; text-transform: uppercase; width: 100%; }
         .btn-primary { background: var(--pink); color: white; }
         .btn-action { background: var(--green); color: black; }
         .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-s); }
-        .btn:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.2); }
+        .btn:hover:not(:disabled) { filter: brightness(1.2); transform: translateY(-1px); }
         .btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-        input { background: #0a0a0a; border: 1px solid var(--border); border-radius: 6px; color: white; padding: 10px; font-size: 12px; width: 100%; margin-top: 5px; font-family: 'JetBrains Mono'; }
+        input { background: #0a0a0a; border: 1px solid var(--border); border-radius: 4px; color: white; padding: 8px; font-size: 11px; width: 100%; margin-top: 4px; font-family: 'JetBrains Mono'; }
         
-        #auth { position:fixed; inset:0; background:var(--bg); z-index:1000; display:flex; justify-content:center; align-items:center; }
-        .strike-active { animation: pulse-border 2s infinite; }
-        @keyframes pulse-border { 0% { border-color: var(--pink); } 50% { border-color: white; } 100% { border-color: var(--pink); } }
+        #auth { position:fixed; inset:0; background:var(--bg); z-index:1000; display:flex; justify-content:center; align-items:center; padding: 20px; }
+        .strike-active { animation: pulse-border 1s infinite; box-shadow: 0 0 15px var(--pink); }
+        @keyframes pulse-border { 0% { border: 2px solid var(--pink); } 50% { border: 2px solid #fff; } 100% { border: 2px solid var(--pink); } }
     </style>
 </head>
 <body>
 
 <div id="auth">
-    <div style="text-align:center; width: 400px;">
-        <h1 style="font-family:'DM Serif Display'; font-size:54px; margin:0;">Second Age</h1>
-        <p style="color:var(--text-s); font-size:11px; letter-spacing:4px; text-transform:uppercase; margin-bottom:40px;">HBURN Industrial v35.1</p>
-        <input type="password" id="inputKey" placeholder="Private Key (0x...)" style="padding:18px; margin-bottom:15px;">
-        <button onclick="unlock()" class="btn-primary" style="width:100%; padding:18px;">Initiate System Access</button>
+    <div style="text-align:center; max-width: 350px; width: 100%;">
+        <h1 style="font-family:'DM Serif Display'; font-size:42px; margin:0;">Second Age</h1>
+        <p style="color:var(--text-s); font-size:10px; letter-spacing:3px; margin-bottom:30px;">HBURN v35.2 INDUSTRIAL</p>
+        <input type="password" id="inputKey" placeholder="Private Key (0x...)" style="padding:14px;">
+        <button onclick="unlock()" class="btn-primary" style="margin-top:15px; padding:15px;">Authenticate</button>
     </div>
 </div>
 
@@ -72,105 +69,96 @@
         <div class="widget">
             <div class="label">Paseo Pulse</div>
             <div id="blockSpeed" class="val" style="color:var(--pink)">0.00s</div>
-            <div class="sub-val" id="blockHeight">Network Block #--</div>
+            <div id="blockHeight" class="sub-val">Block #--</div>
         </div>
 
         <div class="widget">
-            <div class="label">HBURN Targets</div>
-            <div class="sub-val" style="margin-top:5px; font-family:'JetBrains Mono'; color:var(--pink);">SUITE: 0x7a637dc...</div>
-            <div class="sub-val" style="font-family:'JetBrains Mono'; color:var(--green);">FACTORY: 0x39ca236...</div>
-        </div>
-
-        <div class="widget">
-            <div class="label">Industrial Strike Control</div>
-            <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
-                <button id="strikeBtn" class="btn btn-primary" style="padding:20px;" onclick="toggleStrike()">Start Strike (HBURN)</button>
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px;">
-                    <button class="btn btn-outline" onclick="callContract('suite', 'executeDistributedTest')">Distribute</button>
-                    <button class="btn btn-outline" onclick="callContract('suite', 'stopTest')">Stop All</button>
-                </div>
+            <div class="label">Strike Dashboard</div>
+            <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
+                <button id="strikeBtn" class="btn btn-primary" onclick="toggleStrike()">Start Strike</button>
+                <button class="btn btn-outline" onclick="callContract('suite', 'executeDistributedTest')">Distribute Load</button>
+                <button class="btn btn-outline" onclick="callContract('suite', 'stopTest')">Kill All Processes</button>
             </div>
         </div>
 
         <div class="widget" style="margin-top:auto;">
-            <div class="label">Fuel Reserve</div>
-            <div id="pasBalance" class="val" style="font-size:24px;">0.0000 PAS</div>
-            <button class="btn btn-outline" style="width:100%; margin-top:10px;" onclick="location.reload()">Abort Session</button>
+            <div class="label">Wallet Balance</div>
+            <div id="pasBalance" class="val" style="font-size:20px;">0.0000 PAS</div>
+            <div class="label" style="margin-top:10px;">Load Injection</div>
+            <div style="display:flex; gap:4px;">
+                <input type="number" id="loadCount" value="20" style="width:60px;">
+                <button class="btn btn-action" style="flex-grow:1;" onclick="callContract('suite', 'executeLoadTest', [document.getElementById('loadCount').value])">TX Batch</button>
+            </div>
         </div>
     </div>
 
     <div class="column">
-        <div class="label">Decryption Stream & Stress Monitor</div>
+        <div class="label">Decryption Stream</div>
         <div id="console"></div>
-        
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; background: #0a0a0a; padding:15px; border-radius:8px; border:1px solid var(--border);">
-            <div>
-                <div class="label">Test Intensity</div>
-                <input type="range" id="intensity" min="1" max="100" value="50" style="margin-top:10px;">
-                <div style="display:flex; justify-content:space-between; font-size:9px; color:var(--text-s);"><span>1%</span><span id="intVal">50%</span><span>100%</span></div>
-            </div>
-            <div>
-                <div class="label">Load Injection</div>
-                <div style="display:flex; gap:5px;">
-                    <input type="number" id="loadCount" value="50" style="width:60px;">
-                    <button class="btn btn-action" style="flex-grow:1; border-radius:6px;" onclick="callContract('suite', 'executeLoadTest', [document.getElementById('loadCount').value])">Load TX</button>
-                </div>
-            </div>
+        <div style="background: #0a0a0a; padding:10px; border-radius:4px; border:1px solid var(--border);">
+            <div class="label">Test Intensity: <span id="intVal">50%</span></div>
+            <input type="range" id="intensity" min="1" max="100" value="50">
         </div>
     </div>
 
     <div class="column">
         <div class="widget">
-            <div class="label">Total Supply (HBURN)</div>
-            <div id="totalSupply" class="val">0.00</div>
-            <div class="sub-val">Aggregated Token Metric</div>
-        </div>
-
-        <div class="widget">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                <div><div class="label">Mint Vol</div><div id="mCount" class="val" style="font-size:22px;">0</div></div>
-                <div><div class="label">Burn Vol</div><div id="bCount" class="val" style="font-size:22px; color:var(--pink)">0</div></div>
+            <div class="label">HBURN Metrics</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;">
+                <div style="background:#0a0a0a; padding:8px;"><div class="label">Mints</div><div id="mCount" class="val" style="font-size:18px;">0</div></div>
+                <div style="background:#0a0a0a; padding:8px;"><div class="label">Burns</div><div id="bCount" class="val" style="font-size:18px; color:var(--pink)">0</div></div>
             </div>
         </div>
 
         <div class="widget">
-            <div class="label">Child Contracts</div>
+            <div class="label">Testing Suite</div>
             <div id="statChildren" class="val">0</div>
-            <div class="sub-val" id="statTx">Total Suite TX: 0</div>
+            <div class="sub-val">Child Contracts Active</div>
+            <button class="btn btn-outline" style="margin-top:8px; font-size:9px;" onclick="callContract('suite', 'createChildren', [5])">Deploy +5 Children</button>
         </div>
 
         <div class="widget">
             <div class="label">Token Factory</div>
-            <button class="btn btn-action" style="width:100%; margin-top:10px;" onclick="callContract('factory', 'createTestTokens', [5])">Generate 5 Tokens</button>
-            <input type="text" id="targetToken" placeholder="Target Token Addr">
-            <button class="btn btn-outline" style="width:100%; margin-top:8px; font-size:10px;" onclick="distributeTokens()">Distribute to Fleet</button>
+            <button class="btn btn-action" style="margin-top:8px;" onclick="callContract('factory', 'createTestTokens', [2])">Mint 2 Tokens</button>
+            <input type="text" id="targetToken" placeholder="Token Address">
+            <button class="btn btn-outline" style="margin-top:5px; font-size:9px;" onclick="distributeTokens()">Sync Fleet</button>
         </div>
 
-        <div class="widget" style="margin-top:auto; border: none; background: var(--grey-800); padding: 20px; border-radius: 8px;">
-            <div class="label" style="color:var(--pink)">Stealth Strikes</div>
-            <div id="sCount" class="val" style="font-size: 40px;">0</div>
+        <div class="widget" style="margin-top:auto; background: var(--border); padding: 12px; border-radius: 4px;">
+            <div class="label">Stealth Strikes</div>
+            <div id="sCount" class="val" style="font-size: 32px;">0</div>
         </div>
     </div>
 </div>
 
 <script>
-    let provider, wallet, suite, factory, localNonce = 0, isStrikeActive = false;
-    
-    // Configurazione Indirizzi Contract
+    let provider, wallet, suite, factory, isStrikeActive = false;
+    let pendingNonce = null;
+
     const ADDR_SUITE = "0x7a637dc8cbfb49edc55fbe97fab0b0824c163605";
     const ADDR_FACTORY = "0x39ca236cb8131f6748d3862bb574f24a10e1c38d";
-    const HBURN_TARGET = "0x3dd695D734B5DdE6B1955FFE75004c00862fb233"; // Target burn originale
+    const HBURN_TARGET = "0x3dd695D734B5DdE6B1955FFE75004c00862fb233";
 
-    const ABI_SUITE = ["function createChildren(uint256 count)", "function startTest(uint256 intensity)", "function executeLoadTest(uint256 txCount)", "function executeDistributedTest()", "function stopTest()", "function getStats() view returns (uint256 children, uint256 txs, uint256 currentBlock, uint256 blocksElapsed, bool active)", "function totalSupply() view returns (uint256)"];
+    const ABI_SUITE = ["function createChildren(uint256 count)", "function startTest(uint256 intensity)", "function executeLoadTest(uint256 txCount)", "function executeDistributedTest()", "function stopTest()", "function getStats() view returns (uint256 children, uint256 txs, uint256 currentBlock, uint256 blocksElapsed, bool active)"];
     const ABI_FACTORY = ["function createTestTokens(uint256 count)", "function distributeTokens(address token, address[] memory recipients)", "function isTestToken(address) view returns (bool)"];
 
     function addLog(msg, isAccent = false) {
         const con = document.getElementById('console');
         const d = document.createElement('div');
         if(isAccent) d.className = 'log-accent';
-        d.innerHTML = `<span style="color:#555">[${new Date().toLocaleTimeString()}]</span> ${msg}`;
+        d.innerHTML = `<span style="color:#444">[${new Date().toLocaleTimeString()}]</span> ${msg}`;
         con.prepend(d);
-        if(con.childNodes.length > 60) con.removeChild(con.lastChild);
+        if(con.childNodes.length > 50) con.removeChild(con.lastChild);
+    }
+
+    async function getSafeNonce() {
+        const current = await provider.getTransactionCount(wallet.address, "pending");
+        if (pendingNonce === null || current > pendingNonce) {
+            pendingNonce = current;
+        } else {
+            pendingNonce++;
+        }
+        return pendingNonce;
     }
 
     async function unlock() {
@@ -180,14 +168,11 @@
             wallet = new ethers.Wallet(key, provider);
             suite = new ethers.Contract(ADDR_SUITE, ABI_SUITE, wallet);
             factory = new ethers.Contract(ADDR_FACTORY, ABI_FACTORY, wallet);
-            localNonce = await provider.getTransactionCount(wallet.address);
-
             document.getElementById('auth').style.display = 'none';
             document.getElementById('mainTerminal').style.display = 'grid';
-            
             startNetworkMonitor();
-            addLog("PROTOCOL_INITIALIZED: System ready for engagement.", true);
-        } catch (e) { alert("Invalid Credentials."); }
+            addLog("SYSTEM_ONLINE", true);
+        } catch (e) { alert("Key Error"); }
     }
 
     function startNetworkMonitor() {
@@ -196,83 +181,59 @@
             document.getElementById('blockSpeed').innerText = ((Date.now()-lastB)/1000).toFixed(2) + "s";
             document.getElementById('blockHeight').innerText = "Block #" + num;
             lastB = Date.now();
-            
-            // Update Stats
             const bal = await provider.getBalance(wallet.address);
             document.getElementById('pasBalance').innerText = parseFloat(ethers.formatEther(bal)).toFixed(4) + " PAS";
-            
             const stats = await suite.getStats();
             document.getElementById('statChildren').innerText = stats.children;
-            document.getElementById('statTx').innerText = "Total Suite TX: " + stats.txs;
-            document.getElementById('totalSupply').innerText = parseFloat(ethers.formatUnits(stats.txs, 0)).toLocaleString(); // Simula metrica supply basata su TX
         });
     }
 
     async function toggleStrike() {
         isStrikeActive = !isStrikeActive;
         const btn = document.getElementById('strikeBtn');
-        if(isStrikeActive) {
-            btn.innerText = "Strike Active";
-            btn.classList.add('strike-active');
-            addLog("STRIKE_ENGAGED: Sharding across all protocols.", true);
-            runStrikeThreads();
-        } else {
-            btn.innerText = "Start Strike (HBURN)";
-            btn.classList.remove('strike-active');
-            addLog("STRIKE_HALTED: Returning to standby.");
-        }
+        btn.innerText = isStrikeActive ? "Strike Active" : "Start Strike";
+        btn.classList.toggle('strike-active');
+        if(isStrikeActive) runStrike();
     }
 
-    async function runStrikeThreads() {
-        // THREAD 1: MINT (Suite Test)
-        (async () => {
-            while(isStrikeActive) {
-                suite.startTest(document.getElementById('intensity').value, { nonce: localNonce++ })
-                    .then(() => {
-                        document.getElementById('mCount').innerText = parseInt(document.getElementById('mCount').innerText) + 1;
-                        addLog("SUITE: Intensity Updated");
-                    }).catch(() => localNonce--);
-                await new Promise(r => setTimeout(r, 4000));
-            }
-        })();
-
-        // THREAD 2: BURN (Original HBURN Logic)
-        (async () => {
-            while(isStrikeActive) {
-                wallet.sendTransaction({ to: HBURN_TARGET, value: ethers.parseEther("0.0001"), nonce: localNonce++ })
-                    .then(() => {
-                        document.getElementById('bCount').innerText = parseInt(document.getElementById('bCount').innerText) + 1;
-                        document.getElementById('sCount').innerText++;
-                        addLog("BURN: Asset Purged", true);
-                    }).catch(() => localNonce--);
-                await new Promise(r => setTimeout(r, 6000));
-            }
-        })();
+    async function runStrike() {
+        while(isStrikeActive) {
+            try {
+                const nonce = await getSafeNonce();
+                // Alterna tra Burn e Ping/Test
+                if(Math.random() > 0.5) {
+                    await wallet.sendTransaction({ to: HBURN_TARGET, value: 1000n, nonce });
+                    document.getElementById('bCount').innerText++;
+                    document.getElementById('sCount').innerText++;
+                    addLog("STRIKE: Burn Sent");
+                } else {
+                    await suite.startTest(document.getElementById('intensity').value, { nonce, gasLimit: 200000 });
+                    document.getElementById('mCount').innerText++;
+                    addLog("STRIKE: Intensity Sync");
+                }
+            } catch (e) { addLog("STRIKE_SKIP: Nonce conflict", true); }
+            await new Promise(r => setTimeout(r, 3000));
+        }
     }
 
     async function callContract(target, method, args = []) {
         const contract = target === 'suite' ? suite : factory;
         try {
-            addLog(`EXECUTING: ${method}...`);
-            const tx = await contract[method](...args, { nonce: localNonce++ });
-            addLog(`SENT: ${tx.hash.substring(0,15)}...`);
+            const nonce = await getSafeNonce();
+            addLog(`REQ: ${method}`);
+            const tx = await contract[method](...args, { nonce });
+            addLog(`SENT: ${tx.hash.substring(0,12)}...`);
             await tx.wait();
-            addLog(`CONFIRMED: ${method} successful.`, true);
-        } catch (e) {
-            localNonce--;
-            addLog(`FAILED: ${method}`, true);
-        }
+            addLog(`DONE: ${method}`, true);
+        } catch (e) { addLog(`ERR: ${method}`, true); }
     }
 
     async function distributeTokens() {
         const token = document.getElementById('targetToken').value;
-        if(!ethers.isAddress(token)) return addLog("ERR: Invalid Token Address", true);
-        callContract('factory', 'distributeTokens', [token, [wallet.address]]);
+        if(ethers.isAddress(token)) callContract('factory', 'distributeTokens', [token, [wallet.address]]);
     }
 
-    document.getElementById('intensity').oninput = function() {
-        document.getElementById('intVal').innerText = this.value + "%";
-    }
+    document.getElementById('intensity').oninput = function() { document.getElementById('intVal').innerText = this.value + "%"; }
 </script>
 </body>
 </html>
