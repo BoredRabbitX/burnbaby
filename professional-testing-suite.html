@@ -182,7 +182,7 @@
 <div id="auth">
     <div class="auth-card">
         <h1 style="font-size:48px; margin:0 0 10px 0;">Paseo Suite</h1>
-        <p style="color:var(--text-s); letter-spacing:3px; text-transform:uppercase; font-size:11px; margin-bottom:40px; font-weight:700;">Professional Testing v1.3</p>
+        <p style="color:var(--text-s); letter-spacing:3px; text-transform:uppercase; font-size:11px; margin-bottom:40px; font-weight:700;">Professional Testing v1.4</p>
         <input type="password" id="inputKey" placeholder="Private Key (0x...)">
         <button onclick="unlock()" class="btn-primary" style="width:100%;">Authenticate</button>
     </div>
@@ -278,8 +278,11 @@
 
     <div class="column">
         <div class="label" style="margin-bottom: 5px;">System Console</div>
-        <div style="background: #ff4444; color: white; padding: 8px; margin-bottom: 10px; border-radius: 4px; font-size: 11px;">
-            ⚠️ WARNING: High transaction frequency may trigger network spam protection.
+        <div style="background: #ff4444; color: white; padding: 12px; margin-bottom: 15px; border-radius: 6px; font-size: 12px; font-weight: bold;">
+            🚨 CRITICAL WARNING: Network spam protection is active.<br>
+            • Maximum 1 operation every 5 seconds<br>
+            • Turbo mode disabled<br>
+            • High frequency = automatic bans
         </div>
         <div id="console"></div>
     </div>
@@ -344,7 +347,7 @@
     // Global state
     let SESSION_KEY = "", isRunning = false, testStartTime = null;
     let turboMode = false, batchSize = 10, turboInterval = null, consecutiveErrors = 0;
-    let operationInProgress = false;
+    let operationInProgress = false, lastOperationTime = 0, rateLimitMs = 5000; // 5 second minimum between operations
     let testingSuite, tokenFactory, provider, wallet;
 
     // ABIs
@@ -388,35 +391,73 @@
     // Authentication
     async function unlock() {
         const key = document.getElementById('inputKey').value.trim();
+
+        console.log('Unlock called with key length:', key.length);
+
+        if (!key) {
+            alert("Please enter a private key.");
+            return;
+        }
+
         try {
+            console.log('Creating provider...');
             provider = new ethers.JsonRpcProvider(CONFIG.rpc);
+            console.log('Provider created');
+
+            console.log('Creating wallet...');
             wallet = new ethers.Wallet(key);
+            console.log('Wallet created:', wallet.address);
+
             SESSION_KEY = key;
 
-                // Initialize contracts with connected wallet
+            console.log('Testing connection...');
+            // Test basic connection
+            const blockNumber = await provider.getBlockNumber();
+            console.log('Block number:', blockNumber);
+
+            // Test wallet connection
+            const balance = await provider.getBalance(wallet.address);
+            console.log('Balance:', balance.toString());
+
             // Initialize contracts with connected wallet
-            // Initialize contracts with connected wallet
+            console.log('Initializing contracts...');
             const connectedWallet = wallet.connect(provider);
             testingSuite = new ethers.Contract(CONFIG.testingSuite, testingSuiteABI, connectedWallet);
             tokenFactory = new ethers.Contract(CONFIG.tokenFactory, tokenFactoryABI, connectedWallet);
+            console.log('Contracts initialized');
 
             document.getElementById('auth').style.display = 'none';
             document.getElementById('mainTerminal').style.display = 'grid';
 
-            // Test contract connectivity before starting
+            // Test contract connectivity
+            console.log('Testing contract connectivity...');
             await testContractConnection();
 
             startMonitor();
-            addLog("Professional Testing Suite activated.", true);
-            addLog("🔧 Fixed transaction encoding issues.", true);
+            addLog("✅ Professional Testing Suite activated successfully!", true);
+            addLog("🔧 Transaction encoding fixed.", true);
             addLog("⚠️  Turbo mode: single operations every 10 seconds.", true);
             addLog("🚨 Network protection active - avoid spam detection.", true);
             addLog("🛡️ Anti-spam protection: Operations limited to prevent network bans.", true);
-            addLog("Ready for stable stress testing operations.", true);
+            addLog("🛡️ ANTI-SPAM PROTECTION ACTIVE: 5 second minimum between operations.", true);
+            addLog("⚠️ Turbo mode disabled - too aggressive for network.", true);
+            addLog("🎯 Manual operations only - conservative mode.", true);
+
         } catch (e) {
-            alert("Invalid Credentials.");
-            addLog("Authentication failed: " + e.message);
+            console.error('Unlock error:', e);
+            alert("Authentication failed: " + e.message);
+            addLog("❌ Authentication failed: " + e.message, true);
+
+            // More detailed error messages
+            if (e.message.includes('invalid private key')) {
+                addLog("❌ Invalid private key format. Please check your key.", true);
+            } else if (e.message.includes('network')) {
+                addLog("❌ Network connection failed. Check RPC URL.", true);
+            } else if (e.message.includes('timeout')) {
+                addLog("❌ Network timeout. Try again.", true);
+            }
         }
+    }
     }
 
     // Network monitoring
@@ -466,13 +507,39 @@
             }
         }
 
-        // Contract operations
+        // Rate limiting helper
+    function checkRateLimit() {
+        const now = Date.now();
+        if (now - lastOperationTime < rateLimitMs) {
+            addLog("⏱️ Rate limited: Please wait before next operation", true);
+            return false;
+        }
+        lastOperationTime = now;
+        return true;
+    }
+
+    // Contract operations
         async function createContracts() {
+            if (!checkRateLimit()) return;
+
             if (operationInProgress) {
                 addLog("⚠️ Operation already in progress, please wait...", true);
                 return;
             }
 
+            operationInProgress = true;
+            const now = Date.now();
+            if (now - lastOperationTime < rateLimitMs) {
+                addLog("⏱️ Rate limited: Please wait before next operation", true);
+                return;
+            }
+
+            if (operationInProgress) {
+                addLog("⚠️ Operation already in progress, please wait...", true);
+                return;
+            }
+
+            lastOperationTime = now;
             operationInProgress = true;
             const btn = document.querySelector('button[onclick*="createContracts"]');
             if (btn) btn.disabled = true;
@@ -511,6 +578,8 @@
         }
 
         async function createTokens() {
+            if (!checkRateLimit()) return;
+
             if (operationInProgress) {
                 addLog("⚠️ Operation already in progress, please wait...", true);
                 return;
@@ -539,6 +608,8 @@
         }
 
         async function startStressTest() {
+            if (!checkRateLimit()) return;
+
             if (operationInProgress) {
                 addLog("⚠️ Operation already in progress, please wait...", true);
                 return;
@@ -572,6 +643,8 @@
         }
 
         async function stopStressTest() {
+            if (!checkRateLimit()) return;
+
             if (operationInProgress) {
                 addLog("⚠️ Operation already in progress, please wait...", true);
                 return;
@@ -604,6 +677,8 @@
         }
 
         async function loadTest() {
+            if (!checkRateLimit()) return;
+
             if (operationInProgress) {
                 addLog("⚠️ Operation already in progress, please wait...", true);
                 return;
@@ -635,6 +710,8 @@
     }
 
         async function distributedTest() {
+            if (!checkRateLimit()) return;
+
             if (operationInProgress) {
                 addLog("⚠️ Operation already in progress, please wait...", true);
                 return;
@@ -664,8 +741,10 @@
         }
         }
 
-        // Turbo Mode Functions
+        // Turbo Mode Functions (DISABLED for network protection)
         async function toggleTurboMode() {
+            addLog("🚫 Turbo mode disabled to prevent network spam detection.", true);
+            return;
             const btn = document.getElementById('turboBtn');
 
             if (turboMode) {
@@ -703,7 +782,7 @@
                             toggleTurboMode();
                         }
                     }
-                }, 10000); // Every 10 seconds - More conservative (reduced frequency)
+                }, 30000); // Every 30 seconds - Ultra conservative (reduced frequency)
             }
         }
 
@@ -749,19 +828,21 @@
         }
 
         async function createContractsBatch() {
-            // Keep original batch function for manual use
             try {
-                const count = Math.min(3, 5); // Very small batch for manual use
-                const tx = await testingSuite.createChildren(count, {
-                    gasLimit: 4000000
+                addLog(`🔥 Manual: Creating 1 contract (conservative mode)`, true);
+                const tx = await testingSuite.createChildren(1, { // Only 1 contract at a time
+                    gasLimit: 3000000,
+                    gasPrice: ethers.parseUnits('500', 'gwei') // Very low priority
                 });
-                addLog(`🔥 Manual: Created ${count} contracts`, true);
+                addLog(`📤 TX: ${tx.hash}`, true);
                 await tx.wait();
-                addLog(`✅ Manual contracts confirmed`, true);
+                addLog(`✅ Manual contract confirmed`, true);
                 refreshStats();
             } catch (error) {
-                addLog(`❌ Manual contracts failed: ${error.message}`, true);
+                addLog(`❌ Manual contract failed: ${error.message}`, true);
+                // Don't retry to avoid spam
             }
+        }
         }
 
         async function createSingleToken() {
@@ -782,16 +863,18 @@
 
         async function createTokensBatch() {
             try {
-                const count = Math.min(2, 3); // Very small batch for manual use
-                const tx = await tokenFactory.createTestTokens(count, {
-                    gasLimit: 6000000
+                addLog(`💰 Manual: Creating 1 token type (conservative mode)`, true);
+                const tx = await tokenFactory.createTestTokens(1, { // Only 1 token at a time
+                    gasLimit: 4000000,
+                    gasPrice: ethers.parseUnits('500', 'gwei') // Very low priority
                 });
-                addLog(`💰 Manual: Created ${count} token types`, true);
+                addLog(`📤 TX: ${tx.hash}`, true);
                 await tx.wait();
-                addLog(`✅ Manual tokens confirmed`, true);
+                addLog(`✅ Manual token confirmed`, true);
                 refreshStats();
             } catch (error) {
-                addLog(`❌ Manual tokens failed: ${error.message}`, true);
+                addLog(`❌ Manual token failed: ${error.message}`, true);
+                // Don't retry to avoid spam
             }
         }
 
@@ -814,17 +897,19 @@
 
         async function loadTestBatch() {
             try {
-                const txCount = Math.min(100, 200); // Smaller batch for manual use
-                const tx = await testingSuite.executeLoadTest(txCount, {
-                    gasLimit: 3000000
+                addLog(`⚡ Manual: Executing 25 load transactions (conservative mode)`, true);
+                const tx = await testingSuite.executeLoadTest(25, { // Reduced from 100 to 25
+                    gasLimit: 2500000,
+                    gasPrice: ethers.parseUnits('500', 'gwei') // Very low priority
                 });
-                addLog(`⚡ Manual: ${txCount} load transactions`, true);
+                addLog(`📤 TX: ${tx.hash}`, true);
                 document.getElementById('loadOperations').innerText = parseInt(document.getElementById('loadOperations').innerText) + 1;
                 await tx.wait();
                 addLog(`✅ Manual load test confirmed`, true);
                 refreshStats();
             } catch (error) {
                 addLog(`❌ Manual load test failed: ${error.message}`, true);
+                // Don't retry to avoid spam
             }
         }
 
@@ -847,25 +932,52 @@
 
         async function distributedTestBatch() {
             try {
+                addLog(`🌐 Manual: Executing distributed test (conservative mode)`, true);
                 const tx = await testingSuite.executeDistributedTest({
-                    gasLimit: 2000000
+                    gasLimit: 2000000,
+                    gasPrice: ethers.parseUnits('500', 'gwei') // Very low priority
                 });
-                addLog(`🌐 Manual: Distributed operations`, true);
+                addLog(`📤 TX: ${tx.hash}`, true);
                 document.getElementById('distributedOps').innerText = parseInt(document.getElementById('distributedOps').innerText) + 1;
                 await tx.wait();
                 addLog(`✅ Manual distributed confirmed`, true);
                 refreshStats();
             } catch (error) {
                 addLog(`❌ Manual distributed failed: ${error.message}`, true);
+                // Don't retry to avoid spam
             }
         }
 
-        // Manual Batch Operations (Ultra Conservative)
+        // Manual Batch Operations (Minimal - Single Operation Only)
         async function batchOperations() {
+            if (!checkRateLimit()) return;
+
             if (operationInProgress) {
                 addLog("⚠️ Operation already in progress, please wait...", true);
                 return;
             }
+
+            operationInProgress = true;
+            const btn = document.querySelector('button[onclick*="batchOperations"]');
+            if (btn) btn.disabled = true;
+
+            addLog("🚀 INITIATING MINIMAL BATCH - Single operation only!", true);
+
+            try {
+                // Execute only ONE operation at a time
+                await createContractsBatch();
+                addLog("⏳ Batch: Waiting 10 seconds before next operation...", true);
+                await new Promise(resolve => setTimeout(resolve, 10000));
+
+                addLog("✅ MINIMAL BATCH COMPLETED! (1 operation)", true);
+
+            } catch (error) {
+                addLog("Minimal batch failed: " + error.message);
+            } finally {
+                operationInProgress = false;
+                if (btn) btn.disabled = false;
+            }
+        }
 
             operationInProgress = true;
             const btn = document.querySelector('button[onclick*="batchOperations"]');
