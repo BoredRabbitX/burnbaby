@@ -335,8 +335,13 @@
 
             document.getElementById('auth').style.display = 'none';
             document.getElementById('mainTerminal').style.display = 'grid';
+
+            // Test contract connectivity before starting
+            await testContractConnection();
+
             startMonitor();
             addLog("Professional Testing Suite activated.", true);
+            addLog("Ready for intensive stress testing operations.", true);
         } catch (e) {
             alert("Invalid Credentials.");
             addLog("Authentication failed: " + e.message);
@@ -357,11 +362,19 @@
                 document.getElementById('pasBalance').innerText = parseFloat(ethers.formatEther(balance)).toFixed(4) + " PAS";
                 document.getElementById('walletStatus').innerText = "Nominal";
 
-                const gasPrice = await provider.getGasPrice();
-                document.getElementById('gasPrice').innerText = ethers.formatUnits(gasPrice, 'gwei') + " gwei";
+                try {
+                    // Temporarily disable gas price monitoring to avoid v6 compatibility issues
+                    document.getElementById('gasPrice').innerText = "Monitoring disabled";
+                } catch (gasError) {
+                    document.getElementById('gasPrice').innerText = "-- gwei";
+                }
 
-                const nonce = await provider.getTransactionCount(wallet.address);
-                if(nonce > localNonce) localNonce = nonce;
+                try {
+                    const nonce = await provider.getTransactionCount(wallet.address);
+                    if(nonce > localNonce) localNonce = nonce;
+                } catch (nonceError) {
+                    console.log("Nonce error:", nonceError);
+                }
 
                 await refreshStats();
 
@@ -372,30 +385,82 @@
         });
     }
 
-    // Contract operations
-    async function createContracts() {
+        // Test contract connection
+        async function testContractConnection() {
+            try {
+                addLog("Testing contract connectivity...", true);
+                const stats = await testingSuite.getStats();
+                const childCount = await testingSuite.childContractCount();
+                const tokenCount = await tokenFactory.getTokenCount();
+                addLog("Contracts responding: TestingSuite ✓, TokenFactory ✓", true);
+                return true;
+            } catch (error) {
+                addLog("Contract connectivity test failed: " + error.message);
+                throw error;
+            }
+        }
+
+        // Contract operations
+        async function createContracts() {
         try {
             addLog("Creating child contracts...", true);
-            const tx = await testingSuite.createChildren(10);
+            // Prima testiamo se il contratto risponde
+            await testContractConnection();
+
+            const tx = await testingSuite.createChildren(10, {
+                gasLimit: 5000000, // Aumentato il gas limit
+                nonce: localNonce++
+            });
             addLog("TX: " + tx.hash);
             await tx.wait();
             addLog("Child contracts deployed successfully", true);
             await refreshStats();
         } catch (error) {
             addLog("Contract creation failed: " + error.message);
+            // Proviamo con meno contratti
+            addLog("Retrying with fewer contracts...", true);
+            try {
+                const tx = await testingSuite.createChildren(5, {
+                    gasLimit: 3000000,
+                    nonce: localNonce++
+                });
+                addLog("TX retry: " + tx.hash);
+                await tx.wait();
+                addLog("5 Child contracts deployed successfully", true);
+                await refreshStats();
+            } catch (retryError) {
+                addLog("Retry also failed: " + retryError.message);
+            }
         }
     }
 
     async function createTokens() {
         try {
             addLog("Creating test tokens...", true);
-            const tx = await tokenFactory.createTestTokens(5);
+            const tx = await tokenFactory.createTestTokens(5, {
+                gasLimit: 8000000, // Aumentato per token creation
+                nonce: localNonce++
+            });
             addLog("TX: " + tx.hash);
             await tx.wait();
             addLog("Test tokens created successfully", true);
             await refreshStats();
         } catch (error) {
             addLog("Token creation failed: " + error.message);
+            // Retry with fewer tokens
+            addLog("Retrying with fewer tokens...", true);
+            try {
+                const tx = await tokenFactory.createTestTokens(2, {
+                    gasLimit: 4000000,
+                    nonce: localNonce++
+                });
+                addLog("TX retry: " + tx.hash);
+                await tx.wait();
+                addLog("2 Test tokens created successfully", true);
+                await refreshStats();
+            } catch (retryError) {
+                addLog("Retry also failed: " + retryError.message);
+            }
         }
     }
 
@@ -403,7 +468,10 @@
         const intensity = document.getElementById('intensity').value;
         try {
             addLog(`Starting stress test at ${intensity}% intensity...`, true);
-            const tx = await testingSuite.startTest(intensity);
+            const tx = await testingSuite.startTest(intensity, {
+                gasLimit: 2000000,
+                nonce: localNonce++
+            });
             addLog("TX: " + tx.hash);
             await tx.wait();
 
@@ -420,7 +488,10 @@
     async function stopStressTest() {
         try {
             addLog("Stopping stress test...", true);
-            const tx = await testingSuite.stopTest();
+            const tx = await testingSuite.stopTest({
+                gasLimit: 1000000,
+                nonce: localNonce++
+            });
             await tx.wait();
 
             isRunning = false;
@@ -437,12 +508,15 @@
     async function loadTest() {
         try {
             addLog("Executing load test (100 transactions)...", true);
-            const tx = await testingSuite.executeLoadTest(100);
+            const tx = await testingSuite.executeLoadTest(100, {
+                gasLimit: 3000000,
+                nonce: localNonce++
+            });
             addLog("TX: " + tx.hash);
             await tx.wait();
 
             document.getElementById('loadOperations').innerText = parseInt(document.getElementById('loadOperations').innerText) + 1;
-            addLog("Load test completed", true);
+            addLog("Load test completed successfully!", true);
             await refreshStats();
         } catch (error) {
             addLog("Load test failed: " + error.message);
@@ -452,11 +526,14 @@
     async function distributedTest() {
         try {
             addLog("Executing distributed test...", true);
-            const tx = await testingSuite.executeDistributedTest();
+            const tx = await testingSuite.executeDistributedTest({
+                gasLimit: 2000000,
+                nonce: localNonce++
+            });
             await tx.wait();
 
             document.getElementById('distributedOps').innerText = parseInt(document.getElementById('distributedOps').innerText) + 1;
-            addLog("Distributed test completed", true);
+            addLog("Distributed test completed successfully!", true);
             await refreshStats();
         } catch (error) {
             addLog("Distributed test failed: " + error.message);
@@ -495,6 +572,7 @@
     }, 10000);
 
     addLog("Paseo Professional Testing Suite initialized");
+    addLog("Enter your private key to begin stress testing operations.");
 </script>
 </body>
 </html>
